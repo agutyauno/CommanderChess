@@ -22,8 +22,8 @@ public class Board : MonoBehaviour
 
     [SerializeField] Vector2Int offset;
     [SerializeField] Grid grid;
-    Size boardSize = new(11, 12);
-    Dictionary<BoardCoord, PositionType> zoneMap = new();
+    Size boardSize = new(width: 11, height: 12);
+    public readonly Dictionary<BoardCoord, PositionType> zoneMap = new();
 
     public Grid Grid { get => grid; }
     public Size BoardSize { get => boardSize; }
@@ -35,7 +35,8 @@ public class Board : MonoBehaviour
 
     public bool IsInBoard(BoardCoord position)
     {
-        return position.x >= 1 && position.x <= boardSize.width && position.y >= 1 && position.y <= boardSize.height;
+        return position.x >= 1 && position.x <= boardSize.width
+            && position.y >= 1 && position.y <= boardSize.height;
     }
 
     public string BoardCoordToLabel(BoardCoord position)
@@ -76,12 +77,12 @@ public class Board : MonoBehaviour
 
     public void SetZoneRange(BoardCoord from, BoardCoord to, PositionType type)
     {
-        for (int x = Math.Min(from.x, to.x); x <= Math.Max(from.x, to.x); x++)
+        for (int y = Math.Min(from.x, to.x); y <= Math.Max(from.x, to.x); y++)
         {
-            for (int y = Math.Min(from.y, to.y); y <= Math.Max(from.y, to.y); y++)
+            for (int x = Math.Min(from.y, to.y); x <= Math.Max(from.y, to.y); x++)
             {
                 var pos = new BoardCoord(x, y);
-                if(IsInBoard(pos)) zoneMap[pos] = type;
+                if (IsInBoard(pos)) zoneMap[pos] = type;
             }
         }
     }
@@ -110,11 +111,11 @@ public class Board : MonoBehaviour
         // styles
         var axisCharStyle = new GUIStyle();
         axisCharStyle.normal.textColor = Color.white;
-        axisCharStyle.alignment = TextAnchor.MiddleRight; // letters on left side
+        axisCharStyle.alignment = TextAnchor.MiddleRight; // dùng cho chữ ngang (bên trên/giữa)
 
         var axisNumberStyle = new GUIStyle();
         axisNumberStyle.normal.textColor = Color.white;
-        axisNumberStyle.alignment = TextAnchor.UpperCenter; // numbers on top
+        axisNumberStyle.alignment = TextAnchor.UpperCenter; // dùng cho số dọc (trên cùng của nhãn)
 
         // helper: convert 0-based index to letters (A, B, ..., Z, AA, AB...)
         string IndexToLetters(int index)
@@ -130,12 +131,10 @@ public class Board : MonoBehaviour
             return s;
         }
 
-        float halfCellX = Mathf.Abs(grid.cellSize.x) * 0.5f;
-        float halfCellY = Mathf.Abs(grid.cellSize.y) * 0.5f;
         float outOffsetX = Mathf.Abs(grid.cellSize.x) * 0.6f; // distance outward for left labels
         float outOffsetY = Mathf.Abs(grid.cellSize.y) * 0.6f; // distance outward for bottom/top labels
 
-        // Vertical axis (along Y): show letters (A, B, ...) next to each intersection row
+        // --- ĐẢO: Vertical axis (Y) now shows numbers ---
         for (int y = 1; y <= boardSize.height; y++)
         {
             var bc = new BoardCoord(1, y);
@@ -144,12 +143,12 @@ public class Board : MonoBehaviour
             Vector3 world = BoardCoordToWorld(bc); // intersection world position
             // position label to the left of the leftmost intersections
             Vector3 labelPos = world + Vector3.left * outOffsetX;
-            // map y (1-based board) -> 0-based index for letters
-            string letter = IndexToLetters(y - 1);
-            Handles.Label(labelPos, letter, axisCharStyle);
+            // map y (1-based board) -> number
+            string number = y.ToString();
+            Handles.Label(labelPos, number, axisNumberStyle);
         }
 
-        // Horizontal axis (along X): show numbers (1,2,3...) next to each intersection column
+        // --- ĐẢO: Horizontal axis (X) now shows letters ---
         for (int x = 1; x <= boardSize.width; x++)
         {
             var bc = new BoardCoord(x, 1);
@@ -158,9 +157,9 @@ public class Board : MonoBehaviour
             Vector3 world = BoardCoordToWorld(bc); // intersection world position
             // position label below the bottommost intersections
             Vector3 labelPos = world + Vector3.down * outOffsetY;
-            // map x (1-based board) -> number
-            string number = x.ToString();
-            Handles.Label(labelPos, number, axisNumberStyle);
+            // map x (1-based board) -> 0-based index for letters
+            string letter = IndexToLetters(x - 1);
+            Handles.Label(labelPos, letter, axisCharStyle);
         }
 
         return true;

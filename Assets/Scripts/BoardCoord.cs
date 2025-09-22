@@ -23,8 +23,8 @@ public readonly struct BoardCoord
     // Convert to label like "A1", "B3", "AA10"
     public string ToLabel()
     {
-        if (x <= 0) throw new ArgumentOutOfRangeException(nameof(x));
-        int col = x;
+        if (x <= 0) throw new ArgumentOutOfRangeException(nameof(x), "x must be >= 1 for label");
+        int col = x - 1;
         string colLetters = "";
         do
         {
@@ -33,23 +33,24 @@ public readonly struct BoardCoord
             col = (col / 26) - 1;
         } while (col >= 0);
 
-        int rowNumber = y + 1;
+        int rowNumber = y;
         return $"{colLetters}{rowNumber}";
     }
 
-    // Try parse a label (no board-bounds check here)
+    // Try parse a label into 1-based BoardCoord (letters -> x, numbers -> y)
     public static bool TryParseLabel(string label, out BoardCoord coord)
     {
         coord = default;
         if (string.IsNullOrWhiteSpace(label)) return false;
 
+        label = label.Trim();
         int i = 0;
         while (i < label.Length && char.IsLetter(label[i])) i++;
         if (i == 0) return false;
 
         string letters = label.Substring(0, i).ToUpperInvariant();
         string digits = label.Substring(i);
-        if (!int.TryParse(digits, out int row) || row <= 0) return false;
+        if (string.IsNullOrEmpty(digits) || !int.TryParse(digits, out int row) || row <= 0) return false;
 
         int col = 0;
         for (int j = 0; j < letters.Length; j++)
@@ -58,8 +59,9 @@ public readonly struct BoardCoord
             if (c < 'A' || c > 'Z') return false;
             col = col * 26 + (c - 'A' + 1);
         }
-        col -= 1;
-        coord = new BoardCoord(col, row - 1);
+
+        // letters -> x (1-based), digits -> y (1-based)
+        coord = new BoardCoord(col, row);
         return true;
     }
 
