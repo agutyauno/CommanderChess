@@ -23,7 +23,7 @@ public readonly struct BoardCoord
     // Convert to label like "A1", "B3", "AA10"
     public string ToLabel()
     {
-        if (x < 0) throw new ArgumentOutOfRangeException(nameof(x));
+        if (x <= 0) throw new ArgumentOutOfRangeException(nameof(x));
         int col = x;
         string colLetters = "";
         do
