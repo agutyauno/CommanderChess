@@ -1,10 +1,9 @@
 using System.Collections.Generic;
 using UnityEngine;
-public class BoardManager : MonoBehaviour
+public class GameManager : MonoBehaviour
 {
     [SerializeField] Board board;
     [SerializeField] List<Piece> pieces = new();
-
     void Awake()
     {
         SetUpPieces();
@@ -74,7 +73,7 @@ public class BoardManager : MonoBehaviour
             var pos = piece.InitialPosition;
             if (board.IsInBoard(pos))
             {
-                piece.transform.position = board.Grid.CellToWorld(board.BoardCoordToCell(pos));
+                piece.transform.position = board.BoardCoordToWorld(pos);
             }
             else
             {

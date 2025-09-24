@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 public abstract class Piece : MonoBehaviour
@@ -16,9 +17,11 @@ public abstract class Piece : MonoBehaviour
         Navy,
         Headquarters
     }
-    
+
     [SerializeField] Team team;
+    [SerializeField] protected Board board;
     BoardCoord position;
+    bool doReplacePosition;
     bool hadRingOfFire;
     int straightMoveRange;
     bool canMoveDiagonal;
@@ -53,7 +56,6 @@ public abstract class Piece : MonoBehaviour
         }
         return diagonalMoveRange;
     }
-
     int GetDiagonalAttackRange()
     {
         if (!canAttackDiagonal)
@@ -75,8 +77,37 @@ public abstract class Piece : MonoBehaviour
         straightAttackRange += 1;
     }
 
-    abstract public List<Vector2Int> GetPossibleMoves();
-    abstract public List<Vector2Int> GetPossibleAttacks();
+    public void MoveTo(BoardCoord newPosition)
+    {
+        if (!GetPossibleMoves().Contains(newPosition))
+        {
+            throw new ArgumentException("Invalid move");
+        }
+        position = newPosition;
+        transform.position = board.BoardCoordToWorld(newPosition);
+    }
+
+    public void Acctack(Piece target)
+    {
+        if (!GetPossibleAttacks().Contains(target.Position))
+        {
+            throw new ArgumentException("Invalid attack");
+        }
+
+        target.BeingAttacked();
+        if (doReplacePosition)
+        {
+            MoveTo(target.Position);
+        }
+    }
+
+    public void BeingAttacked()
+    {
+        Destroy(gameObject);
+    }
+
+    abstract public List<BoardCoord> GetPossibleMoves();
+    abstract public List<BoardCoord> GetPossibleAttacks();
 }
 
 public enum Team

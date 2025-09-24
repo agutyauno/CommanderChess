@@ -130,7 +130,7 @@ GameObject:
   - component: {fileID: 124011135}
   - component: {fileID: 124011134}
   m_Layer: 0
-  m_Name: BoardManager
+  m_Name: GameManager
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2217,6 +2217,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Commander
   team: 0
+  board: {fileID: 0}
 --- !u!1 &955386416
 GameObject:
   m_ObjectHideFlags: 0
