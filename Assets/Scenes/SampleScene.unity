@@ -2216,8 +2216,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b543762f2cf760444ae7e3b2a02210fa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Commander
+  pieceData: {fileID: 11400000, guid: c2bf0f268b225a4498472e1f723219ac, type: 2}
   team: 0
-  board: {fileID: 0}
+  board: {fileID: 955386419}
+  carryingPiece: {fileID: 0}
 --- !u!1 &955386416
 GameObject:
   m_ObjectHideFlags: 0

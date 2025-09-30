@@ -23,7 +23,10 @@ public class Board : MonoBehaviour
     [SerializeField] Vector2Int offset;
     [SerializeField] Grid grid;
     Size boardSize = new(width: 11, height: 12);
-    public readonly Dictionary<BoardCoord, PositionType> zoneMap = new();
+    readonly Dictionary<BoardCoord, PositionType> zoneMap = new();
+
+    // runtime map: which piece sits on which intersection
+    readonly Dictionary<BoardCoord, Piece> pieces = new();
 
     public Grid Grid { get => grid; }
     public Size BoardSize { get => boardSize; }
@@ -31,6 +34,63 @@ public class Board : MonoBehaviour
     void Awake()
     {
         grid = GetComponent<Grid>();
+    }
+
+    public void Init()
+    {
+        zoneMap.Clear();
+        pieces.Clear();
+        SetUpZone();
+    }
+
+    void SetUpZone()
+    {
+        bool ok;
+        BoardCoord from, to;
+
+        // set land
+        ok = BoardCoord.TryParseLabel("A1", out from);
+        ok &= BoardCoord.TryParseLabel("L11", out to);
+        if (!ok) { Debug.LogError("Failed parsing A1..L11"); return; }
+        SetZoneRange(from, to, PositionType.Land);
+
+        // set sea (A1..L2 in your earlier spec)
+        ok = BoardCoord.TryParseLabel("A1", out from);
+        ok &= BoardCoord.TryParseLabel("L2", out to);
+        if (!ok) { Debug.LogError("Failed parsing A1..L2"); return; }
+        SetZoneRange(from, to, PositionType.Sea);
+
+        // seaside ranges
+        ok = BoardCoord.TryParseLabel("A3", out from);
+        ok &= BoardCoord.TryParseLabel("L3", out to);
+        if (!ok) Debug.LogError("Failed parsing A3..L3");
+        else SetZoneRange(from, to, PositionType.Seaside);
+
+        ok = BoardCoord.TryParseLabel("F3", out from);
+        ok &= BoardCoord.TryParseLabel("G5", out to);
+        if (!ok) Debug.LogError("Failed parsing F3..G5");
+        else SetZoneRange(from, to, PositionType.Seaside);
+
+        ok = BoardCoord.TryParseLabel("F7", out from);
+        ok &= BoardCoord.TryParseLabel("G7", out to);
+        if (!ok) Debug.LogError("Failed parsing F7..G7");
+        else SetZoneRange(from, to, PositionType.Seaside);
+
+        ok = BoardCoord.TryParseLabel("F9", out from);
+        ok &= BoardCoord.TryParseLabel("G11", out to);
+        if (!ok) Debug.LogError("Failed parsing F9..G11");
+        else SetZoneRange(from, to, PositionType.Seaside);
+
+        // shallow ranges
+        ok = BoardCoord.TryParseLabel("F6", out from);
+        ok &= BoardCoord.TryParseLabel("G6", out to);
+        if (!ok) Debug.LogError("Failed parsing F6..G6");
+        else SetZoneRange(from, to, PositionType.Shallow);
+
+        ok = BoardCoord.TryParseLabel("F8", out from);
+        ok &= BoardCoord.TryParseLabel("G8", out to);
+        if (!ok) Debug.LogError("Failed parsing F8..G8");
+        else SetZoneRange(from, to, PositionType.Shallow);
     }
 
     public bool IsInBoard(BoardCoord position)
@@ -92,6 +152,68 @@ public class Board : MonoBehaviour
         type = default;
         if (!IsInBoard(coord)) return false;
         return zoneMap.TryGetValue(coord, out type);
+    }
+
+    public bool TryGetPiece(BoardCoord coord, out Piece piece)
+    {
+        piece = null;
+        if (!IsInBoard(coord)) return false;
+        return pieces.TryGetValue(coord, out piece);
+    }
+
+    public bool PlacePiece(BoardCoord coord, Piece piece)
+    {
+        if (piece == null || !IsInBoard(coord)) return false;
+        if (pieces.ContainsKey(coord)) return false;
+        pieces[coord] = piece;
+        piece.Position = coord;
+        piece.transform.position = BoardCoordToWorld(coord);
+        piece.RecalculateCache();
+        return true;
+    }
+
+    public bool RemovePiece(BoardCoord coord)
+    {
+        return pieces.Remove(coord);
+    }
+
+    public IEnumerable<KeyValuePair<BoardCoord, Piece>> AllPieces() => pieces;
+
+    public bool MovePiece(BoardCoord from, BoardCoord to)
+    {
+        if (!pieces.TryGetValue(from, out var p)) return false;
+        if (!IsInBoard(to)) return false;
+        if (pieces.ContainsKey(to)) return false; // /allow capture if desired
+        if (!p.PossibleMoves.Contains(to)) return false; // move not in range
+        pieces.Remove(from);
+        pieces[to] = p;
+        p.Position = to;
+        p.transform.position = BoardCoordToWorld(to);
+        p.RecalculateCache();
+        return true;
+    }
+
+    public bool Capture(BoardCoord attackPos, BoardCoord targetPos)
+    {
+        if (!pieces.TryGetValue(attackPos, out var attacker)) return false;
+        if (!pieces.TryGetValue(targetPos, out var target)) return false;
+        if (!attacker.PossibleAttacks.Contains(targetPos)) return false; // target not in attack range
+        if (attacker.Team == target.Team) return false; // can't capture friendly
+
+        // remove target from map first to keep map consistent
+        pieces.Remove(targetPos);
+
+        // move attacker if requested
+        if (attacker.DoMoveToTarget)
+        {
+            pieces.Remove(attackPos);
+            pieces[targetPos] = attacker;
+            attacker.Position = targetPos;
+            attacker.transform.position = BoardCoordToWorld(targetPos);
+        }
+        target.OnCaptured();
+        attacker.RecalculateCache();
+        return true;
     }
 
 #if UNITY_EDITOR

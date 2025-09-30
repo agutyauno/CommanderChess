@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-public readonly struct BoardCoord
+public readonly struct BoardCoord : IEquatable<BoardCoord>
 {
     public readonly int x;
     public readonly int y;
@@ -13,10 +13,32 @@ public readonly struct BoardCoord
     }
 
     // Conversions to/from Unity types for convenience
-    public static implicit operator Vector2Int(BoardCoord c) => new Vector2Int(c.x, c.y);
-    public static implicit operator Vector3Int(BoardCoord c) => new Vector3Int(c.x, c.y, 0);
-    public static implicit operator BoardCoord(Vector2Int v) => new BoardCoord(v.x, v.y);
-    public static implicit operator BoardCoord(Vector3Int v) => new BoardCoord(v.x, v.y);
+    public static implicit operator Vector2Int(BoardCoord c) => new(c.x, c.y);
+    public static implicit operator Vector3Int(BoardCoord c) => new(c.x, c.y, 0);
+    public static implicit operator BoardCoord(Vector2Int v) => new(v.x, v.y);
+    public static implicit operator BoardCoord(Vector3Int v) => new(v.x, v.y);
+
+    // arithmetic operators
+    public static BoardCoord operator +(BoardCoord a, BoardCoord b) => new(a.x + b.x, a.y + b.y);
+    public static BoardCoord operator -(BoardCoord a, BoardCoord b) => new(a.x - b.x, a.y - b.y);
+
+    public static BoardCoord operator +(BoardCoord a, Vector2Int v) => new(a.x + v.x, a.y + v.y);
+    public static BoardCoord operator +(Vector2Int v, BoardCoord a) => new(a.x + v.x, a.y + v.y);
+    public static BoardCoord operator -(BoardCoord a, Vector2Int v) => new(a.x - v.x, a.y - v.y);
+
+    public static BoardCoord operator +(Vector3Int v, BoardCoord a) => new(a.x + v.x, a.y + v.y);
+    public static BoardCoord operator +(BoardCoord a, Vector3Int v) => new(a.x + v.x, a.y + v.y);
+    public static BoardCoord operator -(BoardCoord a, Vector3Int v) => new(a.x - v.x, a.y - v.y);
+
+    public static BoardCoord operator *(BoardCoord a, int scalar) => new(a.x * scalar, a.y * scalar);
+    public static BoardCoord operator *(int scalar, BoardCoord a) => new(a.x * scalar, a.y * scalar);
+
+    // equality operators
+    public static bool operator ==(BoardCoord a, BoardCoord b) => a.x == b.x && a.y == b.y;
+    public static bool operator !=(BoardCoord a, BoardCoord b) => !(a == b);
+
+    // convenience deconstruct
+    public void Deconstruct(out int x, out int y) { x = this.x; y = this.y; }
 
     public override string ToString() => $"({x},{y})";
 
@@ -65,6 +87,8 @@ public readonly struct BoardCoord
         return true;
     }
 
-    public override bool Equals(object obj) => obj is BoardCoord other && other.x == x && other.y == y;
+    // IEquatable implementation + overrides
+    public bool Equals(BoardCoord other) => this.x == other.x && this.y == other.y;
+    public override bool Equals(object obj) => obj is BoardCoord other && Equals(other);
     public override int GetHashCode() => HashCode.Combine(x, y);
 }
