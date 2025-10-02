@@ -1,24 +1,20 @@
 using System.Collections.Generic;
 using UnityEngine;
+using VContainer;
+using VContainer.Unity;
 public class GameManager : MonoBehaviour
 {
-    [SerializeField] Board board;
     [SerializeField] List<Piece> pieces = new();
+    [Inject] Board board;
     void Awake()
     {
-        SetUpPieces();
         board.Init();
-        Debug.Log("avalable moves");
-        foreach (var p in pieces[0].PossibleMoves)
+        SetUpPieces();
+        Debug.Log("ring of fire zones:");
+        foreach (var coord in pieces[0].RingOfFireZones)
         {
-            Debug.Log(p.ToLabel());
-        }
-
-        Debug.Log("avalable attacks");
-        foreach (var p in pieces[0].PossibleAttacks)
-        {
-            Debug.Log(p.ToLabel());
-        }
+            Debug.Log(coord.ToLabel());
+        }  
     }
 
 

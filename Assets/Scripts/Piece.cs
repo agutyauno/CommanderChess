@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using VContainer;
 public abstract class Piece : MonoBehaviour
 {
     public enum PieceType
@@ -18,8 +19,8 @@ public abstract class Piece : MonoBehaviour
         Headquarters
     }
 
-    static (int x, int y)[] sdirs = new (int dx, int dy)[] { (1, 0), (-1, 0), (0, 1), (0, -1) };
-    static (int x, int y)[] ddirs = new (int dx, int dy)[] { (1, 1), (1, -1), (-1, 1), (-1, -1) };
+    protected (int x, int y)[] sdirs = new (int dx, int dy)[] { (1, 0), (-1, 0), (0, 1), (0, -1) };
+    protected (int x, int y)[] ddirs = new (int dx, int dy)[] { (1, 1), (1, -1), (-1, 1), (-1, -1) };
 
     List<BoardCoord> cachedMoves = new();
     List<BoardCoord> cachedAttacks = new();
@@ -27,8 +28,8 @@ public abstract class Piece : MonoBehaviour
     [SerializeField] PieceData pieceData;
 
     [SerializeField] Team team;
-    [SerializeField] protected Board board;
-    [SerializeField] Piece carryingPiece;
+    [Inject] protected Board board;
+    Piece carryingPiece;
     BoardCoord initialPosition;
     BoardCoord position;
     bool doMoveToTarget;
@@ -121,6 +122,8 @@ public abstract class Piece : MonoBehaviour
         straightAttackRange += 1;
     }
 
+    public void SetBoard(Board b) => board = b;
+
     public void Init()
     {
         if (pieceData != null)
@@ -153,6 +156,7 @@ public abstract class Piece : MonoBehaviour
     {
         CalulatePossibleMoves();
         CalulatePossibleAttacks();
+        CalculateRingOfFireZones();
     }
 
     virtual protected void CalulatePossibleMoves()
@@ -240,7 +244,7 @@ public abstract class Piece : MonoBehaviour
         }
     }
 
-    void CaculateRingOfFireZones()
+    void CalculateRingOfFireZones()
     {
         if (!hadRingOfFire || board == null) return;
         cachedRingOfFireZones.Clear();
@@ -251,7 +255,6 @@ public abstract class Piece : MonoBehaviour
                 if (Math.Abs(dx) + Math.Abs(dy) > ringOfFireRange) continue;
                 var newPos = new BoardCoord(position.x + dx, position.y + dy);
                 if (!board.IsInBoard(newPos)) continue;
-                if (newPos == position ) continue;
                 cachedRingOfFireZones.Add(newPos);
             }
         }

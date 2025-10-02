@@ -9,24 +9,21 @@ public class PieceData : ScriptableObject
 
     [Header("Movement")]
     public bool canMoveStraight = true;
-    [Range(0, 100)] public int straightMoveRange = 1;
+    [Range(1, 100)] public int straightMoveRange = 1;
     public bool canMoveDiagonal = false;
-    [Range(0, 100)] public int diagonalMoveRange = 0;
+    [Range(1, 100)] public int diagonalMoveRange = 1;
 
     [Header("Attack")]
     public bool canAttackStraight = true;
-    [Range(0, 100)] public int straightAttackRange = 1;
+    [Range(1, 100)] public int straightAttackRange = 1;
     public bool canAttackDiagonal = false;
-    [Range(0, 100)] public int diagonalAttackRange = 0;
+    [Range(1, 100)] public int diagonalAttackRange = 1;
 
     [Header("Ring of Fire")]
     public bool hadRingOfFire = false;
-    [Range(0, 100)] public int ringOfFireRange = 1;
+    [Range(1, 100)] public int ringOfFireRange = 1;
 
     [Header("Other")]
-    public bool doMoveToTarget = false;
-
-    [Header("Visual / Prefab")]
-    public Sprite icon;
+    public bool doMoveToTarget = true;
 }
 

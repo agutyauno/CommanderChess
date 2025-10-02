@@ -206,10 +206,7 @@ public class Board : MonoBehaviour
         // move attacker if requested
         if (attacker.DoMoveToTarget)
         {
-            pieces.Remove(attackPos);
-            pieces[targetPos] = attacker;
-            attacker.Position = targetPos;
-            attacker.transform.position = BoardCoordToWorld(targetPos);
+            MovePiece(attackPos, targetPos);
         }
         target.OnCaptured();
         attacker.RecalculateCache();
