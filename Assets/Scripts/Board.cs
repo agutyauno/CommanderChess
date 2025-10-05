@@ -64,22 +64,22 @@ public class Board : MonoBehaviour
         ok = BoardCoord.TryParseLabel("A3", out from);
         ok &= BoardCoord.TryParseLabel("L3", out to);
         if (!ok) Debug.LogError("Failed parsing A3..L3");
-        else SetZoneRange(from, to, PositionType.Seaside);
+        else SetZoneRange(from, to, PositionType.Coast);
 
         ok = BoardCoord.TryParseLabel("F3", out from);
         ok &= BoardCoord.TryParseLabel("G5", out to);
         if (!ok) Debug.LogError("Failed parsing F3..G5");
-        else SetZoneRange(from, to, PositionType.Seaside);
+        else SetZoneRange(from, to, PositionType.Coast);
 
         ok = BoardCoord.TryParseLabel("F7", out from);
         ok &= BoardCoord.TryParseLabel("G7", out to);
         if (!ok) Debug.LogError("Failed parsing F7..G7");
-        else SetZoneRange(from, to, PositionType.Seaside);
+        else SetZoneRange(from, to, PositionType.Coast);
 
         ok = BoardCoord.TryParseLabel("F9", out from);
         ok &= BoardCoord.TryParseLabel("G11", out to);
         if (!ok) Debug.LogError("Failed parsing F9..G11");
-        else SetZoneRange(from, to, PositionType.Seaside);
+        else SetZoneRange(from, to, PositionType.Coast);
 
         // shallow ranges
         ok = BoardCoord.TryParseLabel("F6", out from);

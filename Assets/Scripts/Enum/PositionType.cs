@@ -1,4 +1,4 @@
 public enum PositionType
 {
-    Sea, Land, Shallow, Seaside
+    Sea, Land, Shallow, Coast
 }

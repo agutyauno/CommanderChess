@@ -23,6 +23,9 @@ public class PieceData : ScriptableObject
     public bool hadRingOfFire = false;
     [Range(1, 100)] public int ringOfFireRange = 1;
 
+    [Header("Carrying")]
+    public Piece.PieceType[] allowedCarryTypes = {};
+
     [Header("Other")]
     public bool doMoveToTarget = true;
 }
