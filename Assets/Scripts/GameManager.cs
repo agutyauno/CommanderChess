@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
 using VContainer;
-using VContainer.Unity;
 public class GameManager : MonoBehaviour
 {
     [SerializeField] List<Piece> pieces = new();
@@ -10,11 +9,20 @@ public class GameManager : MonoBehaviour
     {
         board.Init();
         SetUpPieces();
-        Debug.Log("ring of fire zones:");
-        foreach (var coord in pieces[0].RingOfFireZones)
+        pieces[2].TryAddCarryingPiece(pieces[0]); // tank mang commander
+        pieces[1].TryAddCarryingPiece(pieces[2]); // airforce mang tank
+
+        foreach (var piece in pieces[1].CarryingPieces)
         {
-            Debug.Log(coord.ToLabel());
-        }  
+            Debug.Log($"{pieces[1].Type} is carrying {piece.Type} at {piece.Position.ToLabel()}");
+        }
+
+        foreach (var piece in pieces[2].CarryingPieces)
+        {   
+            if (piece == null) continue;
+            Debug.Log($"{pieces[2].Type} is carrying {piece.Type} at {piece.Position.ToLabel()}");
+        }
+        Debug.Log(pieces[0].Carrier.Type);
     }
 
 

@@ -6,51 +6,44 @@ public abstract class Piece : MonoBehaviour
 {
     public enum PieceType
     {
-        Commander,
-        Indantry,
-        Tank,
-        Militia,
-        Engineer,
-        Artillery,
-        AntiAircraft,
-        Rocket,
-        AirForce,
-        Navy,
-        Headquarters
+        Commander, Infantry, Tank, Militia, Engineer, Artillery, AntiAircraft, Rocket, AirForce, Navy, Headquarters
     }
 
-    protected (int x, int y)[] sdirs = new (int dx, int dy)[] { (1, 0), (-1, 0), (0, 1), (0, -1) };
-    protected (int x, int y)[] ddirs = new (int dx, int dy)[] { (1, 1), (1, -1), (-1, 1), (-1, -1) };
-
-    readonly List<BoardCoord> cachedMoves = new();
-    readonly List<BoardCoord> cachedAttacks = new();
-    readonly List<BoardCoord> cachedRingOfFireZones = new(); 
-
-    [SerializeField] PieceData pieceData;
-    [SerializeField] Team team;
-
-    [Inject] protected Board board;
-
-    Piece[] carryingPiece = new Piece[2]; // tối đa mang 2 đơn vị
-    readonly HashSet<PieceType> allowedCarryTypes = new();
-    BoardCoord initialPosition;
-    BoardCoord position;
-    bool doMoveToTarget;
-    bool hadRingOfFire;
-    int ringOfFireRange;
-
-    bool canMoveStraight;
-    int straightMoveRange;
-
-    bool canMoveDiagonal;
-    int diagonalMoveRange;
-
-    bool canAttackStraight;
-    int straightAttackRange;
-
-    bool canAttackDiagonal;
-    int diagonalAttackRange;
-    bool isHero;
+    #region Fields
+        protected (int x, int y)[] sdirs = new (int dx, int dy)[] { (1, 0), (-1, 0), (0, 1), (0, -1) };
+        protected (int x, int y)[] ddirs = new (int dx, int dy)[] { (1, 1), (1, -1), (-1, 1), (-1, -1) };
+    
+        readonly List<BoardCoord> cachedMoves = new();
+        readonly List<BoardCoord> cachedAttacks = new();
+        readonly List<BoardCoord> cachedRingOfFireZones = new(); 
+    
+        [SerializeField] PieceData pieceData;
+        [SerializeField] Team team;
+    
+        [Inject] protected Board board;
+    
+        Piece[] carryingPieces = new Piece[2]; // tối đa mang 2 đơn vị
+        Piece carrier; // reference tới parent đang mang mình (nếu có)
+        readonly HashSet<PieceType> allowedCarryTypes = new();
+        BoardCoord initialPosition;
+        BoardCoord position;
+        bool doMoveToTarget;
+        bool hadRingOfFire;
+        int ringOfFireRange;
+    
+        bool canMoveStraight;
+        int straightMoveRange;
+    
+        bool canMoveDiagonal;
+        int diagonalMoveRange;
+    
+        bool canAttackStraight;
+        int straightAttackRange;
+    
+        bool canAttackDiagonal;
+        int diagonalAttackRange;
+        bool isHero;
+    #endregion
 
     #region Properties
     public List<BoardCoord> PossibleMoves { get => cachedMoves; }
@@ -60,7 +53,9 @@ public abstract class Piece : MonoBehaviour
     public Team Team { get => team; }
     public BoardCoord InitialPosition { get; }
     public BoardCoord Position { get => position; set => position = value; }
-    public Piece[] CarryingPiece { get => carryingPiece; }
+    public Piece[] CarryingPieces { get => carryingPieces; }
+    public Piece Carrier => carrier;
+    public bool IsCarried => carrier != null;
     public HashSet<PieceType> AllowedCarryTypes { get => allowedCarryTypes; }
     public bool DoMoveToTarget { get => doMoveToTarget; }
     public bool HadRingOfFire { get => hadRingOfFire; }
@@ -164,34 +159,83 @@ public abstract class Piece : MonoBehaviour
         return allowedCarryTypes.Contains(piece.Type) ? piece : null;
     }
 
-    public bool TryAddCarryingPiece(Piece piece)
+    // Kiểm tra xem có đủ chỗ để thêm piece và tất cả piece nó đang mang không
+    private bool CanAcceptPieceAndItsChildren(Piece piece)
     {
-        var validPiece = CheckVaildCarryPiece(piece);
-        if (validPiece == null) return false;
-
-        // tránh tự mang chính mình
-        if (ReferenceEquals(validPiece, this)) return false;
-
-        for (int i = 0; i < carryingPiece.Length; i++)
+        // Đếm số slot trống hiện có
+        int freeSlots = 0;
+        for (int i = 0; i < carryingPieces.Length; i++)
         {
-            if (carryingPiece[i] == null)
+            if (carryingPieces[i] == null) freeSlots++;
+        }
+
+        // Đếm số piece cần thêm (piece + các piece nó đang mang)
+        int neededSlots = 1; // cho chính piece
+        foreach (var child in piece.CarryingPieces)
+        {
+            if (child != null)
             {
-                carryingPiece[i] = validPiece;
+                // Kiểm tra xem child có hợp lệ để mang không
+                if (CheckVaildCarryPiece(child) == null) return false;
+                neededSlots++;
+            }
+        }
+
+        return freeSlots >= neededSlots;
+    }
+
+    public bool TryAddCarryingPiece(Piece piece, bool changeCarrier = true)
+    {
+
+        // kiểm tra piece có thể mang được không
+        var validPiece = CheckVaildCarryPiece(piece);
+        if (validPiece == null || ReferenceEquals(validPiece, this) || IsAlreadyCarring(piece)) return false;
+
+        // Kiểm tra có đủ chỗ cho piece và children của nó không
+        if (!CanAcceptPieceAndItsChildren(validPiece)) return false;
+
+        //kiểm tra quân đang mang có mang được không
+        for (int i = 0; i < carryingPieces.Length; i++)
+        {
+            if (carryingPieces[i] != null)
+            {
+                if (carryingPieces[i].TryAddCarryingPiece(piece))
+                    break;
+            }
+        }
+
+        //tìm slot trống để mang
+        for (int i = 0; i < carryingPieces.Length; i++)
+        {
+            if (carryingPieces[i] == null)
+            {
+                carryingPieces[i] = validPiece;
+                if (changeCarrier) validPiece.carrier = this;
+
+                // Thêm các children của piece
+                foreach (var child in validPiece.CarryingPieces)
+                {
+                    if(child != null) TryAddCarryingPiece(child, false);
+                }
+                //nếu là slot thứ 2 thì thử coi mang slot thứ nhất được không
+                if (i > 0)
+                {
+                    piece.TryAddCarryingPiece(carryingPieces[i - 1], false);
+                }
                 return true;
-            }
-            else if (carryingPiece[i] == validPiece)
-            {
-                // đã mang rồi
-                return false;
-            }
-            else
-            {
-                // thử để piece đang mang tiếp tục mang validPiece
-                if (carryingPiece[i].TryAddCarryingPiece(validPiece))
-                    continue;
             }
         }
         return false;
+    }
+
+    private bool IsAlreadyCarring(Piece piece)
+    {
+        foreach (var p in carryingPieces)
+        {
+            if (p != null)
+                if (p.Type == piece.Type) return false;
+        }
+        return true;
     }
 
     public void RecalculateCache()
@@ -251,7 +295,6 @@ public abstract class Piece : MonoBehaviour
             }
         }
     }
-
     virtual protected void CalulatePossibleAttacks()
     {
         cachedAttacks.Clear();
@@ -289,7 +332,6 @@ public abstract class Piece : MonoBehaviour
             }
         }
     }
-
     void CalculateRingOfFireZones()
     {
         if (!hadRingOfFire || board == null) return;
@@ -308,5 +350,12 @@ public abstract class Piece : MonoBehaviour
     public void OnCaptured()
     {
         Destroy(gameObject);
+        foreach (var child in carryingPieces)
+        {
+            if (child != null)
+            {
+                Destroy(child.gameObject);
+            }
+        }
     }
 }
