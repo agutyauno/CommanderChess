@@ -8,6 +8,7 @@ public class GameLifeTimeScope : LifetimeScope
     protected override void Configure(IContainerBuilder builder)
     {
         builder.RegisterComponent(board).AsSelf();
+        builder.Register<PieceController>(Lifetime.Scoped).AsSelf();
         builder.RegisterComponentInHierarchy<GameManager>();
         builder.RegisterComponentInHierarchy<Piece>();
     }

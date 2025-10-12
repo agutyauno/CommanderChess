@@ -235,6 +235,10 @@ MonoBehaviour:
   - {fileID: 864001851}
   - {fileID: 1684059625}
   - {fileID: 1901420344}
+  pieceLayer:
+    serializedVersion: 2
+    m_Bits: 64
+  screenPosition: {x: 0, y: 0, z: 0}
 --- !u!4 &124011135
 Transform:
   m_ObjectHideFlags: 0
@@ -2208,7 +2212,8 @@ GameObject:
   - component: {fileID: 864001850}
   - component: {fileID: 864001849}
   - component: {fileID: 864001851}
-  m_Layer: 0
+  - component: {fileID: 864001852}
+  m_Layer: 6
   m_Name: Commander
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2302,6 +2307,42 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Commander
   pieceData: {fileID: 11400000, guid: 0c90735320131114ca894d86fc9fce79, type: 2}
   team: 0
+--- !u!58 &864001852
+CircleCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 864001848}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ForceSendLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ForceReceiveLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ContactCaptureLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_CallbackLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_IsTrigger: 0
+  m_UsedByEffector: 0
+  m_CompositeOperation: 0
+  m_CompositeOrder: 0
+  m_Offset: {x: 0, y: 0}
+  m_Radius: 0.5
 --- !u!1 &955386416
 GameObject:
   m_ObjectHideFlags: 0
@@ -2373,7 +2414,8 @@ GameObject:
   - component: {fileID: 1684059624}
   - component: {fileID: 1684059626}
   - component: {fileID: 1684059625}
-  m_Layer: 0
+  - component: {fileID: 1684059627}
+  m_Layer: 6
   m_Name: AirForce
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2467,6 +2509,42 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
+--- !u!58 &1684059627
+CircleCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1684059623}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ForceSendLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ForceReceiveLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ContactCaptureLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_CallbackLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_IsTrigger: 0
+  m_UsedByEffector: 0
+  m_CompositeOperation: 0
+  m_CompositeOrder: 0
+  m_Offset: {x: 0, y: 0}
+  m_Radius: 0.5
 --- !u!1 &1901420342
 GameObject:
   m_ObjectHideFlags: 0
@@ -2478,7 +2556,8 @@ GameObject:
   - component: {fileID: 1901420343}
   - component: {fileID: 1901420345}
   - component: {fileID: 1901420344}
-  m_Layer: 0
+  - component: {fileID: 1901420346}
+  m_Layer: 6
   m_Name: Tank
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2494,7 +2573,7 @@ Transform:
   m_GameObject: {fileID: 1901420342}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 8.34, y: 4.11, z: 0}
+  m_LocalPosition: {x: 6.52, y: 2.99, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2572,6 +2651,42 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
+--- !u!58 &1901420346
+CircleCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1901420342}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ForceSendLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ForceReceiveLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ContactCaptureLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_CallbackLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_IsTrigger: 0
+  m_UsedByEffector: 0
+  m_CompositeOperation: 0
+  m_CompositeOrder: 0
+  m_Offset: {x: 0, y: 0}
+  m_Radius: 0.5
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -2579,6 +2694,6 @@ SceneRoots:
   - {fileID: 519420032}
   - {fileID: 619394802}
   - {fileID: 124011135}
-  - {fileID: 955386417}
   - {fileID: 120551829}
   - {fileID: 23273451}
+  - {fileID: 955386417}

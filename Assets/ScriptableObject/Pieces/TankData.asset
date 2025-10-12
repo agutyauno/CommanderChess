@@ -23,5 +23,5 @@ MonoBehaviour:
   diagonalAttackRange: 2
   hadRingOfFire: 0
   ringOfFireRange: 1
-  allowedCarryTypes: 00000000
+  allowedCarryTypes: 00000000010000000300000004000000
   doMoveToTarget: 1

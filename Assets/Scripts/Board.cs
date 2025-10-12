@@ -154,65 +154,6 @@ public class Board : MonoBehaviour
         return zoneMap.TryGetValue(coord, out type);
     }
 
-    public bool TryGetPiece(BoardCoord coord, out Piece piece)
-    {
-        piece = null;
-        if (!IsInBoard(coord)) return false;
-        return pieces.TryGetValue(coord, out piece);
-    }
-
-    public bool PlacePiece(BoardCoord coord, Piece piece)
-    {
-        if (piece == null || !IsInBoard(coord)) return false;
-        if (pieces.ContainsKey(coord)) return false;
-        pieces[coord] = piece;
-        piece.Position = coord;
-        piece.transform.position = BoardCoordToWorld(coord);
-        piece.RecalculateCache();
-        return true;
-    }
-
-    public bool RemovePiece(BoardCoord coord)
-    {
-        return pieces.Remove(coord);
-    }
-
-    public IEnumerable<KeyValuePair<BoardCoord, Piece>> AllPieces() => pieces;
-
-    public bool MovePiece(BoardCoord from, BoardCoord to)
-    {
-        if (!pieces.TryGetValue(from, out var p)) return false;
-        if (!IsInBoard(to)) return false;
-        if (pieces.ContainsKey(to)) return false; // /allow capture if desired
-        if (!p.PossibleMoves.Contains(to)) return false; // move not in range
-        pieces.Remove(from);
-        pieces[to] = p;
-        p.Position = to;
-        p.transform.position = BoardCoordToWorld(to);
-        p.RecalculateCache();
-        return true;
-    }
-
-    public bool Capture(BoardCoord attackPos, BoardCoord targetPos)
-    {
-        if (!pieces.TryGetValue(attackPos, out var attacker)) return false;
-        if (!pieces.TryGetValue(targetPos, out var target)) return false;
-        if (!attacker.PossibleAttacks.Contains(targetPos)) return false; // target not in attack range
-        if (attacker.Team == target.Team) return false; // can't capture friendly
-
-        // remove target from map first to keep map consistent
-        pieces.Remove(targetPos);
-
-        // move attacker if requested
-        if (attacker.DoMoveToTarget)
-        {
-            MovePiece(attackPos, targetPos);
-        }
-        target.OnCaptured();
-        attacker.RecalculateCache();
-        return true;
-    }
-
 #if UNITY_EDITOR
     void OnDrawGizmos()
     {
