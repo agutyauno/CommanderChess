@@ -4,7 +4,7 @@ using VContainer;
 
 public class PieceController
 {
-    private readonly Board board;
+    [Inject] private readonly Board board;
     private readonly Dictionary<BoardCoord, Piece> pieces;
 
     public PieceController(Board board)

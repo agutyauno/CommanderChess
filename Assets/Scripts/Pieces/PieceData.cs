@@ -12,6 +12,7 @@ public class PieceData : ScriptableObject
     [Range(1, 100)] public int straightMoveRange = 1;
     public bool canMoveDiagonal = false;
     [Range(1, 100)] public int diagonalMoveRange = 1;
+    public PositionType[] AllowedMoveTerrains;
 
     [Header("Attack")]
     public bool canAttackStraight = true;

@@ -25,9 +25,6 @@ public class Board : MonoBehaviour
     Size boardSize = new(width: 11, height: 12);
     readonly Dictionary<BoardCoord, PositionType> zoneMap = new();
 
-    // runtime map: which piece sits on which intersection
-    readonly Dictionary<BoardCoord, Piece> pieces = new();
-
     public Grid Grid { get => grid; }
     public Size BoardSize { get => boardSize; }
 
@@ -38,8 +35,6 @@ public class Board : MonoBehaviour
 
     public void Init()
     {
-        zoneMap.Clear();
-        pieces.Clear();
         SetUpZone();
     }
 
@@ -50,45 +45,51 @@ public class Board : MonoBehaviour
 
         // set land
         ok = BoardCoord.TryParseLabel("A1", out from);
-        ok &= BoardCoord.TryParseLabel("L11", out to);
-        if (!ok) { Debug.LogError("Failed parsing A1..L11"); return; }
+        ok &= BoardCoord.TryParseLabel("K12", out to);
+        if (!ok) { Debug.LogError("Failed parsing A1..k12"); return; }
         SetZoneRange(from, to, PositionType.Land);
 
         // set sea (A1..L2 in your earlier spec)
         ok = BoardCoord.TryParseLabel("A1", out from);
-        ok &= BoardCoord.TryParseLabel("L2", out to);
-        if (!ok) { Debug.LogError("Failed parsing A1..L2"); return; }
+        ok &= BoardCoord.TryParseLabel("C12", out to);
+        if (!ok) { Debug.LogError("Failed parsing A1..C12"); return; }
         SetZoneRange(from, to, PositionType.Sea);
 
         // seaside ranges
-        ok = BoardCoord.TryParseLabel("A3", out from);
-        ok &= BoardCoord.TryParseLabel("L3", out to);
-        if (!ok) Debug.LogError("Failed parsing A3..L3");
+        ok = BoardCoord.TryParseLabel("C1", out from);
+        ok &= BoardCoord.TryParseLabel("C5", out to);
+        if (!ok) Debug.LogError("Failed parsing C1..C5");
         else SetZoneRange(from, to, PositionType.Coast);
 
-        ok = BoardCoord.TryParseLabel("F3", out from);
-        ok &= BoardCoord.TryParseLabel("G5", out to);
-        if (!ok) Debug.LogError("Failed parsing F3..G5");
+        ok = BoardCoord.TryParseLabel("C8", out from);
+        ok &= BoardCoord.TryParseLabel("C12", out to);
+        if (!ok) Debug.LogError("Failed parsing C8..C12");
         else SetZoneRange(from, to, PositionType.Coast);
 
-        ok = BoardCoord.TryParseLabel("F7", out from);
+        // riverside ranges
+        ok = BoardCoord.TryParseLabel("C6", out from);
+        ok &= BoardCoord.TryParseLabel("E7", out to);
+        if (!ok) Debug.LogError("Failed parsing C6..E7");
+        else SetZoneRange(from, to, PositionType.Riverside);
+
+        ok = BoardCoord.TryParseLabel("G6", out from);
         ok &= BoardCoord.TryParseLabel("G7", out to);
-        if (!ok) Debug.LogError("Failed parsing F7..G7");
-        else SetZoneRange(from, to, PositionType.Coast);
+        if (!ok) Debug.LogError("Failed parsing G6..G7");
+        else SetZoneRange(from, to, PositionType.Riverside);
 
-        ok = BoardCoord.TryParseLabel("F9", out from);
-        ok &= BoardCoord.TryParseLabel("G11", out to);
+        ok = BoardCoord.TryParseLabel("I6", out from);
+        ok &= BoardCoord.TryParseLabel("K7", out to);
         if (!ok) Debug.LogError("Failed parsing F9..G11");
-        else SetZoneRange(from, to, PositionType.Coast);
+        else SetZoneRange(from, to, PositionType.Riverside);
 
         // shallow ranges
         ok = BoardCoord.TryParseLabel("F6", out from);
-        ok &= BoardCoord.TryParseLabel("G6", out to);
+        ok &= BoardCoord.TryParseLabel("F7", out to);
         if (!ok) Debug.LogError("Failed parsing F6..G6");
         else SetZoneRange(from, to, PositionType.Shallow);
 
-        ok = BoardCoord.TryParseLabel("F8", out from);
-        ok &= BoardCoord.TryParseLabel("G8", out to);
+        ok = BoardCoord.TryParseLabel("H6", out from);
+        ok &= BoardCoord.TryParseLabel("H7", out to);
         if (!ok) Debug.LogError("Failed parsing F8..G8");
         else SetZoneRange(from, to, PositionType.Shallow);
     }
