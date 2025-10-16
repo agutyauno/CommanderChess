@@ -17,10 +17,12 @@ MonoBehaviour:
   straightMoveRange: 100
   canMoveDiagonal: 0
   diagonalMoveRange: 1
+  AllowedMoveTerrains: 01000000020000000300000004000000
   canAttackStraight: 1
   straightAttackRange: 1
   canAttackDiagonal: 0
   diagonalAttackRange: 1
   hadRingOfFire: 1
   ringOfFireRange: 2
+  allowedCarryTypes: 
   doMoveToTarget: 1

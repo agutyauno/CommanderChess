@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using VContainer;
 public abstract class Piece : MonoBehaviour
@@ -27,6 +28,7 @@ public abstract class Piece : MonoBehaviour
     readonly HashSet<PieceType> allowedCarryTypes = new();
     BoardCoord initialPosition;
     BoardCoord position;
+    PositionType[] allowedMoveTerrains = Array.Empty<PositionType>();
     bool doMoveToTarget;
     bool hadRingOfFire;
     int ringOfFireRange;
@@ -58,56 +60,10 @@ public abstract class Piece : MonoBehaviour
     public HashSet<PieceType> AllowedCarryTypes { get => allowedCarryTypes; }
     public bool DoMoveToTarget { get => doMoveToTarget; }
     public bool HadRingOfFire { get => hadRingOfFire; }
-    public int RingOfFireRange { get => GetRingOfFireRange(); }
-    public int StraightMoveRange { get => GetStraightMoveRange(); }
-    public int DiagonalMoveRange { get => GetDiagonalMoveRange(); }
-    public int StraightAttackRange { get => GetStraightAttackRange(); }
-    public int DiagonalAttackRange { get => GetDiagonalAttackRange(); }
     public bool IsHero { get => isHero; }
 
     #endregion
-    #region Range Getters
-    int GetStraightMoveRange()
-    {
-        if (!canMoveStraight)
-        {
-            return 0;
-        }
-        return straightMoveRange;
-    }
-    int GetStraightAttackRange()
-    {
-        if (!canAttackStraight)
-        {
-            return 0;
-        }
-        return straightAttackRange;
-    }
-    int GetDiagonalMoveRange()
-    {
-        if (!canMoveDiagonal)
-        {
-            return 0;
-        }
-        return diagonalMoveRange;
-    }
-    int GetDiagonalAttackRange()
-    {
-        if (!canAttackDiagonal)
-        {
-            return 0;
-        }
-        return diagonalAttackRange;
-    }
-    int GetRingOfFireRange()
-    {
-        if (!hadRingOfFire)
-        {
-            return 0;
-        }
-        return ringOfFireRange;
-    }
-    #endregion
+
     #region Initialization
     public void Init()
     {
@@ -137,6 +93,8 @@ public abstract class Piece : MonoBehaviour
         {
             allowedCarryTypes.Add(t);
         }
+
+        allowedMoveTerrains = data.AllowedMoveTerrains;
         doMoveToTarget = data.doMoveToTarget;
     }
     #endregion
@@ -162,7 +120,7 @@ public abstract class Piece : MonoBehaviour
 
         // Đếm số piece cần thêm (piece + các piece nó đang mang)
         int neededSlots = 1; // cho chính piece
-        foreach (var child in piece.CarryingPieces)
+        foreach (var child in piece.carryingPieces)
         {
             if (child != null)
             {
@@ -207,7 +165,7 @@ public abstract class Piece : MonoBehaviour
                 if (changeCarrier) validPiece.carrier = this;
 
                 // Thêm các children của piece
-                foreach (var child in validPiece.CarryingPieces)
+                foreach (var child in validPiece.carryingPieces)
                 {
                     if (child != null) TryAddCarryingPiece(child, false);
                 }
@@ -236,11 +194,11 @@ public abstract class Piece : MonoBehaviour
     #region cache calculation
     public void RecalculateCache()
     {
-        CalculatePossibleMoves();
-        CalculatePossibleAttacks();
+        UpdateMoveCache();
+        UpdateAttackCache();
         CalculateRingOfFireZones();
     }
-    virtual protected void CalculatePossibleMoves()
+    virtual protected void UpdateMoveCache()
     {
         cachedMoves.Clear();
         if (board == null) return;
@@ -249,24 +207,7 @@ public abstract class Piece : MonoBehaviour
         {
             foreach (var (x, y) in sdirs)
             {
-                int step = 1;
-                while (step <= straightMoveRange)
-                {
-                    var newPos = new BoardCoord(position.x + x * step, position.y + y * step);
-                    if (!board.IsInBoard(newPos)) break;
-
-                    board.TryGetZone(newPos, out var posType);
-                    if (posType == PositionType.Sea) break;
-
-                    if (pieceController.TryGetPiece(newPos, out var occupant))
-                    {
-                        if (occupant.team != team) break;
-                        if (!occupant.allowedCarryTypes.Contains(Type)) break;
-                    }
-
-                    cachedMoves.Add(newPos);
-                    step++;
-                }
+                cachedMoves.AddRange(CaculateMoves((x, y), straightMoveRange, allowedMoveTerrains).ToList());
             }
         }
 
@@ -274,23 +215,12 @@ public abstract class Piece : MonoBehaviour
         {
             foreach (var (x, y) in ddirs)
             {
-                int step = 1;
-                while (step <= diagonalMoveRange)
-                {
-                    var newPos = new BoardCoord(position.x + x * step, position.y + y * step);
-                    if (!board.IsInBoard(newPos)) break;
-
-                    board.TryGetZone(newPos, out var posType);
-                    if (posType == PositionType.Sea) break;
-
-                    if (pieceController.TryGetPiece(newPos, out var occupant)) break;
-                    cachedMoves.Add(newPos);
-                    step++;
-                }
+                cachedMoves.AddRange(CaculateMoves((x, y), straightMoveRange, allowedMoveTerrains).ToList());
             }
         }
     }
-    virtual protected void CalculatePossibleAttacks()
+
+    virtual protected void UpdateAttackCache()
     {
         cachedAttacks.Clear();
         if (board == null) return;
@@ -299,15 +229,7 @@ public abstract class Piece : MonoBehaviour
         {
             foreach (var (x, y) in sdirs)
             {
-                int step = 1;
-                while (step <= straightAttackRange)
-                {
-                    var newPos = new BoardCoord(position.x + x * step, position.y + y * step);
-                    if (!board.IsInBoard(newPos)) break;
-                    if (pieceController.TryGetPiece(newPos, out var occupant) && occupant.Team != Team)
-                        cachedAttacks.Add(newPos);
-                    step++;
-                }
+                cachedAttacks.AddRange(CaculateAttacks((x, y), straightAttackRange).ToList());
             }
         }
 
@@ -315,15 +237,47 @@ public abstract class Piece : MonoBehaviour
         {
             foreach (var (x, y) in ddirs)
             {
-                int step = 1;
-                while (step <= diagonalAttackRange)
+                cachedAttacks.AddRange(CaculateAttacks((x, y), straightAttackRange).ToList());
+            }
+        }
+    }
+
+    protected IEnumerable<BoardCoord> CaculateMoves((int x, int y) dir, int range, PositionType[] avoidTypes, bool canBeBlocked = true)
+    {
+        foreach (var step in Enumerable.Range(1, range))
+        {
+            var newPos = new BoardCoord(position.x + dir.x * step, position.y + dir.y * step);
+            if (!board.IsInBoard(newPos)) yield break;
+
+            board.TryGetZone(newPos, out var posType);
+            if (avoidTypes.Any(t => posType == t)) yield break;
+
+            if (pieceController.TryGetPiece(newPos, out var occupant))
+            {
+                if (canBeBlocked)
                 {
-                    var newPos = new BoardCoord(position.x + x * step, position.y + y * step);
-                    if (!board.IsInBoard(newPos)) break;
-                    if (pieceController.TryGetPiece(newPos, out var occupant) && occupant.Team != Team)
-                        cachedAttacks.Add(newPos);
-                    step++;
+                    yield break;
                 }
+
+                if (occupant.Team != Team) yield break;
+                if (!occupant.allowedCarryTypes.Contains(Type)) yield break;
+            }
+
+            yield return newPos;
+        }
+    }
+
+    protected IEnumerable<BoardCoord> CaculateAttacks((int x, int y) dir, int range)
+    {
+        foreach (var step in Enumerable.Range(1, range))
+        {
+            var newPos = new BoardCoord(position.x + dir.x * step, position.y + dir.y * step);
+            if (!board.IsInBoard(newPos)) yield break;
+
+            if (pieceController.TryGetPiece(newPos, out var occupant))
+            {
+                if (occupant.team == team) yield break;
+                yield return newPos;
             }
         }
     }

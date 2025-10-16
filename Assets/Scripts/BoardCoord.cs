@@ -18,27 +18,9 @@ public readonly struct BoardCoord : IEquatable<BoardCoord>
     public static implicit operator BoardCoord(Vector2Int v) => new(v.x, v.y);
     public static implicit operator BoardCoord(Vector3Int v) => new(v.x, v.y);
 
-    // arithmetic operators
-    public static BoardCoord operator +(BoardCoord a, BoardCoord b) => new(a.x + b.x, a.y + b.y);
-    public static BoardCoord operator -(BoardCoord a, BoardCoord b) => new(a.x - b.x, a.y - b.y);
-
-    public static BoardCoord operator +(BoardCoord a, Vector2Int v) => new(a.x + v.x, a.y + v.y);
-    public static BoardCoord operator +(Vector2Int v, BoardCoord a) => new(a.x + v.x, a.y + v.y);
-    public static BoardCoord operator -(BoardCoord a, Vector2Int v) => new(a.x - v.x, a.y - v.y);
-
-    public static BoardCoord operator +(Vector3Int v, BoardCoord a) => new(a.x + v.x, a.y + v.y);
-    public static BoardCoord operator +(BoardCoord a, Vector3Int v) => new(a.x + v.x, a.y + v.y);
-    public static BoardCoord operator -(BoardCoord a, Vector3Int v) => new(a.x - v.x, a.y - v.y);
-
-    public static BoardCoord operator *(BoardCoord a, int scalar) => new(a.x * scalar, a.y * scalar);
-    public static BoardCoord operator *(int scalar, BoardCoord a) => new(a.x * scalar, a.y * scalar);
-
     // equality operators
     public static bool operator ==(BoardCoord a, BoardCoord b) => a.x == b.x && a.y == b.y;
     public static bool operator !=(BoardCoord a, BoardCoord b) => !(a == b);
-
-    // convenience deconstruct
-    public void Deconstruct(out int x, out int y) { x = this.x; y = this.y; }
 
     public override string ToString() => $"({x},{y})";
 
