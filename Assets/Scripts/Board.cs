@@ -24,10 +24,13 @@ public class Board : MonoBehaviour
     [SerializeField] Grid grid;
     Size boardSize = new(width: 11, height: 12);
     readonly Dictionary<BoardCoord, PositionType> zoneMap = new();
-
+    readonly Dictionary<BoardCoord, Piece> pieces = new();
     public Grid Grid { get => grid; }
     public Size BoardSize { get => boardSize; }
-
+    #region Properties
+    public Dictionary<BoardCoord, Piece> Pieces => pieces;
+    
+    #endregion
     void Awake()
     {
         grid = GetComponent<Grid>();
@@ -99,14 +102,12 @@ public class Board : MonoBehaviour
         return position.x >= 1 && position.x <= boardSize.width
             && position.y >= 1 && position.y <= boardSize.height;
     }
-
     public string BoardCoordToLabel(BoardCoord position)
     {
         if (!IsInBoard(position))
             throw new ArgumentOutOfRangeException("Position is out of board range.");
         return position.ToLabel();
     }
-
     public bool TryBoardLabelToCoord(string label, out BoardCoord coord)
     {
         if (!BoardCoord.TryParseLabel(label, out coord))
@@ -116,7 +117,6 @@ public class Board : MonoBehaviour
             throw new ArgumentOutOfRangeException("Converted position is out of board range.");
         return true;
     }
-
     public Vector3Int BoardCoordToCell(BoardCoord position)
     {
         if (!IsInBoard(position))
@@ -124,18 +124,14 @@ public class Board : MonoBehaviour
         Vector3Int offsetPos = Vector3Int.RoundToInt(transform.position) + (Vector3Int)offset;
         return position + offsetPos;
     }
-
     public Vector3Int BoardCoordToCell(string label)
     {
         if (!TryBoardLabelToCoord(label, out BoardCoord coord))
             throw new ArgumentException("Label must be in the format of a letter followed by a number (e.g., A1, B12).");
         return BoardCoordToCell(coord);
     }
-
     public Vector3 BoardCoordToWorld(BoardCoord position) => grid.CellToWorld(BoardCoordToCell(position));
-
     public Vector3 BoardCoordToWorld(string label) => grid.CellToWorld(BoardCoordToCell(label));
-
     public void SetZoneRange(BoardCoord from, BoardCoord to, PositionType type)
     {
         for (int y = Math.Min(from.x, to.x); y <= Math.Max(from.x, to.x); y++)
@@ -147,7 +143,6 @@ public class Board : MonoBehaviour
             }
         }
     }
-
     public bool TryGetZone(BoardCoord coord, out PositionType type)
     {
         type = default;
@@ -155,6 +150,23 @@ public class Board : MonoBehaviour
         return zoneMap.TryGetValue(coord, out type);
     }
 
+    public bool PlacePiece(Piece piece, BoardCoord coord)
+    {
+        if (!ValidatePlacement(piece, coord)) return false;
+
+        pieces[coord] = piece;
+        piece.Position = coord;
+        piece.transform.position = BoardCoordToWorld(coord);
+        piece.RecalculateCache();
+        return true;
+    }
+
+    private bool ValidatePlacement(Piece piece, BoardCoord coord)
+    {
+        if (piece == null || !IsInBoard(coord)) return false;
+        if (pieces.ContainsKey(coord)) return false;
+        return true;
+    }
 #if UNITY_EDITOR
     void OnDrawGizmos()
     {

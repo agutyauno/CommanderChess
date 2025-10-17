@@ -215,7 +215,7 @@ public abstract class Piece : MonoBehaviour
         {
             foreach (var (x, y) in ddirs)
             {
-                cachedMoves.AddRange(CaculateMoves((x, y), straightMoveRange, allowedMoveTerrains).ToList());
+                cachedMoves.AddRange(CaculateMoves((x, y), diagonalMoveRange, allowedMoveTerrains).ToList());
             }
         }
     }
@@ -237,7 +237,7 @@ public abstract class Piece : MonoBehaviour
         {
             foreach (var (x, y) in ddirs)
             {
-                cachedAttacks.AddRange(CaculateAttacks((x, y), straightAttackRange).ToList());
+                cachedAttacks.AddRange(CaculateAttacks((x, y), diagonalAttackRange).ToList());
             }
         }
     }
