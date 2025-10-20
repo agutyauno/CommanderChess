@@ -55,7 +55,7 @@ public abstract class Piece : MonoBehaviour
     public HashSet<PieceType> AllowedCarryTypes { get => allowedCarryTypes; }
     public bool DoMoveToTarget { get => doMoveToTarget; }
     public bool HadRingOfFire { get => hadRingOfFire; }
-    public bool IsHero { get => isHero; }
+    public bool IsHero { get => isHero; set => isHero = value; }
 
     #endregion
 
@@ -201,6 +201,7 @@ public abstract class Piece : MonoBehaviour
     {
         // Todo: sửa lại hàm này
         gameObject.SetActive(false);
+        carryingSystem.UnregisterPiece(this);
     }
 
     public void OnUndoCapture()
