@@ -3,7 +3,7 @@ using System.Linq;
 using VContainer;
 using UnityEngine;
 
-public class ZoneManager
+public class ROFManager
 {
     [Inject] readonly Board board;
     readonly Dictionary<Team, HashSet<BoardCoord>> ROFByTeam = new();
@@ -63,22 +63,6 @@ public class ZoneManager
     {
         var enemyTeam = friendlyTeam == Team.Red ? Team.Blue : Team.Red;
         return GetROFByTeam(enemyTeam);
-    }
-
-    /// <summary>
-    /// lấy danh sách tọa độ vùng nguy hiểm cho quân
-    /// </summary>
-    /// <param name="piece"></param>
-    /// <returns></returns>
-    public HashSet<BoardCoord> GetDangerZoneForPiece(Piece piece)
-    {
-        switch (piece.Type)
-        {
-            case Piece.PieceType.AirForce:
-                return GetROFByEnemy(piece.Team);
-            default:
-                return null;
-        }
     }
 
     /// <summary>
