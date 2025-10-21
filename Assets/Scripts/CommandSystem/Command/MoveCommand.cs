@@ -8,16 +8,18 @@ public class MoveCommand : BaseCommand
     readonly BoardCoord to;
     private bool wasSuccessful = false;
 
-    [Inject] readonly Board board;
-    [Inject] readonly CarryingSystem carryingSystem;
+    readonly Board board;
+    readonly CarryingSystem carryingSystem;
 
     readonly Dictionary<Piece, PieceBackupData> backupData = new();
     Piece movedPiece;
 
-    public MoveCommand(BoardCoord from, BoardCoord to)
+    public MoveCommand(BoardCoord from, BoardCoord to, Board board, CarryingSystem carryingSystem)
     {
         this.from = from;
         this.to = to;
+        this.board = board;
+        this.carryingSystem = carryingSystem;
     }
     
 

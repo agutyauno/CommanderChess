@@ -23,7 +23,7 @@ public class Board : MonoBehaviour
     [SerializeField] Vector2Int offset;
     [SerializeField] Grid grid;
     Size boardSize = new(width: 11, height: 12);
-    readonly Dictionary<BoardCoord, PositionType> zoneMap = new();
+    readonly Dictionary<BoardCoord, Terrains> zoneMap = new();
     readonly Dictionary<BoardCoord, Piece> pieces = new();
     public Grid Grid { get => grid; }
     public Size BoardSize { get => boardSize; }
@@ -38,10 +38,10 @@ public class Board : MonoBehaviour
 
     public void Init()
     {
-        SetUpZone();
+        SetUpTerrains();
     }
 
-    void SetUpZone()
+    void SetUpTerrains()
     {
         bool ok;
         BoardCoord from, to;
@@ -50,51 +50,51 @@ public class Board : MonoBehaviour
         ok = BoardCoord.TryParseLabel("A1", out from);
         ok &= BoardCoord.TryParseLabel("K12", out to);
         if (!ok) { Debug.LogError("Failed parsing A1..k12"); return; }
-        SetZoneRange(from, to, PositionType.Land);
+        SetTerrainRange(from, to, Terrains.Land);
 
         // set sea (A1..L2 in your earlier spec)
         ok = BoardCoord.TryParseLabel("A1", out from);
         ok &= BoardCoord.TryParseLabel("C12", out to);
         if (!ok) { Debug.LogError("Failed parsing A1..C12"); return; }
-        SetZoneRange(from, to, PositionType.Sea);
+        SetTerrainRange(from, to, Terrains.Sea);
 
         // seaside ranges
         ok = BoardCoord.TryParseLabel("C1", out from);
         ok &= BoardCoord.TryParseLabel("C5", out to);
         if (!ok) Debug.LogError("Failed parsing C1..C5");
-        else SetZoneRange(from, to, PositionType.Coast);
+        else SetTerrainRange(from, to, Terrains.Coast);
 
         ok = BoardCoord.TryParseLabel("C8", out from);
         ok &= BoardCoord.TryParseLabel("C12", out to);
         if (!ok) Debug.LogError("Failed parsing C8..C12");
-        else SetZoneRange(from, to, PositionType.Coast);
+        else SetTerrainRange(from, to, Terrains.Coast);
 
         // riverside ranges
         ok = BoardCoord.TryParseLabel("C6", out from);
         ok &= BoardCoord.TryParseLabel("E7", out to);
         if (!ok) Debug.LogError("Failed parsing C6..E7");
-        else SetZoneRange(from, to, PositionType.Riverside);
+        else SetTerrainRange(from, to, Terrains.Riverside);
 
         ok = BoardCoord.TryParseLabel("G6", out from);
         ok &= BoardCoord.TryParseLabel("G7", out to);
         if (!ok) Debug.LogError("Failed parsing G6..G7");
-        else SetZoneRange(from, to, PositionType.Riverside);
+        else SetTerrainRange(from, to, Terrains.Riverside);
 
         ok = BoardCoord.TryParseLabel("I6", out from);
         ok &= BoardCoord.TryParseLabel("K7", out to);
         if (!ok) Debug.LogError("Failed parsing F9..G11");
-        else SetZoneRange(from, to, PositionType.Riverside);
+        else SetTerrainRange(from, to, Terrains.Riverside);
 
         // shallow ranges
         ok = BoardCoord.TryParseLabel("F6", out from);
         ok &= BoardCoord.TryParseLabel("F7", out to);
         if (!ok) Debug.LogError("Failed parsing F6..G6");
-        else SetZoneRange(from, to, PositionType.Shallow);
+        else SetTerrainRange(from, to, Terrains.Shallow);
 
         ok = BoardCoord.TryParseLabel("H6", out from);
         ok &= BoardCoord.TryParseLabel("H7", out to);
         if (!ok) Debug.LogError("Failed parsing F8..G8");
-        else SetZoneRange(from, to, PositionType.Shallow);
+        else SetTerrainRange(from, to, Terrains.Shallow);
     }
 #region Conversion Methods
         public bool IsInBoard(BoardCoord position)
@@ -133,7 +133,7 @@ public class Board : MonoBehaviour
         public Vector3 BoardCoordToWorld(BoardCoord position) => grid.CellToWorld(BoardCoordToCell(position));
         public Vector3 BoardCoordToWorld(string label) => grid.CellToWorld(BoardCoordToCell(label));
 #endregion
-    public void SetZoneRange(BoardCoord from, BoardCoord to, PositionType type)
+    public void SetTerrainRange(BoardCoord from, BoardCoord to, Terrains type)
     {
         for (int y = Math.Min(from.x, to.x); y <= Math.Max(from.x, to.x); y++)
         {
@@ -144,7 +144,7 @@ public class Board : MonoBehaviour
             }
         }
     }
-    public bool TryGetZone(BoardCoord coord, out PositionType type)
+    public bool TryGetTerrain(BoardCoord coord, out Terrains type)
     {
         type = default;
         if (!IsInBoard(coord)) return false;

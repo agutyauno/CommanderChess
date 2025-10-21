@@ -26,7 +26,7 @@ public abstract class Piece : MonoBehaviour
     readonly HashSet<PieceType> allowedCarryTypes = new();
     BoardCoord initialPosition;
     BoardCoord position;
-    PositionType[] allowedMoveTerrains = Array.Empty<PositionType>();
+    Terrains[] allowedMoveTerrains = Array.Empty<Terrains>();
     bool doMoveToTarget;
     bool hadRingOfFire;
     int ringOfFireRange;
@@ -71,27 +71,27 @@ public abstract class Piece : MonoBehaviour
     private void ApplyPieceData(PieceData data)
     {
         if (data == null) return;
-        initialPosition = data.initialPosition;
+        initialPosition = data.InitialPosition;
 
-        canMoveStraight = data.canMoveStraight;
-        straightMoveRange = data.straightMoveRange;
-        canMoveDiagonal = data.canMoveDiagonal;
-        diagonalMoveRange = data.diagonalMoveRange;
+        canMoveStraight = data.CanMoveStraight;
+        straightMoveRange = data.StraightMoveRange;
+        canMoveDiagonal = data.CanMoveDiagonal;
+        diagonalMoveRange = data.DiagonalMoveRange;
 
-        canAttackStraight = data.canAttackStraight;
-        straightAttackRange = data.straightAttackRange;
-        canAttackDiagonal = data.canAttackDiagonal;
-        diagonalAttackRange = data.diagonalAttackRange;
-        hadRingOfFire = data.hadRingOfFire;
-        ringOfFireRange = data.ringOfFireRange;
+        canAttackStraight = data.CanAttackStraight;
+        straightAttackRange = data.StraightAttackRange;
+        canAttackDiagonal = data.CanAttackDiagonal;
+        diagonalAttackRange = data.DiagonalAttackRange;
+        hadRingOfFire = data.HadRingOfFire;
+        ringOfFireRange = data.RingOfFireRange;
 
-        foreach (var t in data.allowedCarryTypes)
+        foreach (var t in data.AllowedCarryTypes)
         {
             allowedCarryTypes.Add(t);
         }
 
         allowedMoveTerrains = data.AllowedMoveTerrains;
-        doMoveToTarget = data.doMoveToTarget;
+        doMoveToTarget = data.DoMoveToTarget;
     }
     #endregion
     #region cache calculation
@@ -143,14 +143,14 @@ public abstract class Piece : MonoBehaviour
             }
         }
     }
-    protected IEnumerable<BoardCoord> CaculateMoves((int x, int y) dir, int range, PositionType[] avoidTypes, bool canBeBlocked = true)
+    protected IEnumerable<BoardCoord> CaculateMoves((int x, int y) dir, int range, Terrains[] avoidTypes, bool canBeBlocked = true)
     {
         foreach (var step in Enumerable.Range(1, range))
         {
             var newPos = new BoardCoord(position.x + dir.x * step, position.y + dir.y * step);
             if (!board.IsInBoard(newPos)) yield break;
 
-            board.TryGetZone(newPos, out var posType);
+            board.TryGetTerrain(newPos, out var posType);
             if (avoidTypes.Any(t => posType == t)) yield break;
 
             if (board.TryGetPiece(newPos, out var occupant))
