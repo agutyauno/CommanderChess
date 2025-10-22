@@ -197,17 +197,7 @@ public abstract class Piece : MonoBehaviour
         }
     }
     #endregion
-    public void OnCaptured()
-    {
-        // Todo: sửa lại hàm này
-        gameObject.SetActive(false);
-        carryingSystem.UnregisterPiece(this);
-    }
-
-    public void OnUndoCapture()
-    {
-        gameObject.SetActive(true);
-    }
+    
     public void BecomeHero()
     {
         if (isHero) return;

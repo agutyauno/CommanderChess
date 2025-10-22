@@ -3,6 +3,9 @@ using System.Linq;
 using VContainer;
 using UnityEngine;
 
+/// <summary>
+/// class hỗ trợ xác định các vùng ring of fire (ROF)
+/// </summary>
 public class ROFManager
 {
     [Inject] readonly Board board;
@@ -42,7 +45,7 @@ public class ROFManager
         }
         isDirty = false;
     }
-    
+
     /// <summary>
     /// lấy danh sách tọa độ vùng Ring Of Fire của đội bất kì
     /// </summary>
@@ -111,7 +114,7 @@ public class ROFManager
 
         return intersections;
     }
-    
+
     // helper method
     private int ManhattanDistance(BoardCoord a, BoardCoord b)
     {
