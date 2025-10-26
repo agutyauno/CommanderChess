@@ -4,7 +4,7 @@ using VContainer;
 
 public class StateBackupService
 {
-   [Inject] readonly CarryingSystem carryingSystem;
+    [Inject] readonly CarryingSystem carryingSystem;
     [Inject] readonly Board board;
 
     public struct PieceBackupData

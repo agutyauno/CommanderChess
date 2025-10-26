@@ -203,14 +203,14 @@ public class CarryingSystem
         return carryingNodes.TryGetValue(piece, out var node) ? node.Carrier : null;
     }
 
-    #endregion
-
-    #region Private Validation
-
-    private bool CanCarryDirectly(Piece carrier, Piece passenger)
+    public bool CanCarryDirectly(Piece carrier, Piece passenger)
     {
         return carrier.AllowedCarryTypes.Contains(passenger.Type);
     }
+
+    #endregion
+
+    #region Private Validation
 
     private bool CanCarry(Piece carrier, Piece passenger, out string reason)
     {
@@ -306,7 +306,6 @@ public class CarryingSystem
 
     private bool ExecuteCarry(Piece carrier, Piece passenger)
     {
-        var carrierNode = carryingNodes[carrier];
         var passengerNode = carryingNodes[passenger];
 
         // Nếu passenger đã được mang bởi ai đó khác, tách ra trước
