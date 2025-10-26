@@ -1,0 +1,50 @@
+using UnityEngine;
+
+[CreateAssetMenu(fileName = "PieceData", menuName = "ScriptableObjects/PieceData", order = 1)]
+public class PieceData : ScriptableObject
+{
+
+    [Tooltip("Initial intersection (1-based). A1 => (1,1)")]
+    private Vector2Int initialPosition = new(1, 1);
+
+    [Header("Movement")]
+    private bool canMoveStraight = true;
+    [Range(1, 100)] private int straightMoveRange = 1;
+    private bool canMoveDiagonal = false;
+    [Range(1, 100)] private int diagonalMoveRange = 1;
+    private Terrains[] allowedMoveTerrains;
+
+    [Header("Attack")]
+    private bool canAttackStraight = true;
+    [Range(1, 100)] private int straightAttackRange = 1;
+    private bool canAttackDiagonal = false;
+    [Range(1, 100)] private int diagonalAttackRange = 1;
+
+    [Header("Ring of Fire")]
+    private bool hadRingOfFire = false;
+    [Range(1, 100)] private int ringOfFireRange = 1;
+
+    [Header("Carrying")]
+    private Piece.PieceType[] allowedCarryTypes = { };
+
+    [Header("Other")]
+    private bool doMoveToTarget = true;
+
+    #region properties
+    public Vector2Int InitialPosition { get => initialPosition; set => initialPosition = value; }
+    public bool CanMoveStraight { get => canMoveStraight; set => canMoveStraight = value; }
+    public int StraightMoveRange { get => straightMoveRange; set => straightMoveRange = value; }
+    public bool CanMoveDiagonal { get => canMoveDiagonal; set => canMoveDiagonal = value; }
+    public int DiagonalMoveRange { get => diagonalMoveRange; set => diagonalMoveRange = value; }
+    public Terrains[] AllowedMoveTerrains { get => allowedMoveTerrains; set => allowedMoveTerrains = value; }
+    public bool CanAttackStraight { get => canAttackStraight; set => canAttackStraight = value; }
+    public int StraightAttackRange { get => straightAttackRange; set => straightAttackRange = value; }
+    public bool CanAttackDiagonal { get => canAttackDiagonal; set => canAttackDiagonal = value; }
+    public int DiagonalAttackRange { get => diagonalAttackRange; set => diagonalAttackRange = value; }
+    public bool HadRingOfFire { get => hadRingOfFire; set => hadRingOfFire = value; }
+    public int RingOfFireRange { get => ringOfFireRange; set => ringOfFireRange = value; }
+    public Piece.PieceType[] AllowedCarryTypes { get => allowedCarryTypes; set => allowedCarryTypes = value; }
+    public bool DoMoveToTarget { get => doMoveToTarget; set => doMoveToTarget = value; }
+    #endregion
+}
+

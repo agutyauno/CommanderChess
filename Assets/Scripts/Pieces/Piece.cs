@@ -21,14 +21,12 @@ public abstract class Piece : MonoBehaviour
     [SerializeField] Team team;
 
     [Inject] protected Board board;
-    [Inject] protected PieceController pieceController;
+    [Inject] protected CarryingSystem carryingSystem;
 
-    Piece[] carryingPieces = new Piece[2]; // tối đa mang 2 đơn vị
-    Piece carrier; // reference tới parent đang mang mình (nếu có)
     readonly HashSet<PieceType> allowedCarryTypes = new();
     BoardCoord initialPosition;
     BoardCoord position;
-    PositionType[] allowedMoveTerrains = Array.Empty<PositionType>();
+    Terrains[] allowedMoveTerrains = Array.Empty<Terrains>();
     bool doMoveToTarget;
     bool hadRingOfFire;
     int ringOfFireRange;
@@ -54,13 +52,10 @@ public abstract class Piece : MonoBehaviour
     public Team Team { get => team; }
     public BoardCoord InitialPosition { get; }
     public BoardCoord Position { get => position; set => position = value; }
-    public Piece[] CarryingPieces { get => carryingPieces; }
-    public Piece Carrier => carrier;
-    public bool IsCarried => carrier != null;
     public HashSet<PieceType> AllowedCarryTypes { get => allowedCarryTypes; }
     public bool DoMoveToTarget { get => doMoveToTarget; }
     public bool HadRingOfFire { get => hadRingOfFire; }
-    public bool IsHero { get => isHero; }
+    public bool IsHero { get => isHero; set => isHero = value; }
 
     #endregion
 
@@ -69,127 +64,35 @@ public abstract class Piece : MonoBehaviour
     {
         if (pieceData != null)
             ApplyPieceData(pieceData);
+        carryingSystem.RegisterPiece(this);
         position = initialPosition;
         RecalculateCache();
     }
     private void ApplyPieceData(PieceData data)
     {
         if (data == null) return;
-        initialPosition = data.initialPosition;
+        initialPosition = data.InitialPosition;
 
-        canMoveStraight = data.canMoveStraight;
-        straightMoveRange = data.straightMoveRange;
-        canMoveDiagonal = data.canMoveDiagonal;
-        diagonalMoveRange = data.diagonalMoveRange;
+        canMoveStraight = data.CanMoveStraight;
+        straightMoveRange = data.StraightMoveRange;
+        canMoveDiagonal = data.CanMoveDiagonal;
+        diagonalMoveRange = data.DiagonalMoveRange;
 
-        canAttackStraight = data.canAttackStraight;
-        straightAttackRange = data.straightAttackRange;
-        canAttackDiagonal = data.canAttackDiagonal;
-        diagonalAttackRange = data.diagonalAttackRange;
-        hadRingOfFire = data.hadRingOfFire;
-        ringOfFireRange = data.ringOfFireRange;
+        canAttackStraight = data.CanAttackStraight;
+        straightAttackRange = data.StraightAttackRange;
+        canAttackDiagonal = data.CanAttackDiagonal;
+        diagonalAttackRange = data.DiagonalAttackRange;
+        hadRingOfFire = data.HadRingOfFire;
+        ringOfFireRange = data.RingOfFireRange;
 
-        foreach (var t in data.allowedCarryTypes)
+        foreach (var t in data.AllowedCarryTypes)
         {
             allowedCarryTypes.Add(t);
         }
 
         allowedMoveTerrains = data.AllowedMoveTerrains;
-        doMoveToTarget = data.doMoveToTarget;
+        doMoveToTarget = data.DoMoveToTarget;
     }
-    #endregion
-    #region Carry Logic
-    protected virtual Piece CheckVaildCarryPiece(Piece piece)
-    {
-        if (piece == null) return null;
-        if (piece.Team != Team) return null;
-        // nếu không có loại nào được cấu hình thì không được mang
-        if (allowedCarryTypes.Count == 0) return null;
-        return allowedCarryTypes.Contains(piece.Type) ? piece : null;
-    }
-
-    // Kiểm tra xem có đủ chỗ để thêm piece và tất cả piece nó đang mang không
-    private bool CanAcceptPieceAndItsChildren(Piece piece)
-    {
-        // Đếm số slot trống hiện có
-        int freeSlots = 0;
-        for (int i = 0; i < carryingPieces.Length; i++)
-        {
-            if (carryingPieces[i] == null) freeSlots++;
-        }
-
-        // Đếm số piece cần thêm (piece + các piece nó đang mang)
-        int neededSlots = 1; // cho chính piece
-        foreach (var child in piece.carryingPieces)
-        {
-            if (child != null)
-            {
-                // Kiểm tra xem child có hợp lệ để mang không
-                if (CheckVaildCarryPiece(child) == null) return false;
-                neededSlots++;
-            }
-        }
-
-        return freeSlots >= neededSlots;
-    }
-
-    public bool TryAddCarryingPiece(Piece piece, bool changeCarrier = true)
-    {
-
-        // kiểm tra piece có thể mang được không
-        var validPiece = CheckVaildCarryPiece(piece);
-        if (validPiece == null || ReferenceEquals(validPiece, this) || IsAlreadyCarring(piece))
-        {
-            return false;
-        }
-
-        // Kiểm tra có đủ chỗ cho piece và children của nó không
-        if (!CanAcceptPieceAndItsChildren(validPiece)) return false;
-
-        //kiểm tra quân đang mang có mang được không
-        for (int i = 0; i < carryingPieces.Length; i++)
-        {
-            if (carryingPieces[i] != null)
-            {
-                if (carryingPieces[i].TryAddCarryingPiece(piece))
-                    break;
-            }
-        }
-
-        //tìm slot trống để mang
-        for (int i = 0; i < carryingPieces.Length; i++)
-        {
-            if (carryingPieces[i] == null)
-            {
-                carryingPieces[i] = validPiece;
-                if (changeCarrier) validPiece.carrier = this;
-
-                // Thêm các children của piece
-                foreach (var child in validPiece.carryingPieces)
-                {
-                    if (child != null) TryAddCarryingPiece(child, false);
-                }
-                //nếu là slot thứ 2 thì thử coi mang slot thứ nhất được không
-                if (i > 0)
-                {
-                    piece.TryAddCarryingPiece(carryingPieces[i - 1], false);
-                }
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private bool IsAlreadyCarring(Piece piece)
-    {
-        foreach (var p in carryingPieces)
-        {
-            if (p != null)
-                if (p.Type == piece.Type) return true;
-        }
-        return false;
-    }
-
     #endregion
     #region cache calculation
     public void RecalculateCache()
@@ -215,11 +118,10 @@ public abstract class Piece : MonoBehaviour
         {
             foreach (var (x, y) in ddirs)
             {
-                cachedMoves.AddRange(CaculateMoves((x, y), straightMoveRange, allowedMoveTerrains).ToList());
+                cachedMoves.AddRange(CaculateMoves((x, y), diagonalMoveRange, allowedMoveTerrains).ToList());
             }
         }
     }
-
     virtual protected void UpdateAttackCache()
     {
         cachedAttacks.Clear();
@@ -237,22 +139,21 @@ public abstract class Piece : MonoBehaviour
         {
             foreach (var (x, y) in ddirs)
             {
-                cachedAttacks.AddRange(CaculateAttacks((x, y), straightAttackRange).ToList());
+                cachedAttacks.AddRange(CaculateAttacks((x, y), diagonalAttackRange).ToList());
             }
         }
     }
-
-    protected IEnumerable<BoardCoord> CaculateMoves((int x, int y) dir, int range, PositionType[] avoidTypes, bool canBeBlocked = true)
+    protected IEnumerable<BoardCoord> CaculateMoves((int x, int y) dir, int range, Terrains[] avoidTypes, bool canBeBlocked = true)
     {
         foreach (var step in Enumerable.Range(1, range))
         {
             var newPos = new BoardCoord(position.x + dir.x * step, position.y + dir.y * step);
             if (!board.IsInBoard(newPos)) yield break;
 
-            board.TryGetZone(newPos, out var posType);
+            board.TryGetTerrain(newPos, out var posType);
             if (avoidTypes.Any(t => posType == t)) yield break;
 
-            if (pieceController.TryGetPiece(newPos, out var occupant))
+            if (board.TryGetPiece(newPos, out var occupant))
             {
                 if (canBeBlocked)
                 {
@@ -266,7 +167,6 @@ public abstract class Piece : MonoBehaviour
             yield return newPos;
         }
     }
-
     protected IEnumerable<BoardCoord> CaculateAttacks((int x, int y) dir, int range)
     {
         foreach (var step in Enumerable.Range(1, range))
@@ -274,7 +174,7 @@ public abstract class Piece : MonoBehaviour
             var newPos = new BoardCoord(position.x + dir.x * step, position.y + dir.y * step);
             if (!board.IsInBoard(newPos)) yield break;
 
-            if (pieceController.TryGetPiece(newPos, out var occupant))
+            if (board.TryGetPiece(newPos, out var occupant))
             {
                 if (occupant.team == team) yield break;
                 yield return newPos;
@@ -297,17 +197,7 @@ public abstract class Piece : MonoBehaviour
         }
     }
     #endregion
-    public void OnCaptured()
-    {
-        Destroy(gameObject);
-        foreach (var child in carryingPieces)
-        {
-            if (child != null)
-            {
-                Destroy(child.gameObject);
-            }
-        }
-    }
+    
     public void BecomeHero()
     {
         if (isHero) return;
@@ -319,5 +209,4 @@ public abstract class Piece : MonoBehaviour
         diagonalAttackRange += 1;
         straightAttackRange += 1;
     }
-
 }

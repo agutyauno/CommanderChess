@@ -9,12 +9,12 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: aca1c6eac15761a40bdce2dc88b4d85b, type: 3}
+  m_Script: {fileID: 11500000, guid: 83b4585d6c457964c84d2f48d0b8b5f3, type: 3}
   m_Name: CommanderData
   m_EditorClassIdentifier: Assembly-CSharp::PieceData
-  initialPosition: {x: 7, y: 7}
+  initialPosition: {x: 1, y: 1}
   canMoveStraight: 1
-  straightMoveRange: 100
+  straightMoveRange: 15
   canMoveDiagonal: 0
   diagonalMoveRange: 1
   AllowedMoveTerrains: 01000000020000000300000004000000
@@ -22,7 +22,7 @@ MonoBehaviour:
   straightAttackRange: 1
   canAttackDiagonal: 0
   diagonalAttackRange: 1
-  hadRingOfFire: 1
-  ringOfFireRange: 2
+  hadRingOfFire: 0
+  ringOfFireRange: 1
   allowedCarryTypes: 
   doMoveToTarget: 1

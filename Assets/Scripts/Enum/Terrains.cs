@@ -1,4 +1,4 @@
-public enum PositionType
+public enum Terrains
 {
     Sea, Land, Shallow, Coast, Riverside
 }
