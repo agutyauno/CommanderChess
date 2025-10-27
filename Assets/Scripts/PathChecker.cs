@@ -96,35 +96,38 @@ public class PathChecker
             return result;
         }
 
-        // Lấy tất cả vùng nguy hiểm cho piece này từ DangerZoneProvider
-        var dangerZones = zoneProvider.GetDangerZonesForPiece(piece);
-
-        // Kiểm tra từng vị trí trên path
-        bool crossingDanger = false;
-        
-        for (int i = 0; i < path.Count; i++)
+        if (!piece.IsHero)
         {
-            var position = path[i];
-            bool isDestination = i == path.Count - 1;
-
-            if (dangerZones.GetZoneByEnemyTeam(piece.Team).Contains(position))
+            // Lấy tất cả vùng nguy hiểm cho piece này từ DangerZoneProvider
+            var dangerZones = zoneProvider.GetDangerZonesForPiece(piece);
+    
+            // Kiểm tra từng vị trí trên path
+            bool crossingDanger = false;
+            
+            for (int i = 0; i < path.Count; i++)
             {
-                // Xác định loại nguy hiểm
-                if (isDestination)
+                var position = path[i];
+                bool isDestination = i == path.Count - 1;
+    
+                if (dangerZones.GetZoneByEnemyTeam(piece.Team).Contains(position))
                 {
-                    result.Result = PathResult.Inside;
-                }
-                else
-                {
-                    crossingDanger = true;
+                    // Xác định loại nguy hiểm
+                    if (isDestination)
+                    {
+                        result.Result = PathResult.Inside;
+                    }
+                    else
+                    {
+                        crossingDanger = true;
+                    }
                 }
             }
-        }
-
-        // Nếu không nằm trong danger zone nhưng có đi qua
-        if (result.Result == PathResult.None && crossingDanger)
-        {
-            result.Result = PathResult.GoThrough;
+    
+            // Nếu không nằm trong danger zone nhưng có đi qua
+            if (result.Result == PathResult.None && crossingDanger)
+            {
+                result.Result = PathResult.GoThrough;
+            }
         }
         return result;
     }

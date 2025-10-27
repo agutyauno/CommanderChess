@@ -29,7 +29,7 @@ public class Board : MonoBehaviour
     public Size BoardSize { get => boardSize; }
     #region Properties
     public Dictionary<BoardCoord, Piece> Pieces => pieces;
-    
+
     #endregion
     void Awake()
     {
@@ -96,43 +96,60 @@ public class Board : MonoBehaviour
         if (!ok) Debug.LogError("Failed parsing F8..G8");
         else SetTerrainRange(from, to, Terrains.Shallow);
     }
-#region Conversion Methods
-        public bool IsInBoard(BoardCoord position)
-        {
-            return position.x >= 1 && position.x <= boardSize.width
-                && position.y >= 1 && position.y <= boardSize.height;
-        }
-        public string BoardCoordToLabel(BoardCoord position)
-        {
-            if (!IsInBoard(position))
-                throw new ArgumentOutOfRangeException("Position is out of board range.");
-            return position.ToLabel();
-        }
-        public bool TryBoardLabelToCoord(string label, out BoardCoord coord)
-        {
-            if (!BoardCoord.TryParseLabel(label, out coord))
-                throw new ArgumentException("Label must be in the format of a letter followed by a number (e.g., A1, B12).");
-    
-            if (!IsInBoard(coord))
-                throw new ArgumentOutOfRangeException("Converted position is out of board range.");
-            return true;
-        }
-        public Vector3Int BoardCoordToCell(BoardCoord position)
-        {
-            if (!IsInBoard(position))
-                throw new ArgumentOutOfRangeException("Position is out of board range.");
-            Vector3Int offsetPos = Vector3Int.RoundToInt(transform.position) + (Vector3Int)offset;
-            return position + offsetPos;
-        }
-        public Vector3Int BoardCoordToCell(string label)
-        {
-            if (!TryBoardLabelToCoord(label, out BoardCoord coord))
-                throw new ArgumentException("Label must be in the format of a letter followed by a number (e.g., A1, B12).");
-            return BoardCoordToCell(coord);
-        }
-        public Vector3 BoardCoordToWorld(BoardCoord position) => grid.CellToWorld(BoardCoordToCell(position));
-        public Vector3 BoardCoordToWorld(string label) => grid.CellToWorld(BoardCoordToCell(label));
-#endregion
+    #region Conversion Methods
+    public bool IsInBoard(BoardCoord position)
+    {
+        return position.x >= 1 && position.x <= boardSize.width
+            && position.y >= 1 && position.y <= boardSize.height;
+    }
+    public string BoardCoordToLabel(BoardCoord position)
+    {
+        if (!IsInBoard(position))
+            throw new ArgumentOutOfRangeException("Position is out of board range.");
+        return position.ToLabel();
+    }
+    public bool TryBoardLabelToCoord(string label, out BoardCoord coord)
+    {
+        if (!BoardCoord.TryParseLabel(label, out coord))
+            throw new ArgumentException("Label must be in the format of a letter followed by a number (e.g., A1, B12).");
+
+        if (!IsInBoard(coord))
+            throw new ArgumentOutOfRangeException("Converted position is out of board range.");
+        return true;
+    }
+    public Vector3Int BoardCoordToCell(BoardCoord position)
+    {
+        if (!IsInBoard(position))
+            throw new ArgumentOutOfRangeException("Position is out of board range.");
+        Vector3Int offsetPos = Vector3Int.RoundToInt(transform.position) + (Vector3Int)offset;
+        return position + offsetPos;
+    }
+    public Vector3Int BoardCoordToCell(string label)
+    {
+        if (!TryBoardLabelToCoord(label, out BoardCoord coord))
+            throw new ArgumentException("Label must be in the format of a letter followed by a number (e.g., A1, B12).");
+        return BoardCoordToCell(coord);
+    }
+    public Vector3 BoardCoordToWorld(BoardCoord position) => grid.CellToWorld(BoardCoordToCell(position));
+    public Vector3 BoardCoordToWorld(string label) => grid.CellToWorld(BoardCoordToCell(label));
+    public bool TryWorldToBoardCoord(Vector3 worldPos, out BoardCoord coord)
+    {
+        Vector3Int cellPos = grid.WorldToCell(worldPos);
+        return TryCellToBoardCoord(cellPos, out coord);
+    }
+    public bool TryCellToBoardCoord(Vector3Int cellPos, out BoardCoord coord)
+    {
+        Vector3Int offsetPos = Vector3Int.RoundToInt(transform.position) + new Vector3Int(offset.x, offset.y, 0);
+
+        coord = new BoardCoord(
+            cellPos.x - offsetPos.x,
+            cellPos.y - offsetPos.y
+        );
+
+        return IsInBoard(coord);
+    }
+
+    #endregion
     public void SetTerrainRange(BoardCoord from, BoardCoord to, Terrains type)
     {
         for (int y = Math.Min(from.x, to.x); y <= Math.Max(from.x, to.x); y++)
