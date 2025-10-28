@@ -12,3 +12,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 83b4585d6c457964c84d2f48d0b8b5f3, type: 3}
   m_Name: AirForceData
   m_EditorClassIdentifier: Assembly-CSharp::PieceData
+  canMoveStraight: 1
+  straightMoveRange: 4
+  canMoveDiagonal: 1
+  diagonalMoveRange: 4
+  allowedMoveTerrains: 
+  canAttackStraight: 1
+  straightAttackRange: 4
+  canAttackDiagonal: 1
+  diagonalAttackRange: 4
+  hadRingOfFire: 0
+  ringOfFireRange: 1
+  allowedCarryTypes: 0000000001000000020000000300000004000000
+  doMoveToTarget: 1

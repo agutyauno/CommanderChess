@@ -8,27 +8,27 @@ public class PieceData : ScriptableObject
     private Vector2Int initialPosition = new(1, 1);
 
     [Header("Movement")]
-    private bool canMoveStraight = true;
-    [Range(1, 100)] private int straightMoveRange = 1;
-    private bool canMoveDiagonal = false;
-    [Range(1, 100)] private int diagonalMoveRange = 1;
-    private Terrains[] allowedMoveTerrains;
+    [SerializeField] private bool canMoveStraight = true;
+    [Range(1, 100), SerializeField] private int straightMoveRange = 1;
+    [SerializeField] private bool canMoveDiagonal = false;
+    [Range(1, 100), SerializeField] private int diagonalMoveRange = 1;
+    [SerializeField] private Terrains[] allowedMoveTerrains;
 
     [Header("Attack")]
-    private bool canAttackStraight = true;
-    [Range(1, 100)] private int straightAttackRange = 1;
-    private bool canAttackDiagonal = false;
-    [Range(1, 100)] private int diagonalAttackRange = 1;
+    [SerializeField] private bool canAttackStraight = true;
+    [Range(1, 100), SerializeField] private int straightAttackRange = 1;
+    [SerializeField] private bool canAttackDiagonal = false;
+    [Range(1, 100), SerializeField] private int diagonalAttackRange = 1;
 
     [Header("Ring of Fire")]
-    private bool hadRingOfFire = false;
-    [Range(1, 100)] private int ringOfFireRange = 1;
+    [SerializeField] private bool hadRingOfFire = false;
+    [Range(1, 100), SerializeField] private int ringOfFireRange = 1;
 
     [Header("Carrying")]
-    private Piece.PieceType[] allowedCarryTypes = { };
+    [SerializeField] private Piece.PieceType[] allowedCarryTypes = { };
 
     [Header("Other")]
-    private bool doMoveToTarget = true;
+    [SerializeField] private bool doMoveToTarget = true;
 
     #region properties
     public Vector2Int InitialPosition { get => initialPosition; set => initialPosition = value; }
