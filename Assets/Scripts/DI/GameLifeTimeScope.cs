@@ -12,6 +12,7 @@ public class GameLifeTimeScope : LifetimeScope
     [SerializeField] InputHandler inputHandler;
     [SerializeField] BoardHighlighter boardHighlighter;
     [SerializeField] GameManager gameManager;
+    [SerializeField] PieceSpawner pieceSpawner;
     
     protected override void Configure(IContainerBuilder builder)
     {
@@ -27,14 +28,12 @@ public class GameLifeTimeScope : LifetimeScope
         builder.Register<CommandManager>(Lifetime.Singleton).AsSelf();
         builder.Register<TurnManager>(Lifetime.Singleton).AsSelf();
         builder.Register<ActionValidator>(Lifetime.Singleton).AsSelf();
+        builder.RegisterComponent(pieceSpawner).AsSelf();
         
         // Managers
         builder.RegisterComponent(gameStateManager).AsSelf();
         builder.RegisterComponent(inputHandler).AsSelf();
         builder.RegisterComponent(boardHighlighter).AsSelf();
         builder.RegisterComponent(gameManager).AsSelf();
-        
-        // Pieces (registered per instance when spawned)
-        builder.RegisterComponentInHierarchy<Piece>();
     }
 }

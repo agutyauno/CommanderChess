@@ -17,14 +17,13 @@ public abstract class Piece : MonoBehaviour
     readonly List<BoardCoord> cachedAttacks = new();
     readonly List<BoardCoord> cachedRingOfFireZones = new();
 
-    [SerializeField] PieceData pieceData;
+    PieceData pieceData;
     [SerializeField] Team team;
 
     [Inject] protected Board board;
     [Inject] protected CarryingSystem carryingSystem;
 
     readonly HashSet<PieceType> allowedCarryTypes = new();
-    BoardCoord initialPosition;
     BoardCoord position;
     Terrains[] allowedMoveTerrains = Array.Empty<Terrains>();
     bool doMoveToTarget;
@@ -49,13 +48,13 @@ public abstract class Piece : MonoBehaviour
     public List<BoardCoord> PossibleAttacks { get => cachedAttacks; }
     public List<BoardCoord> RingOfFireZones { get => cachedRingOfFireZones; }
     public abstract PieceType Type { get; }
-    public Team Team { get => team; }
-    public BoardCoord InitialPosition { get; }
+    public Team Team { get => team; set => team = value; }
     public BoardCoord Position { get => position; set => position = value; }
     public HashSet<PieceType> AllowedCarryTypes { get => allowedCarryTypes; }
     public bool DoMoveToTarget { get => doMoveToTarget; }
     public bool HadRingOfFire { get => hadRingOfFire; }
     public bool IsHero { get => isHero; set => isHero = value; }
+    public PieceData PieceData { get => pieceData; set => pieceData = value; }
 
     #endregion
 
@@ -65,13 +64,11 @@ public abstract class Piece : MonoBehaviour
         if (pieceData != null)
             ApplyPieceData(pieceData);
         carryingSystem.RegisterPiece(this);
-        position = initialPosition;
         RecalculateCache();
     }
     private void ApplyPieceData(PieceData data)
     {
         if (data == null) return;
-        initialPosition = data.InitialPosition;
 
         canMoveStraight = data.CanMoveStraight;
         straightMoveRange = data.StraightMoveRange;

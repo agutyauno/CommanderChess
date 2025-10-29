@@ -3,10 +3,6 @@ using UnityEngine;
 [CreateAssetMenu(fileName = "PieceData", menuName = "ScriptableObjects/PieceData", order = 1)]
 public class PieceData : ScriptableObject
 {
-
-    [Tooltip("Initial intersection (1-based). A1 => (1,1)")]
-    private Vector2Int initialPosition = new(1, 1);
-
     [Header("Movement")]
     [SerializeField] private bool canMoveStraight = true;
     [Range(1, 100), SerializeField] private int straightMoveRange = 1;
@@ -31,7 +27,6 @@ public class PieceData : ScriptableObject
     [SerializeField] private bool doMoveToTarget = true;
 
     #region properties
-    public Vector2Int InitialPosition { get => initialPosition; set => initialPosition = value; }
     public bool CanMoveStraight { get => canMoveStraight; set => canMoveStraight = value; }
     public int StraightMoveRange { get => straightMoveRange; set => straightMoveRange = value; }
     public bool CanMoveDiagonal { get => canMoveDiagonal; set => canMoveDiagonal = value; }

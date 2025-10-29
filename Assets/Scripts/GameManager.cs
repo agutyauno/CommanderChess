@@ -9,6 +9,7 @@ public class GameManager : MonoBehaviour
     [Inject] readonly Board board;
     [Inject] readonly TurnManager turnManager;
     [Inject] readonly GameStateManager gameStateManager;
+    [Inject] readonly PieceSpawner pieceSpawner;
 
     void Start()
     {
@@ -21,35 +22,26 @@ public class GameManager : MonoBehaviour
 
         // 1. Initialize board
         board.Init();
-        Debug.Log("✓ Board initialized");
+        Debug.Log("Board initialized");
 
         // 2. Setup pieces (TODO: Load from configuration)
         SetupPieces();
-        Debug.Log("✓ Pieces setup completed");
+        Debug.Log("Pieces setup completed");
 
         // 3. Reset turn to Red
         turnManager.ResetTurn();
-        Debug.Log("✓ Turn manager initialized");
+        Debug.Log("Turn manager initialized");
 
         // 4. Subscribe to events
         SubscribeToEvents();
-        Debug.Log("✓ Event subscriptions completed");
+        Debug.Log("Event subscriptions completed");
 
         Debug.Log("=== Game Ready ===");
     }
 
     void SetupPieces()
     {
-        // TODO: Implement piece spawning logic
-        // For now, this should be done manually in the editor or through a PieceSpawner
-        
-        // Example flow:
-        // 1. Load piece configurations (initial positions, types)
-        // 2. Spawn GameObjects for each piece
-        // 3. Call piece.Init() for each piece
-        // 4. Place pieces on board using board.PlacePiece()
-        
-        Debug.LogWarning("Piece setup not implemented - place pieces manually in the editor");
+        pieceSpawner.Spawn();        
     }
 
     void SubscribeToEvents()

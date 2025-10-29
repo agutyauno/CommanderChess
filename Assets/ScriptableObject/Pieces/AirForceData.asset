@@ -16,7 +16,7 @@ MonoBehaviour:
   straightMoveRange: 4
   canMoveDiagonal: 1
   diagonalMoveRange: 4
-  allowedMoveTerrains: 
+  allowedMoveTerrains: 0000000001000000020000000300000004000000
   canAttackStraight: 1
   straightAttackRange: 4
   canAttackDiagonal: 1

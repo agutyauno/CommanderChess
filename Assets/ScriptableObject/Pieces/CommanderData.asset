@@ -12,12 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 83b4585d6c457964c84d2f48d0b8b5f3, type: 3}
   m_Name: CommanderData
   m_EditorClassIdentifier: Assembly-CSharp::PieceData
-  initialPosition: {x: 1, y: 1}
   canMoveStraight: 1
   straightMoveRange: 15
   canMoveDiagonal: 0
   diagonalMoveRange: 1
-  AllowedMoveTerrains: 01000000020000000300000004000000
+  allowedMoveTerrains: 0000000001000000020000000300000004000000
   canAttackStraight: 1
   straightAttackRange: 1
   canAttackDiagonal: 0

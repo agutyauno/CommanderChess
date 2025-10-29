@@ -173,21 +173,4 @@ public class Board : MonoBehaviour
         if (!IsInBoard(coord)) return false;
         return pieces.TryGetValue(coord, out piece);
     }
-    public bool PlacePiece(Piece piece, BoardCoord coord)
-    {
-        if (!ValidatePlacement(piece, coord)) return false;
-
-        pieces[coord] = piece;
-        piece.Position = coord;
-        piece.transform.position = BoardCoordToWorld(coord);
-        piece.RecalculateCache();
-        return true;
-    }
-
-    private bool ValidatePlacement(Piece piece, BoardCoord coord)
-    {
-        if (piece == null || !IsInBoard(coord)) return false;
-        if (pieces.ContainsKey(coord)) return false;
-        return true;
-    }
 }
