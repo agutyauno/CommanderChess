@@ -1,11 +1,19 @@
+using VContainer;
+
 public class ZoneProvider
 {
-    ROFZone ROF = new();
-    public IZone GetDangerZonesForPiece(Piece piece)
+    ROFZone ROF;
+
+    [Inject]
+    public ZoneProvider(Board board)
+    {
+        ROF = new(board);
+    }
+    public IZone GetDangerZonesForPiece(BasePiece piece)
     {
         switch (piece.Type)
         {
-            case Piece.PieceType.AirForce:
+            case BasePiece.PieceType.AirForce:
                 return ROF;
             default:
                 return null;

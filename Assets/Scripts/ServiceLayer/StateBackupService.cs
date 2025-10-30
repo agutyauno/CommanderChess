@@ -10,27 +10,27 @@ public class StateBackupService
     public struct PieceBackupData
     {
         public BoardCoord Position;
-        public Piece Carrier;
-        public List<Piece> Carrying;
+        public BasePiece Carrier;
+        public List<BasePiece> Carrying;
         public bool IsHero;
         public bool ExistsOnBoard; // Track if piece was on board
     }
 
     public class Snapshot
     {
-        public Dictionary<Piece, PieceBackupData> PieceData { get; } = new();
-        public Dictionary<BoardCoord, Piece> BoardState { get; } = new();
+        public Dictionary<BasePiece, PieceBackupData> PieceData { get; } = new();
+        public Dictionary<BoardCoord, BasePiece> BoardState { get; } = new();
     }
 
     /// <summary>
     /// Backup state của một piece và tất cả pieces liên quan (carried pieces)
     /// </summary>
-    public Snapshot CreateSnapshot(params Piece[] pieces)
+    public Snapshot CreateSnapshot(params BasePiece[] pieces)
     {
         if (pieces == null || pieces.Length == 0) return null;
 
         var snapshot = new Snapshot();
-        var piecesToBackup = new HashSet<Piece>();
+        var piecesToBackup = new HashSet<BasePiece>();
 
         // Collect all pieces cần backup (bao gồm cả carried pieces)
         foreach (var piece in pieces)
@@ -47,7 +47,7 @@ public class StateBackupService
             {
                 Position = piece.Position,
                 Carrier = carryingSystem.GetCarrier(piece),
-                Carrying = new List<Piece>(carryingSystem.GetDirectCarrying(piece)),
+                Carrying = new List<BasePiece>(carryingSystem.GetDirectCarrying(piece)),
                 IsHero = piece.IsHero,
                 ExistsOnBoard = board.Pieces.ContainsValue(piece)
             };
@@ -80,7 +80,7 @@ public class StateBackupService
             {
                 Position = piece.Position,
                 Carrier = carryingSystem.GetCarrier(piece),
-                Carrying = new List<Piece>(carryingSystem.GetDirectCarrying(piece)),
+                Carrying = new List<BasePiece>(carryingSystem.GetDirectCarrying(piece)),
                 IsHero = piece.IsHero,
                 ExistsOnBoard = true
             };
@@ -136,8 +136,8 @@ public class StateBackupService
 
         // Phase 3: Restore carrying relationships
         // Phải restore theo thứ tự: root carriers trước, carried pieces sau
-        var restored = new HashSet<Piece>();
-        var queue = new Queue<Piece>(snapshot.PieceData.Keys);
+        var restored = new HashSet<BasePiece>();
+        var queue = new Queue<BasePiece>(snapshot.PieceData.Keys);
 
         while (queue.Count > 0)
         {

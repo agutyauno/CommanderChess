@@ -21,7 +21,7 @@ public class PieceData : ScriptableObject
     [Range(1, 100), SerializeField] private int ringOfFireRange = 1;
 
     [Header("Carrying")]
-    [SerializeField] private Piece.PieceType[] allowedCarryTypes = { };
+    [SerializeField] private BasePiece.PieceType[] allowedCarryTypes = { };
 
     [Header("Other")]
     [SerializeField] private bool doMoveToTarget = true;
@@ -38,7 +38,7 @@ public class PieceData : ScriptableObject
     public int DiagonalAttackRange { get => diagonalAttackRange; set => diagonalAttackRange = value; }
     public bool HadRingOfFire { get => hadRingOfFire; set => hadRingOfFire = value; }
     public int RingOfFireRange { get => ringOfFireRange; set => ringOfFireRange = value; }
-    public Piece.PieceType[] AllowedCarryTypes { get => allowedCarryTypes; set => allowedCarryTypes = value; }
+    public BasePiece.PieceType[] AllowedCarryTypes { get => allowedCarryTypes; set => allowedCarryTypes = value; }
     public bool DoMoveToTarget { get => doMoveToTarget; set => doMoveToTarget = value; }
     #endregion
 }

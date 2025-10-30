@@ -25,7 +25,7 @@ public class ActionValidator
     /// <summary>
     /// Validate hành động di chuyển
     /// </summary>
-    public ValidationResult ValidateMove(Piece piece, BoardCoord to)
+    public ValidationResult ValidateMove(BasePiece piece, BoardCoord to)
     {
         // Kiểm tra piece không null
         if (piece == null)
@@ -57,7 +57,7 @@ public class ActionValidator
     /// <summary>
     /// Validate hành động tấn công
     /// </summary>
-    public ValidationResult ValidateCapture(Piece attacker, BoardCoord targetPos)
+    public ValidationResult ValidateCapture(BasePiece attacker, BoardCoord targetPos)
     {
         // Kiểm tra attacker không null
         if (attacker == null)
@@ -92,7 +92,7 @@ public class ActionValidator
     /// <summary>
     /// Validate hành động boarding (mang theo đồng minh)
     /// </summary>
-    public ValidationResult ValidateBoarding(Piece carrier, BoardCoord targetPos)
+    public ValidationResult ValidateBoarding(BasePiece carrier, BoardCoord targetPos)
     {
         // Kiểm tra carrier không null
         if (carrier == null)
@@ -142,7 +142,7 @@ public class ActionValidator
     /// <summary>
     /// Validate hành động detach (tách quân ra khỏi carrier)
     /// </summary>
-    public ValidationResult ValidateDetach(Piece carrier, Piece passenger, BoardCoord to)
+    public ValidationResult ValidateDetach(BasePiece carrier, BasePiece passenger, BoardCoord to)
     {
         // Kiểm tra carrier và passenger không null
         if (carrier == null)

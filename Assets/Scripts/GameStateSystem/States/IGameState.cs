@@ -24,7 +24,7 @@ public interface IGameState
     /// <summary>
     /// Xử lý khi người chơi click vào một piece
     /// </summary>
-    void HandlePieceClick(Piece piece);
+    void HandlePieceClick(BasePiece piece);
 
     /// <summary>
     /// Xử lý khi người chơi cancel action (right click hoặc ESC)

@@ -36,7 +36,7 @@ public class IdleState : IGameState
         Debug.Log($"Clicked empty position {coord.ToLabel()} in IdleState - no action");
     }
 
-    public void HandlePieceClick(Piece piece)
+    public void HandlePieceClick(BasePiece piece)
     {
         // Kiểm tra xem có phải quân của người chơi hiện tại không
         if (!Manager.TurnManager.IsCurrentPlayerPiece(piece))

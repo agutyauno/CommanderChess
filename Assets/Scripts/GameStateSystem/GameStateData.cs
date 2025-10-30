@@ -9,7 +9,7 @@ public class GameStateData
     public GameState CurrentState { get; set; }
 
     // Selection info
-    public Piece SelectedPiece { get; set; }
+    public BasePiece SelectedPiece { get; set; }
     public BoardCoord SelectedPosition { get; set; }
 
     // Pending action info

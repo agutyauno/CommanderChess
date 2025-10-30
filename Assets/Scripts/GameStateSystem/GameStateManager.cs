@@ -26,7 +26,7 @@ public class GameStateManager : MonoBehaviour
 
     #region Properties
     public GameState CurrentState => stateData.CurrentState;
-    public Piece SelectedPiece => stateData.SelectedPiece;
+    public BasePiece SelectedPiece => stateData.SelectedPiece;
     
     // Expose dependencies for states
     public Board Board => board;
@@ -38,7 +38,7 @@ public class GameStateManager : MonoBehaviour
 
     #region Events
     public event Action<GameState, GameState> OnStateChanged;
-    public event Action<Piece> OnPieceSelected;
+    public event Action<BasePiece> OnPieceSelected;
     public event Action OnPieceDeselected;
     public event Action<ICommand> OnCommandExecuted;
     #endregion
@@ -199,7 +199,7 @@ public class GameStateManager : MonoBehaviour
     /// <summary>
     /// Notify that a piece was selected
     /// </summary>
-    public void NotifyPieceSelected(Piece piece)
+    public void NotifyPieceSelected(BasePiece piece)
     {
         OnPieceSelected?.Invoke(piece);
     }

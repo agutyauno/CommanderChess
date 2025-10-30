@@ -22,26 +22,38 @@ public class PieceSpawner : MonoBehaviour
 
         foreach (var setup in redTeam)
         {
-            Instantiate(setup.Prefab);
-            var piece = setup.Piece;
-            piece.PieceData = setup.PieceData;
             GameObject obj = objectResolver.Instantiate(setup.Prefab);
-            piece = obj.GetComponent<Piece>();
-            piece.Init();
-
+            var piece = obj.GetComponent<BasePiece>();
+            piece.PieceData = setup.PieceData;
             movementExecutor.PlaceOnBoard(piece, setup.Position);
+            piece.Init();
+            if (piece.PossibleAttacks.Count > 0)
+            {
+                Debug.Log($"Piece {piece.Type} at {piece.Position} can attack {piece.PossibleAttacks.Count} positions");
+            }
+            else
+            {
+                Debug.Log($"Piece {piece.Type} at {piece.Position} has no attack positions");
+            }
+
+            if (piece.PossibleMoves.Count > 0)
+            {
+                Debug.Log($"Piece {piece.Type} at {piece.Position} can move to {piece.PossibleMoves.Count} positions");
+            }
+            else
+            {
+                Debug.Log($"Piece {piece.Type} at {piece.Position} has no move positions");
+            }
         }
 
         foreach (var setup in blueTeam)
         {
-            Instantiate(setup.Prefab);
-            var piece = setup.Piece;
-            piece.PieceData = setup.PieceData;
             GameObject obj = objectResolver.Instantiate(setup.Prefab);
-            piece = obj.GetComponent<Piece>();
+            var piece = obj.GetComponent<BasePiece>();
+            piece.PieceData = setup.PieceData;
+            movementExecutor.PlaceOnBoard(piece, setup.Position);
             piece.Init();
 
-            movementExecutor.PlaceOnBoard(piece, setup.Position);
         }
     }
 
@@ -53,7 +65,7 @@ public class PieceSpawner : MonoBehaviour
         Debug.Log("Clearing all pieces...");
 
         // Get all piece GameObjects
-        Piece[] pieces = GetComponentsInChildren<Piece>();
+        BasePiece[] pieces = GetComponentsInChildren<BasePiece>();
         
         foreach (var piece in pieces)
         {
@@ -164,7 +176,7 @@ public class PieceSetupData
 
     public BoardCoord Position { get => GetPositionFromLabel();}
     public GameObject Prefab { get => prefab; }
-    public Piece Piece { get => prefab.GetComponent<Piece>(); }
+    public BasePiece Piece { get => prefab.GetComponent<BasePiece>(); }
     public PieceData PieceData { get => pieceData; }
 
     BoardCoord GetPositionFromLabel()

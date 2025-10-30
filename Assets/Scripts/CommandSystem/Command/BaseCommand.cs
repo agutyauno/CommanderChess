@@ -29,7 +29,7 @@ public abstract class BaseCommand : ICommand
     //fields
     protected BoardCoord From;
     protected BoardCoord To;
-    protected Piece SelectedPiece;
+    protected BasePiece SelectedPiece;
 
     protected BaseCommand(
         BoardCoord from,
@@ -197,11 +197,11 @@ public abstract class BaseCommand : ICommand
     /// <summary>
     /// Trả về danh sách pieces cần backup
     /// </summary>
-    protected Piece[] GetPiecesToBackup()
+    protected BasePiece[] GetPiecesToBackup()
     {
-        var movedPiece = board.Pieces[From];
-        var targetPiece = board.Pieces[To];
-        List<Piece> piecesToBackUp = new();
+        board.Pieces.TryGetValue(From, out var movedPiece);
+        board.Pieces.TryGetValue(To, out var targetPiece);
+        List<BasePiece> piecesToBackUp = new();
 
         if (movedPiece != null)
         {
@@ -218,7 +218,7 @@ public abstract class BaseCommand : ICommand
     /// <summary>
     /// Helper: Update position của piece và các pieces nó đang mang
     /// </summary>
-    protected void UpdatePieceAndCarriedPositions(Piece piece, BoardCoord newPosition)
+    protected void UpdatePieceAndCarriedPositions(BasePiece piece, BoardCoord newPosition)
     {
         piece.Position = newPosition;
 
@@ -237,7 +237,7 @@ public abstract class BaseCommand : ICommand
     /// <summary>
     /// Helper: Update board dictionary
     /// </summary>
-    protected void UpdateBoardPosition(BoardCoord from, BoardCoord to, Piece piece)
+    protected void UpdateBoardPosition(BoardCoord from, BoardCoord to, BasePiece piece)
     {
         board.Pieces.Remove(from);
         board.Pieces[to] = piece;

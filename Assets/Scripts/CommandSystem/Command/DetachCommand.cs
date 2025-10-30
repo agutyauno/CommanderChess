@@ -5,8 +5,8 @@ using UnityEngine;
 public class DetachCommand : BaseCommand
 {
    // carrier from which we detach, passenger being detached, destination
-    Piece carrier;
-    Piece passenger;
+    BasePiece carrier;
+    BasePiece passenger;
     bool wasShotDown = false;
 
     public DetachCommand(

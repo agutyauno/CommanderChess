@@ -8,6 +8,6 @@ public interface IZone
     HashSet<BoardCoord> GetZone();
     HashSet<BoardCoord> GetZoneByTeam(Team team);
     HashSet<BoardCoord> GetZoneByEnemyTeam(Team FriendlyTeam);
-    Piece GetZoneSourceAtPosition(BoardCoord position, Team team);
+    BasePiece GetZoneSourceAtPosition(BoardCoord position, Team team);
     List<BoardCoord> GetIntersectingZoneOnPath(List<BoardCoord> path, Team team);
 }

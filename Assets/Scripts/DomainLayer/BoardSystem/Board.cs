@@ -24,11 +24,11 @@ public class Board : MonoBehaviour
     [SerializeField] Grid grid;
     Size boardSize = new(width: 11, height: 12);
     readonly Dictionary<BoardCoord, Terrains> zoneMap = new();
-    readonly Dictionary<BoardCoord, Piece> pieces = new();
+    readonly Dictionary<BoardCoord, BasePiece> pieces = new();
     public Grid Grid { get => grid; }
     public Size BoardSize { get => boardSize; }
     #region Properties
-    public Dictionary<BoardCoord, Piece> Pieces => pieces;
+    public Dictionary<BoardCoord, BasePiece> Pieces => pieces;
 
     #endregion
     void Awake()
@@ -43,58 +43,36 @@ public class Board : MonoBehaviour
 
     void SetUpTerrains()
     {
-        bool ok;
         BoardCoord from, to;
 
         // set land
-        ok = BoardCoord.TryParseLabel("A1", out from);
-        ok &= BoardCoord.TryParseLabel("K12", out to);
-        if (!ok) { Debug.LogError("Failed parsing A1..k12"); return; }
+        from = new BoardCoord(1, 1);
+        to = new BoardCoord(11, 12);
         SetTerrainRange(from, to, Terrains.Land);
 
         // set sea (A1..L2 in your earlier spec)
-        ok = BoardCoord.TryParseLabel("A1", out from);
-        ok &= BoardCoord.TryParseLabel("C12", out to);
-        if (!ok) { Debug.LogError("Failed parsing A1..C12"); return; }
+        from = new BoardCoord(1, 1);
+        to = new BoardCoord(11, 2);
         SetTerrainRange(from, to, Terrains.Sea);
 
         // seaside ranges
-        ok = BoardCoord.TryParseLabel("C1", out from);
-        ok &= BoardCoord.TryParseLabel("C5", out to);
-        if (!ok) Debug.LogError("Failed parsing C1..C5");
-        else SetTerrainRange(from, to, Terrains.Coast);
-
-        ok = BoardCoord.TryParseLabel("C8", out from);
-        ok &= BoardCoord.TryParseLabel("C12", out to);
-        if (!ok) Debug.LogError("Failed parsing C8..C12");
-        else SetTerrainRange(from, to, Terrains.Coast);
+        from = new BoardCoord(3, 1);
+        to = new BoardCoord(3, 12);
+        SetTerrainRange(from, to, Terrains.Coast);
 
         // riverside ranges
-        ok = BoardCoord.TryParseLabel("C6", out from);
-        ok &= BoardCoord.TryParseLabel("E7", out to);
-        if (!ok) Debug.LogError("Failed parsing C6..E7");
-        else SetTerrainRange(from, to, Terrains.Riverside);
-
-        ok = BoardCoord.TryParseLabel("G6", out from);
-        ok &= BoardCoord.TryParseLabel("G7", out to);
-        if (!ok) Debug.LogError("Failed parsing G6..G7");
-        else SetTerrainRange(from, to, Terrains.Riverside);
-
-        ok = BoardCoord.TryParseLabel("I6", out from);
-        ok &= BoardCoord.TryParseLabel("K7", out to);
-        if (!ok) Debug.LogError("Failed parsing F9..G11");
-        else SetTerrainRange(from, to, Terrains.Riverside);
+        from = new BoardCoord(3, 6);
+        to = new BoardCoord(11, 7);
+        SetTerrainRange(from, to, Terrains.Riverside);
 
         // shallow ranges
-        ok = BoardCoord.TryParseLabel("F6", out from);
-        ok &= BoardCoord.TryParseLabel("F7", out to);
-        if (!ok) Debug.LogError("Failed parsing F6..G6");
-        else SetTerrainRange(from, to, Terrains.Shallow);
+        from = new BoardCoord(6, 6);
+        to = new BoardCoord(6, 7);
+        SetTerrainRange(from, to, Terrains.Shallow);
 
-        ok = BoardCoord.TryParseLabel("H6", out from);
-        ok &= BoardCoord.TryParseLabel("H7", out to);
-        if (!ok) Debug.LogError("Failed parsing F8..G8");
-        else SetTerrainRange(from, to, Terrains.Shallow);
+        from = new BoardCoord(8, 6);
+        to = new BoardCoord(8, 7);
+        SetTerrainRange(from, to, Terrains.Shallow);
     }
     #region Conversion Methods
     public bool IsInBoard(BoardCoord position)
@@ -130,8 +108,8 @@ public class Board : MonoBehaviour
             throw new ArgumentException("Label must be in the format of a letter followed by a number (e.g., A1, B12).");
         return BoardCoordToCell(coord);
     }
-    public Vector3 BoardCoordToWorld(BoardCoord position) => grid.CellToWorld(BoardCoordToCell(position));
-    public Vector3 BoardCoordToWorld(string label) => grid.CellToWorld(BoardCoordToCell(label));
+    public Vector3 BoardCoordToWorld(BoardCoord position) => grid.CellToWorld(BoardCoordToCell(position)) + new Vector3(0.5f, 0.5f, 0f);
+    public Vector3 BoardCoordToWorld(string label) => grid.CellToWorld(BoardCoordToCell(label)) + new Vector3(0.5f, 0.5f, 0f);
     public bool TryWorldToBoardCoord(Vector3 worldPos, out BoardCoord coord)
     {
         Vector3Int cellPos = grid.WorldToCell(worldPos);
@@ -167,7 +145,7 @@ public class Board : MonoBehaviour
         if (!IsInBoard(coord)) return false;
         return zoneMap.TryGetValue(coord, out type);
     }
-    public bool TryGetPiece(BoardCoord coord, out Piece piece)
+    public bool TryGetPiece(BoardCoord coord, out BasePiece piece)
     {
         piece = null;
         if (!IsInBoard(coord)) return false;

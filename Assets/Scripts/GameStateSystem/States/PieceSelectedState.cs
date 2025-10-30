@@ -28,6 +28,29 @@ public class PieceSelectedState : IGameState
 
         // Highlight valid moves and attacks
         var piece = Data.SelectedPiece;
+        piece.RecalculateCache();
+
+        if (piece == null)
+        {
+            Debug.LogError("SelectedPiece is null in PieceSelectedState.Enter()");
+        }
+        else
+        {
+            Debug.Log($"Selected piece: {piece.Type} at {piece.Position.ToLabel()}");
+        }
+
+        if (piece.PossibleMoves == null && piece.PossibleAttacks == null)
+        {
+            Debug.LogError("PossibleMoves or PossibleAttacks is null in PieceSelectedState.Enter()");
+        }
+        else if(piece.PossibleMoves.Count == 0 && piece.PossibleAttacks.Count == 0)
+        {
+            Debug.LogWarning("No possible moves or attacks for selected piece.");
+        }
+        else
+        {
+            Debug.Log($"Possible moves count: {piece.PossibleMoves.Count}, Possible attacks count: {piece.PossibleAttacks.Count}");
+        }
         
         Data.HighlightedMoves.Clear();
         Data.HighlightedMoves.AddRange(piece.PossibleMoves);
@@ -76,7 +99,7 @@ public class PieceSelectedState : IGameState
         Manager.ChangeState(GameState.Idle);
     }
 
-    public void HandlePieceClick(Piece clickedPiece)
+    public void HandlePieceClick(BasePiece clickedPiece)
     {
         var selectedPiece = Data.SelectedPiece;
         if (selectedPiece == null)
@@ -144,7 +167,7 @@ public class PieceSelectedState : IGameState
 
     #region Private Helper Methods
 
-    private void TryChangePieceSelection(Piece newPiece)
+    private void TryChangePieceSelection(BasePiece newPiece)
     {
         Debug.Log($"Changing selection to {newPiece.Type} at {newPiece.Position.ToLabel()}");
         

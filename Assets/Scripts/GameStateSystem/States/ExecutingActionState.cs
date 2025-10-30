@@ -41,7 +41,7 @@ public class ExecutingActionState : IGameState
         Debug.Log("Input blocked - command executing");
     }
 
-    public void HandlePieceClick(Piece piece)
+    public void HandlePieceClick(BasePiece piece)
     {
         // Input blocked during execution
         Debug.Log("Input blocked - command executing");

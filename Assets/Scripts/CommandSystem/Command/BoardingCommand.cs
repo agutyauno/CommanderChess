@@ -2,7 +2,7 @@ using System;
 
 public class BoardingCommand : BaseCommand
 {
-    Piece pieceToBoard;
+    BasePiece pieceToBoard;
 
     // trạng thái để undo
     bool wasShotDown = false;

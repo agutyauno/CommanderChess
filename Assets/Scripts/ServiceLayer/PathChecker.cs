@@ -78,12 +78,12 @@ public class PathChecker
         return false;
     }
 
-    public PathCheckResult CheckPath(Piece piece, BoardCoord from, BoardCoord to)
+    public PathCheckResult CheckPath(BasePiece piece, BoardCoord from, BoardCoord to)
     {
         return CheckPath(piece, GeneratePath(from, to));
     }
 
-    public PathCheckResult CheckPath(Piece piece, List<BoardCoord> path)
+    public PathCheckResult CheckPath(BasePiece piece, List<BoardCoord> path)
     {
         var result = new PathCheckResult
         {
@@ -99,7 +99,9 @@ public class PathChecker
         if (!piece.IsHero)
         {
             // Lấy tất cả vùng nguy hiểm cho piece này từ DangerZoneProvider
-            var dangerZones = zoneProvider.GetDangerZonesForPiece(piece);
+            var dangerZone = zoneProvider.GetDangerZonesForPiece(piece);
+            if (dangerZone == null) return result;
+            var dangerPos = dangerZone.GetZoneByEnemyTeam(piece.Team);
     
             // Kiểm tra từng vị trí trên path
             bool crossingDanger = false;
@@ -108,8 +110,7 @@ public class PathChecker
             {
                 var position = path[i];
                 bool isDestination = i == path.Count - 1;
-    
-                if (dangerZones.GetZoneByEnemyTeam(piece.Team).Contains(position))
+                if (dangerPos.Contains(position))
                 {
                     // Xác định loại nguy hiểm
                     if (isDestination)

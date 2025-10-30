@@ -29,7 +29,7 @@ public class MovementExecutor
     /// Di chuyển piece từ vị trí from sang to
     /// Tự động update cả carried pieces
     /// </summary>
-    public MovementResult MovePiece(Piece piece, BoardCoord from, BoardCoord to)
+    public MovementResult MovePiece(BasePiece piece, BoardCoord from, BoardCoord to)
     {
         if (piece == null)
         {
@@ -65,7 +65,7 @@ public class MovementExecutor
     /// <summary>
     /// Di chuyển piece về vị trí cũ (thường dùng cho undo)
     /// </summary>
-    public MovementResult RevertMovePiece(Piece piece, BoardCoord currentPos, BoardCoord previousPos)
+    public MovementResult RevertMovePiece(BasePiece piece, BoardCoord currentPos, BoardCoord previousPos)
     {
         return MovePiece(piece, currentPos, previousPos);
     }
@@ -74,7 +74,7 @@ public class MovementExecutor
     /// Chỉ update position logic, không touch board dictionary
     /// Dùng khi piece được mang theo carrier
     /// </summary>
-    public void UpdatePositionOnly(Piece piece, BoardCoord newPosition)
+    public void UpdatePositionOnly(BasePiece piece, BoardCoord newPosition)
     {
         if (piece == null) return;
 
@@ -87,7 +87,7 @@ public class MovementExecutor
     /// <summary>
     /// Remove piece khỏi board (dùng khi bị capture hoặc boarding)
     /// </summary>
-    public void RemoveFromBoard(Piece piece)
+    public void RemoveFromBoard(BasePiece piece)
     {
         if (piece == null) return;
 
@@ -98,7 +98,7 @@ public class MovementExecutor
     /// <summary>
     /// Place piece lên board tại vị trí mới
     /// </summary>
-    public bool PlaceOnBoard(Piece piece, BoardCoord position)
+    public bool PlaceOnBoard(BasePiece piece, BoardCoord position)
     {
         if (piece == null || !board.IsInBoard(position))
         {
@@ -116,7 +116,7 @@ public class MovementExecutor
     /// <summary>
     /// Teleport piece (không gửi animation event, instant move)
     /// </summary>
-    public void TeleportPiece(Piece piece, BoardCoord to)
+    public void TeleportPiece(BasePiece piece, BoardCoord to)
     {
         if (piece == null) return;
 
@@ -141,7 +141,7 @@ public class MovementExecutor
 
     #region Board Dictionary Management
 
-    private void UpdateBoardDictionary(Piece piece, BoardCoord from, BoardCoord to)
+    private void UpdateBoardDictionary(BasePiece piece, BoardCoord from, BoardCoord to)
     {
         // Remove from old position
         if (board.Pieces.TryGetValue(from, out var pieceAtFrom) && pieceAtFrom == piece)
@@ -157,12 +157,12 @@ public class MovementExecutor
 
     #region Position Updates (Logic)
 
-    private void UpdatePiecePosition(Piece piece, BoardCoord newPosition)
+    private void UpdatePiecePosition(BasePiece piece, BoardCoord newPosition)
     {
         piece.Position = newPosition;
     }
 
-    private void UpdateCarriedPiecesPositions(Piece carrier, BoardCoord position)
+    private void UpdateCarriedPiecesPositions(BasePiece carrier, BoardCoord position)
     {
         var carriedPieces = carryingSystem.GetAllCarriedPieces(carrier);
         
@@ -176,7 +176,7 @@ public class MovementExecutor
 
     #region Visual Position Updates (Transform)
 
-    private void UpdateVisualPosition(Piece piece, BoardCoord position)
+    private void UpdateVisualPosition(BasePiece piece, BoardCoord position)
     {
         if (piece.transform == null) return;
 
@@ -184,7 +184,7 @@ public class MovementExecutor
         piece.transform.position = worldPos;
     }
 
-    private void UpdateCarriedVisualPositions(Piece carrier)
+    private void UpdateCarriedVisualPositions(BasePiece carrier)
     {
         var carriedPieces = carryingSystem.GetAllCarriedPieces(carrier);
         
@@ -203,7 +203,7 @@ public class MovementExecutor
 
     #region Events
 
-    private void SendMoveEvent(Piece piece, BoardCoord from, BoardCoord to)
+    private void SendMoveEvent(BasePiece piece, BoardCoord from, BoardCoord to)
     {
         // TODO: Implement event system
         // eventBus.Publish(new PieceMovedEvent(piece, from, to));
@@ -221,14 +221,14 @@ public class MovementExecutor
     public class MovementResult
     {
         public bool IsSuccess { get; private set; }
-        public Piece Piece { get; private set; }
+        public BasePiece Piece { get; private set; }
         public BoardCoord From { get; private set; }
         public BoardCoord To { get; private set; }
         public string ErrorMessage { get; private set; }
 
         private MovementResult() { }
 
-        public static MovementResult Success(Piece piece, BoardCoord from, BoardCoord to)
+        public static MovementResult Success(BasePiece piece, BoardCoord from, BoardCoord to)
         {
             return new MovementResult
             {

@@ -93,7 +93,7 @@ public class GameManager : MonoBehaviour
         // TODO: Update UI to show current state
     }
 
-    void OnPieceSelected(Piece piece)
+    void OnPieceSelected(BasePiece piece)
     {
         Debug.Log($">>> Selected: {piece.Team} {piece.Type} at {piece.Position.ToLabel()}");
         // TODO: Show piece info panel

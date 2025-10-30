@@ -3,7 +3,7 @@ using UnityEngine;
 
 public class CaptureCommand : BaseCommand
 {
-     Piece pieceToCapture;
+     BasePiece pieceToCapture;
     bool attackerShotDown = false;
     bool defenderShotDown = false;
 

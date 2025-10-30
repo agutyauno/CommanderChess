@@ -12,18 +12,18 @@ using UnityEngine;
 public class CarryingSystem
 {
     // Lưu thông tin về quan hệ mang/được mang
-    private readonly Dictionary<Piece, CarryingNode> carryingNodes = new();
+    private readonly Dictionary<BasePiece, CarryingNode> carryingNodes = new();
 
     /// <summary>
     /// Node đại diện cho một quân cờ trong hệ thống mang
     /// </summary>
     public class CarryingNode
     {
-        public Piece Piece { get; }
-        public Piece Carrier { get; set; } // Quân đang mang mình
-        public List<Piece> Carrying { get; } = new(2); // Tối đa 2 quân
+        public BasePiece Piece { get; }
+        public BasePiece Carrier { get; set; } // Quân đang mang mình
+        public List<BasePiece> Carrying { get; } = new(2); // Tối đa 2 quân
 
-        public CarryingNode(Piece piece)
+        public CarryingNode(BasePiece piece)
         {
             Piece = piece;
         }
@@ -38,7 +38,7 @@ public class CarryingSystem
     /// <summary>
     /// Đăng ký một quân cờ vào hệ thống
     /// </summary>
-    public void RegisterPiece(Piece piece)
+    public void RegisterPiece(BasePiece piece)
     {
         if (!carryingNodes.ContainsKey(piece))
         {
@@ -49,7 +49,7 @@ public class CarryingSystem
     /// <summary>
     /// Hủy đăng ký quân cờ khỏi hệ thống
     /// </summary>
-    public void UnregisterPiece(Piece piece)
+    public void UnregisterPiece(BasePiece piece)
     {
         if (carryingNodes.TryGetValue(piece, out var node))
         {
@@ -74,10 +74,10 @@ public class CarryingSystem
     /// TryAddCarry - Tự động xác định ai mang ai
     /// Đảm bảo group size < 3
     /// </summary>
-    public bool TryAddCarry(Piece A, Piece B)
+    public bool TryAddCarry(BasePiece A, BasePiece B)
     {
-        Piece passenger;
-        Piece carrier;
+        BasePiece passenger;
+        BasePiece carrier;
         // Xác định carrier và passenger
         if (CanCarryDirectly(A, B))
         {
@@ -112,7 +112,7 @@ public class CarryingSystem
     /// Tách một quân ra khỏi carrier
     /// Khi tách một quân, các quân nó đang mang cũng theo
     /// </summary>
-    public bool Detach(Piece piece)
+    public bool Detach(BasePiece piece)
     {
         if (!carryingNodes.TryGetValue(piece, out var node))
             return false;
@@ -137,19 +137,19 @@ public class CarryingSystem
     /// <summary>
     /// Lấy tất cả quân mà piece đang mang (không bao gồm đệ quy)
     /// </summary>
-    public List<Piece> GetDirectCarrying(Piece piece)
+    public List<BasePiece> GetDirectCarrying(BasePiece piece)
     {
         return carryingNodes.TryGetValue(piece, out var node) 
-            ? new List<Piece>(node.Carrying) 
-            : new List<Piece>();
+            ? new List<BasePiece>(node.Carrying) 
+            : new List<BasePiece>();
     }
 
     /// <summary>
     /// Lấy tất cả quân trong group (đệ quy)
     /// </summary>
-    public List<Piece> GetAllCarriedPieces(Piece piece)
+    public List<BasePiece> GetAllCarriedPieces(BasePiece piece)
     {
-        var result = new List<Piece>();
+        var result = new List<BasePiece>();
         if (!carryingNodes.TryGetValue(piece, out var node))
             return result;
 
@@ -165,7 +165,7 @@ public class CarryingSystem
     /// <summary>
     /// Đếm tổng số quân trong group
     /// </summary>
-    public int CountGroupSize(Piece piece)
+    public int CountGroupSize(BasePiece piece)
     {
         return 1 + GetAllCarriedPieces(piece).Count;
     }
@@ -173,7 +173,7 @@ public class CarryingSystem
     /// <summary>
     /// Lấy carrier gốc (top-level) của một quân
     /// </summary>
-    public Piece GetRootCarrier(Piece piece)
+    public BasePiece GetRootCarrier(BasePiece piece)
     {
         if (!carryingNodes.TryGetValue(piece, out var node))
             return piece;
@@ -190,7 +190,7 @@ public class CarryingSystem
     /// <summary>
     /// Kiểm tra xem piece có đang được mang không
     /// </summary>
-    public bool IsCarried(Piece piece)
+    public bool IsCarried(BasePiece piece)
     {
         return carryingNodes.TryGetValue(piece, out var node) && node.Carrier != null;
     }
@@ -198,12 +198,12 @@ public class CarryingSystem
     /// <summary>
     /// Lấy carrier trực tiếp của piece
     /// </summary>
-    public Piece GetCarrier(Piece piece)
+    public BasePiece GetCarrier(BasePiece piece)
     {
         return carryingNodes.TryGetValue(piece, out var node) ? node.Carrier : null;
     }
 
-    public bool CanCarryDirectly(Piece carrier, Piece passenger)
+    public bool CanCarryDirectly(BasePiece carrier, BasePiece passenger)
     {
         return carrier.AllowedCarryTypes.Contains(passenger.Type);
     }
@@ -212,7 +212,7 @@ public class CarryingSystem
 
     #region Private Validation
 
-    private bool CanCarry(Piece carrier, Piece passenger, out string reason)
+    private bool CanCarry(BasePiece carrier, BasePiece passenger, out string reason)
     {
         reason = "";
 
@@ -284,7 +284,7 @@ public class CarryingSystem
     /// <summary>
     /// Kiểm tra ancestor có phải là tổ tiên của descendant không
     /// </summary>
-    private bool IsAncestorOf(Piece ancestor, Piece descendant)
+    private bool IsAncestorOf(BasePiece ancestor, BasePiece descendant)
     {
         if (!carryingNodes.TryGetValue(descendant, out var node))
             return false;
@@ -304,7 +304,7 @@ public class CarryingSystem
 
     #region Private Execution
 
-    private bool ExecuteCarry(Piece carrier, Piece passenger)
+    private bool ExecuteCarry(BasePiece carrier, BasePiece passenger)
     {
         var passengerNode = carryingNodes[passenger];
 
@@ -330,7 +330,7 @@ public class CarryingSystem
     /// <summary>
     /// Phân phối thông minh khi thêm passenger vào carrier
     /// </summary>
-    private bool TryPlace(Piece carrier, Piece passenger)
+    private bool TryPlace(BasePiece carrier, BasePiece passenger)
     {
         var carrierNode = carryingNodes[carrier];
         var passengerNode = carryingNodes[passenger];
@@ -362,7 +362,7 @@ public class CarryingSystem
     /// Ví dụ: Airforce mang Infantry, sau đó mang Tank (tank trống)
     /// Kết quả: Airforce carry [Tank], Tank carry [Infantry]
     /// </summary>
-    private bool TryPlaceWithRedistribution(Piece carrier, Piece passenger)
+    private bool TryPlaceWithRedistribution(BasePiece carrier, BasePiece passenger)
     {
         var carrierNode = carryingNodes[carrier];
         var passengerNode = carryingNodes[passenger];
@@ -374,7 +374,7 @@ public class CarryingSystem
         var passengerChildren = passengerNode.Carrying.ToList();
 
         // Tạo list tất cả pieces cần redistribute
-        var piecesToRedistribute = new List<Piece>();
+        var piecesToRedistribute = new List<BasePiece>();
         piecesToRedistribute.AddRange(carrierChildren);
         piecesToRedistribute.AddRange(passengerChildren);
 
@@ -478,7 +478,7 @@ public class CarryingSystem
     /// <summary>
     /// Thử đặt passenger vào một trong các quân carrier đang mang
     /// </summary>
-    private bool TryPlaceInCarriedPieces(Piece carrier, Piece passenger)
+    private bool TryPlaceInCarriedPieces(BasePiece carrier, BasePiece passenger)
     {
         var carrierNode = carryingNodes[carrier];
 
@@ -513,7 +513,7 @@ public class CarryingSystem
 
     #region Debug & Visualization
 
-    public void PrintGroupStructure(Piece root, string indent = "")
+    public void PrintGroupStructure(BasePiece root, string indent = "")
     {
         if (!carryingNodes.TryGetValue(root, out var node))
             return;
@@ -526,14 +526,14 @@ public class CarryingSystem
         }
     }
 
-    public string GetGroupTreeString(Piece root)
+    public string GetGroupTreeString(BasePiece root)
     {
         var sb = new System.Text.StringBuilder();
         BuildTreeString(root, sb, "", true);
         return sb.ToString();
     }
 
-    private void BuildTreeString(Piece piece, System.Text.StringBuilder sb, string indent, bool isLast)
+    private void BuildTreeString(BasePiece piece, System.Text.StringBuilder sb, string indent, bool isLast)
     {
         if (!carryingNodes.TryGetValue(piece, out var node))
             return;

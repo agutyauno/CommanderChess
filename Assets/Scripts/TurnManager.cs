@@ -24,7 +24,7 @@ public class TurnManager
     /// <summary>
     /// Kiểm tra xem piece có thuộc về người chơi hiện tại không
     /// </summary>
-    public bool IsCurrentPlayerPiece(Piece piece)
+    public bool IsCurrentPlayerPiece(BasePiece piece)
     {
         if (piece == null) return false;
         return piece.Team == currentTurn;

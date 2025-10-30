@@ -8,11 +8,17 @@ using UnityEngine;
 /// </summary>
 public class ROFZone : IZone
 {
-    [Inject] readonly Board board;
-    readonly Dictionary<Team, HashSet<BoardCoord>> ROFByTeam = new();
-    readonly Dictionary<BoardCoord, List<Piece>> ROFSourcePieces = new();
+    readonly Board board;
 
-    bool isDirty;
+    public ROFZone(Board board)
+    {
+        this.board = board;
+    }
+
+    readonly Dictionary<Team, HashSet<BoardCoord>> ROFByTeam = new();
+    readonly Dictionary<BoardCoord, List<BasePiece>> ROFSourcePieces = new();
+
+    bool isDirty = true;
 
     public bool IsDirty => isDirty;
 
@@ -80,7 +86,7 @@ public class ROFZone : IZone
     /// <param name="position"></param>
     /// <param name="team"></param>
     /// <returns></returns>
-    public Piece GetZoneSourceAtPosition(BoardCoord position, Team team)
+    public BasePiece GetZoneSourceAtPosition(BoardCoord position, Team team)
     {
         if (isDirty) RecalculateAll();
 
