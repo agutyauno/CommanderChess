@@ -73,6 +73,19 @@ public abstract class BaseCommand : ICommand
             if (piecesToBackup != null && piecesToBackup.Length > 0)
             {
                 snapshot = backupService.CreateSnapshot(piecesToBackup);
+
+                // Kiểm tra snapshot có được tạo thành công không
+                if (snapshot == null)
+                {
+                    Debug.LogError($"Failed to create snapshot for: {Description}");
+                    WasSuccessful = false;
+                    return false;
+                }
+            }
+            else
+            {
+                // ⚠️ Warning nếu không có pieces để backup
+                Debug.LogWarning($"No pieces to backup for: {Description}");
             }
 
             // Step 3: Execute actual logic
@@ -199,19 +212,24 @@ public abstract class BaseCommand : ICommand
     /// </summary>
     protected BasePiece[] GetPiecesToBackup()
     {
+
         board.Pieces.TryGetValue(From, out var movedPiece);
         board.Pieces.TryGetValue(To, out var targetPiece);
         List<BasePiece> piecesToBackUp = new();
 
+        // ✅ Thêm piece chính trước
         if (movedPiece != null)
         {
+            piecesToBackUp.Add(movedPiece);
             piecesToBackUp.AddRange(carryingSystem.GetAllCarriedPieces(movedPiece));
         }
 
         if (targetPiece != null)
         {
+            piecesToBackUp.Add(targetPiece);
             piecesToBackUp.AddRange(carryingSystem.GetAllCarriedPieces(targetPiece));
         }
+
         return piecesToBackUp.ToArray();
     }
 

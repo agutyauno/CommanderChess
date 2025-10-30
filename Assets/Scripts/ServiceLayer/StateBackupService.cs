@@ -1,5 +1,6 @@
 
 using System.Collections.Generic;
+using UnityEngine;
 using VContainer;
 
 public class StateBackupService
@@ -27,18 +28,43 @@ public class StateBackupService
     /// </summary>
     public Snapshot CreateSnapshot(params BasePiece[] pieces)
     {
-        if (pieces == null || pieces.Length == 0) return null;
+        // Log chi tiết hơn
+        if (pieces == null)
+        {
+            Debug.LogWarning("CreateSnapshot: pieces array is null");
+            return null;
+        }
+
+        if (pieces.Length == 0)
+        {
+            Debug.LogWarning("CreateSnapshot: pieces array is empty");
+            return null;
+        }
 
         var snapshot = new Snapshot();
         var piecesToBackup = new HashSet<BasePiece>();
 
-        // Collect all pieces cần backup (bao gồm cả carried pieces)
+        // Collect all pieces cần backup
         foreach (var piece in pieces)
         {
-            if (piece == null) continue;
+            if (piece == null)
+            {
+                Debug.LogWarning("CreateSnapshot: null piece in array, skipping");
+                continue;
+            }
+
             piecesToBackup.Add(piece);
             piecesToBackup.UnionWith(carryingSystem.GetAllCarriedPieces(piece));
         }
+
+        // Kiểm tra sau khi collect
+        if (piecesToBackup.Count == 0)
+        {
+            Debug.LogWarning("CreateSnapshot: no valid pieces to backup");
+            return null;
+        }
+
+        Debug.Log($"Creating snapshot for {piecesToBackup.Count} pieces");
 
         // Backup từng piece
         foreach (var piece in piecesToBackup)
@@ -53,7 +79,7 @@ public class StateBackupService
             };
         }
 
-        // Backup board state cho các vị trí liên quan
+        // Backup board state
         foreach (var piece in piecesToBackup)
         {
             var pos = piece.Position;
@@ -63,6 +89,7 @@ public class StateBackupService
             }
         }
 
+        Debug.Log($"Snapshot created: {snapshot.PieceData.Count} pieces, {snapshot.BoardState.Count} board positions");
         return snapshot;
     }
 
