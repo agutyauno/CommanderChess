@@ -206,7 +206,7 @@ public class MovementExecutor
 
                 // Update visual with offset for passenger
                 Vector3 carrierPos = board.BoardCoordToWorld(to);
-                UpdateCarriedVisualPositions(mover);
+                UpdateCarriedVisualPositions(target);
 
                 SendBoardingEvent(target, mover, from, to);
             }
@@ -227,7 +227,7 @@ public class MovementExecutor
                 UpdateCarriedPiecesPositions(target, to);
 
                 Vector3 carrierPos = board.BoardCoordToWorld(to);
-                UpdateCarriedVisualPositions(target);
+                UpdateCarriedVisualPositions(mover);
 
                 SendBoardingEvent(mover, target, from, to);
             }
