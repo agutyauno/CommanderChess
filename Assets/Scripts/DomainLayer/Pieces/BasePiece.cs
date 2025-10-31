@@ -250,7 +250,6 @@ public abstract class BasePiece : MonoBehaviour
                     {
                         if (!cachedMoves.Contains(targetPos))
                             cachedMoves.Add(targetPos);
-                        continue;
                     }
                 }
                 if (!canPassThrough)

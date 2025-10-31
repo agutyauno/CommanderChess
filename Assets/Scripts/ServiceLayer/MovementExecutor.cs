@@ -85,7 +85,7 @@ public class MovementExecutor
     }
 
     /// <summary>
-    /// Remove piece khỏi board (dùng khi bị capture hoặc boarding)
+    /// Remove piece khỏi board
     /// </summary>
     public void RemoveFromBoard(BasePiece piece)
     {

@@ -287,7 +287,10 @@ MonoBehaviour:
   - positionLabel: I3
     pieceData: {fileID: 11400000, guid: 61dd7acdede814e45978e659ccb92285, type: 2}
     prefab: {fileID: 2980104084831620166, guid: e2fdb2d5155d17747b2a5d03692f38b5, type: 3}
-  blueTeam: []
+  blueTeam:
+  - positionLabel: H8
+    pieceData: {fileID: 11400000, guid: bc68b1fa1f678e048aa72a5f94db6d09, type: 2}
+    prefab: {fileID: 5357026786014750533, guid: a1d4a010f26200b4faa3071f69c9397a, type: 3}
 --- !u!4 &421106172
 Transform:
   m_ObjectHideFlags: 0
