@@ -104,3 +104,4 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Tank
   team: 1
+  pieceData: {fileID: 11400000, guid: bc68b1fa1f678e048aa72a5f94db6d09, type: 2}

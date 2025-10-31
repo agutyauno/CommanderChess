@@ -57,7 +57,7 @@ public class MovementExecutor
 
     /// <summary>
     /// Di chuyển piece từ from sang to (ô trống)
-    /// Tự động update carried pieces
+    /// Tự động xử lý carried pieces - chúng di chuyển theo carrier
     /// </summary>
     public MovementResult MovePiece(BasePiece piece, BoardCoord from, BoardCoord to)
     {
@@ -77,23 +77,22 @@ public class MovementExecutor
         // 2. Place at new position
         board.Pieces[to] = piece;
 
-        // 3. Update logical positions
+        // 3. Update logical positions (piece + all carried)
         piece.Position = to;
         UpdateCarriedPiecesPositions(piece, to);
 
-        // 4. Update visual positions
+        // 4. Update visual positions (piece + all carried)
         UpdateVisualPosition(piece, to);
         UpdateCarriedVisualPositions(piece);
 
         // 5. Send event
         SendMoveEvent(piece, from, to);
-
-        Debug.Log($"MovePiece: {piece.Team} {piece.Type} {from.ToLabel()} → {to.ToLabel()}");
         return MovementResult.Success(piece, from, to);
     }
 
     /// <summary>
     /// Revert piece movement (dùng cho Undo)
+    /// Tự động xử lý carried pieces
     /// </summary>
     public MovementResult RevertMovePiece(BasePiece piece, BoardCoord currentPos, BoardCoord previousPos)
     {
@@ -105,7 +104,7 @@ public class MovementExecutor
     #region Capture Movement
 
     /// <summary>
-    /// Thực hiện capture: remove defender, move attacker vào vị trí (nếu DoMoveToTarget = true)
+    /// Thực hiện capture: remove defender (+ carried), move attacker (+ carried) vào vị trí
     /// </summary>
     public MovementResult ExecuteCapture(BasePiece attacker, BasePiece defender, BoardCoord from, BoardCoord to)
     {
@@ -115,57 +114,63 @@ public class MovementExecutor
         if (!board.IsInBoard(from) || !board.IsInBoard(to))
             return MovementResult.Failed("Invalid coordinates");
 
-        // 1. Remove defender from board
-        RemoveFromBoard(defender);
+        // Get carried pieces info
+        var attackerCarried = carryingSystem.GetAllCarriedPieces(attacker);
+        var defenderCarried = carryingSystem.GetAllCarriedPieces(defender);
 
-        // 2. Move attacker (nếu DoMoveToTarget = true)
+        // 1. Remove defender + all carried pieces from board
+        ShotDownPiece(defender);
+
+        // 2. Move attacker + all carried pieces (nếu DoMoveToTarget = true)
         if (attacker.DoMoveToTarget)
         {
             board.Pieces.Remove(from);
             board.Pieces[to] = attacker;
 
+            // Update positions for attacker + all carried
             attacker.Position = to;
             UpdateCarriedPiecesPositions(attacker, to);
 
+            // Update visuals for attacker + all carried
             UpdateVisualPosition(attacker, to);
             UpdateCarriedVisualPositions(attacker);
-        }
-        else
-        {
-            // Attacker đứng yên (ví dụ: Pháo bắn từ xa)
-            Debug.Log($"  Attacker stays at {from.ToLabel()} (DoMoveToTarget = false)");
         }
 
         // 3. Send events
         SendCaptureEvent(attacker, defender, from, to);
 
-        Debug.Log($"ExecuteCapture: {attacker.Team} {attacker.Type} captures {defender.Team} {defender.Type}");
         return MovementResult.Success(attacker, from, to);
     }
 
     /// <summary>
     /// Revert capture (dùng cho Undo)
-    /// Restore defender, move attacker về vị trí cũ (nếu cần)
+    /// Restore defender (+ carried), move attacker (+ carried) về vị trí cũ
     /// </summary>
     public MovementResult RevertCapture(BasePiece attacker, BasePiece defender, BoardCoord attackerOriginalPos, BoardCoord defenderPos)
     {
-        // 1. Restore defender
+        // 1. Restore defender + carried pieces được xử lý bởi StateBackupService
         PlaceOnBoard(defender, defenderPos);
 
-        // 2. Move attacker back (nếu đã di chuyển)
+        // Defender's carried pieces positions sẽ được restore bởi StateBackupService
+        // Chỉ cần update visual
+        UpdateVisualPosition(defender, defenderPos);
+        UpdateCarriedVisualPositions(defender);
+
+        // 2. Move attacker + carried pieces back (nếu đã di chuyển)
         if (attacker.DoMoveToTarget)
         {
             board.Pieces.Remove(defenderPos);
             board.Pieces[attackerOriginalPos] = attacker;
 
+            // Update positions for attacker + carried
             attacker.Position = attackerOriginalPos;
             UpdateCarriedPiecesPositions(attacker, attackerOriginalPos);
 
+            // Update visuals for attacker + carried
             UpdateVisualPosition(attacker, attackerOriginalPos);
             UpdateCarriedVisualPositions(attacker);
         }
 
-        Debug.Log($"RevertCapture: Restored {defender.Type} at {defenderPos.ToLabel()}");
         return MovementResult.Success(attacker, defenderPos, attackerOriginalPos);
     }
 
@@ -175,9 +180,12 @@ public class MovementExecutor
 
     /// <summary>
     /// Thực hiện boarding: carrier di chuyển tới passenger, passenger trở thành carried
-    /// Xử lý cả 2 trường hợp:
-    /// - A mang B: A di chuyển tới B, B becomes carried
-    /// - B mang A: A di chuyển tới B, A becomes carried
+    /// Xử lý cả trường hợp cả 2 pieces đều đang mang quân khác
+    /// 
+    /// Lưu ý quan trọng:
+    /// - Nếu mover đang mang quân → các quân đó vẫn theo mover sau khi boarding
+    /// - Nếu target đang mang quân → các quân đó vẫn ở với target
+    /// - CarryingSystem.TryAddCarry() sẽ tự động redistribute nếu cần
     /// </summary>
     public MovementResult ExecuteBoarding(BasePiece mover, BasePiece target, BoardCoord from, BoardCoord to)
     {
@@ -189,23 +197,18 @@ public class MovementExecutor
         var passenger = carrier == target ? mover : target;
         var actualCarrier = carrier == target ? target : mover;
 
-        Debug.Log($"ExecuteBoarding: {actualCarrier.Type} carries {passenger.Type}");
-
         // Case 1: Mover becomes passenger
         if (passenger == mover)
         {
             // Remove mover from board (becomes carried)
             board.Pieces.Remove(from);
 
-            // Update positions
+            // Update positions for mover + all its carried pieces
             mover.Position = to;
             UpdateCarriedPiecesPositions(mover, to);
 
-            // Update visuals (passenger ẩn hoặc ở cùng vị trí carrier)
             UpdateVisualPosition(mover, to);
             UpdateCarriedVisualPositions(mover);
-
-            Debug.Log($"  {mover.Type} becomes carried by {target.Type}");
         }
         // Case 2: Mover becomes carrier
         else
@@ -214,21 +217,19 @@ public class MovementExecutor
             board.Pieces.Remove(from);
             board.Pieces[to] = mover;
 
-            // Update positions
+            // Update positions for mover + all its original carried pieces
             mover.Position = to;
             UpdateCarriedPiecesPositions(mover, to);
 
-            // Target (passenger) is now carried
+            // Target (passenger) is now carried (+ its carried pieces if any)
             target.Position = to;
             UpdateCarriedPiecesPositions(target, to);
 
-            // Update visuals
+            // Update visuals for everyone
             UpdateVisualPosition(mover, to);
-            UpdateCarriedVisualPositions(mover);
+            UpdateCarriedVisualPositions(mover); // Updates ALL carried (including target and its nested)
             UpdateVisualPosition(target, to);
             UpdateCarriedVisualPositions(target);
-
-            Debug.Log($"  {mover.Type} carries {target.Type}");
         }
 
         SendBoardingEvent(actualCarrier, passenger, from, to);
@@ -237,27 +238,34 @@ public class MovementExecutor
 
     /// <summary>
     /// Revert boarding (dùng cho Undo)
+    /// Xử lý cả trường hợp có carried pieces
     /// </summary>
     public MovementResult RevertBoarding(BasePiece mover, BasePiece target, BoardCoord from, BoardCoord to, bool moverWasPassenger)
     {
         // Case 1: Mover was passenger
         if (moverWasPassenger)
         {
-            // Place mover back on board
+            // Place mover back on board (+ its carried pieces)
             PlaceOnBoard(mover, from);
+
+            // Update positions for mover + carried
+            UpdateCarriedPiecesPositions(mover, from);
+            UpdateVisualPosition(mover, from);
+            UpdateCarriedVisualPositions(mover);
         }
         // Case 2: Mover was carrier
         else
         {
-            // Move mover back
+            // Move mover back to original position (+ its original carried)
             board.Pieces.Remove(to);
             board.Pieces[from] = mover;
 
             mover.Position = from;
             UpdateCarriedPiecesPositions(mover, from);
 
-            // Place target back on board
+            // Place target back on board (+ its carried)
             PlaceOnBoard(target, to);
+            UpdateCarriedPiecesPositions(target, to);
 
             // Update visuals
             UpdateVisualPosition(mover, from);
@@ -266,7 +274,6 @@ public class MovementExecutor
             UpdateCarriedVisualPositions(target);
         }
 
-        Debug.Log($"RevertBoarding: {mover.Type} and {target.Type} separated");
         return MovementResult.Success(mover, to, from);
     }
 
@@ -275,7 +282,9 @@ public class MovementExecutor
     #region Detach Movement
 
     /// <summary>
-    /// Thực hiện detach: tách passenger ra khỏi carrier, đặt tại vị trí mới
+    /// Thực hiện detach: tách passenger (+ carried của passenger) ra khỏi carrier
+    /// 
+    /// Lưu ý: Nếu passenger đang mang quân khác, các quân đó vẫn theo passenger
     /// </summary>
     public MovementResult ExecuteDetach(BasePiece passenger, BoardCoord carrierPos, BoardCoord passengerDestination)
     {
@@ -288,21 +297,26 @@ public class MovementExecutor
         // Place passenger on board at new position
         PlaceOnBoard(passenger, passengerDestination);
 
-        Debug.Log($"ExecuteDetach: {passenger.Type} detached to {passengerDestination.ToLabel()}");
-        SendDetachEvent(passenger, carrierPos, passengerDestination);
+        // Update positions for passenger + all its carried pieces
+        UpdateCarriedPiecesPositions(passenger, passengerDestination);
 
+        // Update visuals for passenger + carried
+        UpdateVisualPosition(passenger, passengerDestination);
+        UpdateCarriedVisualPositions(passenger);
+
+        SendDetachEvent(passenger, carrierPos, passengerDestination);
         return MovementResult.Success(passenger, carrierPos, passengerDestination);
     }
 
     /// <summary>
     /// Revert detach (dùng cho Undo)
+    /// Xử lý cả trường hợp passenger có carried pieces
     /// </summary>
     public MovementResult RevertDetach(BasePiece passenger, BoardCoord passengerPos)
     {
         // Remove passenger from board (will be reattached by StateBackupService)
         RemoveFromBoard(passenger);
 
-        Debug.Log($"RevertDetach: {passenger.Type} removed from board (will be reattached)");
         return MovementResult.Success(passenger, passengerPos, passenger.Position);
     }
 
@@ -311,38 +325,36 @@ public class MovementExecutor
     #region Basic Operations
 
     /// <summary>
-    /// Remove piece khỏi board
+    /// Remove piece (+ all carried) khỏi board
     /// </summary>
     public void RemoveFromBoard(BasePiece piece)
     {
         if (piece == null) return;
-
         board.Pieces.Remove(piece.Position);
-        Debug.Log($"RemoveFromBoard: {piece.Type} at {piece.Position.ToLabel()}");
     }
 
     /// <summary>
-    /// Place piece lên board tại vị trí
+    /// Place piece (+ visual update cho carried) lên board
     /// </summary>
     public bool PlaceOnBoard(BasePiece piece, BoardCoord position)
     {
         if (piece == null || !board.IsInBoard(position))
             return false;
 
+        if (board.Pieces.ContainsKey(position))
+            return false; 
         board.Pieces[position] = piece;
         piece.Position = position;
         UpdateCarriedPiecesPositions(piece, position);
 
         UpdateVisualPosition(piece, position);
         UpdateCarriedVisualPositions(piece);
-
-        Debug.Log($"PlaceOnBoard: {piece.Type} at {position.ToLabel()}");
         return true;
     }
 
     /// <summary>
     /// Update position only (không touch board dictionary)
-    /// Dùng khi piece đang được mang
+    /// Dùng khi piece đang được mang hoặc special cases
     /// </summary>
     public void UpdatePositionOnly(BasePiece piece, BoardCoord newPosition)
     {
@@ -356,7 +368,7 @@ public class MovementExecutor
     }
 
     /// <summary>
-    /// Teleport piece (instant, no animation)
+    /// Teleport piece (+ carried) - instant, no animation
     /// </summary>
     public void TeleportPiece(BasePiece piece, BoardCoord to)
     {
@@ -370,10 +382,37 @@ public class MovementExecutor
         piece.Position = to;
         UpdateCarriedPiecesPositions(piece, to);
 
+        // Instant visual update (no animation)
         piece.transform.position = board.BoardCoordToWorld(to);
         UpdateCarriedVisualPositions(piece);
+    }
 
-        Debug.Log($"TeleportPiece: {piece.Type} {from.ToLabel()} → {to.ToLabel()}");
+    /// <summary>
+    /// Thực hiện shot down: remove piece (+ carried) khỏi board và disable visuals
+    /// </summary>
+    public void ShotDownPiece(BasePiece piece)
+    {
+        if (piece == null) return;
+        var carriedPieces = carryingSystem.GetAllCarriedPieces(piece);
+        
+        // Remove from board
+        RemoveFromBoard(piece);
+
+        // Disable visuals for main piece and carried pieces
+        if (piece.gameObject != null)
+        {
+            piece.gameObject.SetActive(false);
+        }
+
+        foreach (var carried in carriedPieces)
+        {
+            if (carried != null)
+            {
+                carried.gameObject.SetActive(false);
+            }
+        }
+
+        Debug.Log($"Shot down: {piece.Type} at {piece.Position.ToLabel()} (+ {carriedPieces.Count} carried pieces)");
     }
 
     #endregion
@@ -397,14 +436,14 @@ public class MovementExecutor
 
     private void UpdateCarriedVisualPositions(BasePiece carrier)
     {
+        Vector3 offset = new();
         var carried = carryingSystem.GetAllCarriedPieces(carrier);
         foreach (var p in carried)
         {
             if (p.transform != null)
             {
-                // Carried pieces ở cùng vị trí với carrier
-                // Hoặc có thể thêm offset nếu muốn hiển thị stack
-                p.transform.position = carrier.transform.position;
+                offset += new Vector3(-0.25f, -0.25f, -0.1f);
+                p.transform.position = carrier.transform.position + offset;
             }
         }
     }

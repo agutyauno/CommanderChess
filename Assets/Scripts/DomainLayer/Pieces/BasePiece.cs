@@ -28,7 +28,7 @@ public abstract class BasePiece : MonoBehaviour
     #region Serialized Fields
     [Header("Piece Configuration")]
     [SerializeField] protected Team team;
-    protected PieceData pieceData;
+    [SerializeField] protected PieceData pieceData;
     #endregion
 
     #region Properties

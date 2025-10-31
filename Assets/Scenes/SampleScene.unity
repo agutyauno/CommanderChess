@@ -278,19 +278,83 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PieceSpawner
   redTeam:
-  - positionLabel: G1
-    pieceData: {fileID: 11400000, guid: 0c90735320131114ca894d86fc9fce79, type: 2}
-    prefab: {fileID: 350427634462696964, guid: c1e899d354a66ba428a21bc988b96e35, type: 3}
-  - positionLabel: H4
-    pieceData: {fileID: 11400000, guid: bc68b1fa1f678e048aa72a5f94db6d09, type: 2}
+  - positionLabel: B2
+    prefab: {fileID: 7122779622946933075, guid: b33b02de5bca93743a38f8422ed22ff6, type: 3}
+  - positionLabel: C4
+    prefab: {fileID: 7122779622946933075, guid: b33b02de5bca93743a38f8422ed22ff6, type: 3}
+  - positionLabel: C5
+    prefab: {fileID: 507130876015485651, guid: c0501bb7477909947a6c3ffc4f020328, type: 3}
+  - positionLabel: K5
+    prefab: {fileID: 507130876015485651, guid: c0501bb7477909947a6c3ffc4f020328, type: 3}
+  - positionLabel: D5
+    prefab: {fileID: 7471161648759672918, guid: d8d6780b1fb36474e98930ac5d23e799, type: 3}
+  - positionLabel: J5
+    prefab: {fileID: 7471161648759672918, guid: d8d6780b1fb36474e98930ac5d23e799, type: 3}
+  - positionLabel: E4
+    prefab: {fileID: 539650448593959330, guid: aa0d035a275ccaf44afae74464bc350f, type: 3}
+  - positionLabel: I4
+    prefab: {fileID: 539650448593959330, guid: aa0d035a275ccaf44afae74464bc350f, type: 3}
+  - positionLabel: F4
     prefab: {fileID: 5085140284169937371, guid: 38cb082a5439ad7449d0c6c3b6e3523e, type: 3}
-  - positionLabel: I3
-    pieceData: {fileID: 11400000, guid: 61dd7acdede814e45978e659ccb92285, type: 2}
+  - positionLabel: H4
+    prefab: {fileID: 5085140284169937371, guid: 38cb082a5439ad7449d0c6c3b6e3523e, type: 3}
+  - positionLabel: D3
+    prefab: {fileID: 1730682649538368211, guid: 84f646d09762c374f8c908ee5e4248a2, type: 3}
+  - positionLabel: J3
+    prefab: {fileID: 1730682649538368211, guid: 84f646d09762c374f8c908ee5e4248a2, type: 3}
+  - positionLabel: E2
     prefab: {fileID: 2980104084831620166, guid: e2fdb2d5155d17747b2a5d03692f38b5, type: 3}
+  - positionLabel: I2
+    prefab: {fileID: 2980104084831620166, guid: e2fdb2d5155d17747b2a5d03692f38b5, type: 3}
+  - positionLabel: F2
+    prefab: {fileID: 1196814827317691775, guid: e53a26ec02f457542b030ed010c113d3, type: 3}
+  - positionLabel: H2
+    prefab: {fileID: 1196814827317691775, guid: e53a26ec02f457542b030ed010c113d3, type: 3}
+  - positionLabel: G5
+    prefab: {fileID: 2462347611294991076, guid: 44e11c0cf5f284b4bad5fd4ed22d9449, type: 3}
+  - positionLabel: G3
+    prefab: {fileID: 389491250581908698, guid: 8bc9b7299b7298b479258cd398e5fb6d, type: 3}
+  - positionLabel: G1
+    prefab: {fileID: 350427634462696964, guid: c1e899d354a66ba428a21bc988b96e35, type: 3}
   blueTeam:
-  - positionLabel: H8
-    pieceData: {fileID: 11400000, guid: bc68b1fa1f678e048aa72a5f94db6d09, type: 2}
+  - positionLabel: G8
+    prefab: {fileID: 6695609539406858358, guid: d9a12a72246871c41bcb20e7c95f9d61, type: 3}
+  - positionLabel: G10
+    prefab: {fileID: 4148882166869655, guid: 529cdead61a70204694737bc0ef67870, type: 3}
+  - positionLabel: G12
+    prefab: {fileID: 8641889650114956997, guid: 54a09ea4e39c11441a7d55773dbe144d, type: 3}
+  - positionLabel: B11
+    prefab: {fileID: 1872278066550502989, guid: b062321733fef4a46a8d57146936a208, type: 3}
+  - positionLabel: C9
+    prefab: {fileID: 1872278066550502989, guid: b062321733fef4a46a8d57146936a208, type: 3}
+  - positionLabel: E11
+    prefab: {fileID: 7451988551969744590, guid: 38f89ae62c455ba41a6e781a88270bbc, type: 3}
+  - positionLabel: I11
+    prefab: {fileID: 7451988551969744590, guid: 38f89ae62c455ba41a6e781a88270bbc, type: 3}
+  - positionLabel: F11
+    prefab: {fileID: 2636333244907773868, guid: db134137d003a984ab58ca2f6a280b9e, type: 3}
+  - positionLabel: H11
+    prefab: {fileID: 2636333244907773868, guid: db134137d003a984ab58ca2f6a280b9e, type: 3}
+  - positionLabel: D10
+    prefab: {fileID: 2325750171020201991, guid: 100544249da123149b4204755d7779d2, type: 3}
+  - positionLabel: J10
+    prefab: {fileID: 2636333244907773868, guid: db134137d003a984ab58ca2f6a280b9e, type: 3}
+  - positionLabel: E9
+    prefab: {fileID: 5920575342185498960, guid: 70ebe9765b359c045a1020cd8ed38ffa, type: 3}
+  - positionLabel: I9
+    prefab: {fileID: 5920575342185498960, guid: 70ebe9765b359c045a1020cd8ed38ffa, type: 3}
+  - positionLabel: F9
     prefab: {fileID: 5357026786014750533, guid: a1d4a010f26200b4faa3071f69c9397a, type: 3}
+  - positionLabel: H9
+    prefab: {fileID: 5357026786014750533, guid: a1d4a010f26200b4faa3071f69c9397a, type: 3}
+  - positionLabel: C8
+    prefab: {fileID: 8717847670374085389, guid: 68b2d45bc7f11c346b3b5bf7e20aced2, type: 3}
+  - positionLabel: K8
+    prefab: {fileID: 8717847670374085389, guid: 68b2d45bc7f11c346b3b5bf7e20aced2, type: 3}
+  - positionLabel: D8
+    prefab: {fileID: 4313722825362331307, guid: 5c2441f3794c43c48a90ab395dd2d42e, type: 3}
+  - positionLabel: J8
+    prefab: {fileID: 4313722825362331307, guid: 5c2441f3794c43c48a90ab395dd2d42e, type: 3}
 --- !u!4 &421106172
 Transform:
   m_ObjectHideFlags: 0
@@ -2569,6 +2633,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Board
   offset: {x: -6, y: -6}
   grid: {fileID: 955386418}
+  showCoordinates: 1
+  labelSize: 0.4
+  labelColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
 --- !u!1 &1353720678
 GameObject:
   m_ObjectHideFlags: 0

@@ -56,7 +56,7 @@ public class DetachCommand : BaseCommand
             if (pathResult == PathResult.GoThrough || pathResult == PathResult.Inside)
             {
                 // Passenger shot down during detach
-                movementExecutor.RemoveFromBoard(passenger);
+                movementExecutor.ShotDownPiece(passenger);
                 wasShotDown = true;
                 Debug.Log($"  {passenger.Type} shot down during detach!");
                 return true;

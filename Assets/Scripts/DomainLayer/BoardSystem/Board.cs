@@ -52,7 +52,7 @@ public class Board : MonoBehaviour
 
         // set sea (A1..L2 in your earlier spec)
         from = new BoardCoord(1, 1);
-        to = new BoardCoord(11, 2);
+        to = new BoardCoord(12, 2);
         SetTerrainRange(from, to, Terrains.Sea);
 
         // seaside ranges
@@ -151,4 +151,54 @@ public class Board : MonoBehaviour
         if (!IsInBoard(coord)) return false;
         return pieces.TryGetValue(coord, out piece);
     }
+
+    [Header("Debug Visualization")]
+    [SerializeField] bool showCoordinates = true;
+    [SerializeField] float labelSize = 0.4f;
+    [SerializeField] Color labelColor = Color.yellow;
+
+#if UNITY_EDITOR
+    private void OnDrawGizmos()
+    {
+        if (!showCoordinates || grid == null) return;
+
+        // Lưu lại màu cũ
+        var oldColor = Handles.color;
+        Handles.color = labelColor;
+
+        // Vẽ tọa độ ngang (A-K)
+        for (int x = 1; x <= boardSize.width; x++)
+        {
+            var pos = new BoardCoord(x, 1);
+            var worldPos = BoardCoordToWorld(pos);
+            worldPos.y -= 0.7f; // Dịch xuống dưới một chút
+            
+            // Convert số thành chữ cái (1->A, 2->B,...)
+            string label = ((char)('A' + x - 1)).ToString();
+            Handles.Label(worldPos, label, CreateLabelStyle());
+        }
+
+        // Vẽ tọa độ dọc (1-12) 
+        for (int y = 1; y <= boardSize.height; y++)
+        {
+            var pos = new BoardCoord(1, y);
+            var worldPos = BoardCoordToWorld(pos);
+            worldPos.x -= 0.7f; // Dịch sang trái một chút
+            
+            Handles.Label(worldPos, y.ToString(), CreateLabelStyle());
+        }
+
+        // Khôi phục màu
+        Handles.color = oldColor;
+    }
+
+    private GUIStyle CreateLabelStyle()
+    {
+        var style = new GUIStyle();
+        style.normal.textColor = labelColor;
+        style.fontSize = Mathf.RoundToInt(labelSize * 20);
+        style.alignment = TextAnchor.MiddleCenter;
+        return style;
+    }
+#endif
 }

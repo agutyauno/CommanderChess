@@ -39,8 +39,7 @@ public class MoveCommand : BaseCommand
             // Check for danger zones
             if (pathResult == PathResult.GoThrough || pathResult == PathResult.Inside)
             {
-                // Shot down during movement or at destination
-                movementExecutor.RemoveFromBoard(SelectedPiece);
+                movementExecutor.ShotDownPiece(SelectedPiece);
                 wasShotDown = true;
                 Debug.Log($"  {SelectedPiece.Type} was shot down!");
                 return true;

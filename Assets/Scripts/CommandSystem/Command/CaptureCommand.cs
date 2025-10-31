@@ -42,15 +42,15 @@ public class CaptureCommand : BaseCommand
             {
                 case PathResult.GoThrough:
                     // Attacker shot down before reaching target
-                    movementExecutor.RemoveFromBoard(SelectedPiece);
+                    movementExecutor.ShotDownPiece(SelectedPiece);
                     attackerShotDown = true;
                     Debug.Log($"  {SelectedPiece.Type} shot down before reaching target!");
                     return true;
 
                 case PathResult.Inside:
                     // Both destroyed (1-for-1 trade)
-                    movementExecutor.RemoveFromBoard(SelectedPiece);
-                    movementExecutor.RemoveFromBoard(defender);
+                    movementExecutor.ShotDownPiece(SelectedPiece);
+                    movementExecutor.ShotDownPiece(defender);
                     attackerShotDown = true;
                     defenderDestroyed = true;
                     Debug.Log($"  1-for-1 trade! Both pieces destroyed!");

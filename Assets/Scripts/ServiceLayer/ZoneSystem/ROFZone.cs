@@ -48,6 +48,10 @@ public class ROFZone : IZone
                 {
                     ROFSourcePieces[zone] = new();
                 }
+                if (!ROFSourcePieces.ContainsKey(zone))
+                {
+                    ROFSourcePieces[zone] = new List<BasePiece>();
+                }
                 ROFSourcePieces[zone].Add(piece);
             }
         }

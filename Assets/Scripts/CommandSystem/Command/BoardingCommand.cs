@@ -24,7 +24,7 @@ public class BoardingCommand : BaseCommand
     }
 
     public override string Description =>
-        $"Boarding: {SelectedPiece?.Type} -> {target?.Type} at {To.ToLabel()}";
+        $"Boarding: {SelectedPiece.Type} -> {target.Type} at {To.ToLabel()}";
 
     public override bool CanExecute()
     {
@@ -43,7 +43,7 @@ public class BoardingCommand : BaseCommand
             // Check for danger zones
             if (pathResult == PathResult.GoThrough || pathResult == PathResult.Inside)
             {
-                movementExecutor.RemoveFromBoard(SelectedPiece);
+                movementExecutor.ShotDownPiece(SelectedPiece);
                 wasShotDown = true;
                 Debug.Log($"  {SelectedPiece.Type} shot down during boarding!");
                 return true;
@@ -57,7 +57,7 @@ public class BoardingCommand : BaseCommand
             }
 
             // Check who became passenger
-            moverBecamePassenger = (carryingSystem.GetCarrier(SelectedPiece) == target);
+            moverBecamePassenger = carryingSystem.GetCarrier(SelectedPiece) == target;
 
             // Execute boarding movement
             var result = movementExecutor.ExecuteBoarding(SelectedPiece, target, From, To);

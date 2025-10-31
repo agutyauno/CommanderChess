@@ -1,4 +1,3 @@
-
 using System.Collections.Generic;
 using UnityEngine;
 using VContainer;
@@ -14,7 +13,8 @@ public class StateBackupService
         public BasePiece Carrier;
         public List<BasePiece> Carrying;
         public bool IsHero;
-        public bool ExistsOnBoard; // Track if piece was on board
+        public bool ExistsOnBoard;
+        public bool IsActive; // Track if piece is visually active
     }
 
     public class Snapshot
@@ -75,7 +75,8 @@ public class StateBackupService
                 Carrier = carryingSystem.GetCarrier(piece),
                 Carrying = new List<BasePiece>(carryingSystem.GetDirectCarrying(piece)),
                 IsHero = piece.IsHero,
-                ExistsOnBoard = board.Pieces.ContainsValue(piece)
+                ExistsOnBoard = board.Pieces.ContainsValue(piece),
+                IsActive = piece.gameObject.activeSelf // Store active state
             };
         }
 
@@ -128,13 +129,13 @@ public class StateBackupService
     {
         if (snapshot == null) return;
 
-        // Phase 1: Detach tất cả carrying relationships
+        // Phase 1: Detach all carrying relationships
         foreach (var piece in snapshot.PieceData.Keys)
         {
             carryingSystem.Detach(piece);
         }
 
-        // Phase 2: Restore positions và board state
+        // Phase 2: Restore positions, board state and visual state
         foreach (var kvp in snapshot.PieceData)
         {
             var piece = kvp.Key;
@@ -142,9 +143,15 @@ public class StateBackupService
 
             piece.Position = data.Position;
             piece.IsHero = data.IsHero;
+            
+            // Restore visual state
+            if (piece.gameObject != null)
+            {
+                piece.gameObject.SetActive(data.IsActive);
+            }
         }
 
-        // Clear và restore board state
+        // Clear and restore board state
         var positionsToUpdate = new HashSet<BoardCoord>();
         foreach (var piece in snapshot.PieceData.Keys)
         {
@@ -158,7 +165,10 @@ public class StateBackupService
 
         foreach (var kvp in snapshot.BoardState)
         {
-            board.Pieces[kvp.Key] = kvp.Value;
+            if (snapshot.PieceData[kvp.Value].ExistsOnBoard)
+            {
+                board.Pieces[kvp.Key] = kvp.Value;
+            }
         }
 
         // Phase 3: Restore carrying relationships

@@ -24,33 +24,14 @@ public class PieceSpawner : MonoBehaviour
         {
             GameObject obj = objectResolver.Instantiate(setup.Prefab);
             var piece = obj.GetComponent<BasePiece>();
-            piece.PieceData = setup.PieceData;
             movementExecutor.PlaceOnBoard(piece, setup.Position);
             piece.Init();
-            if (piece.PossibleAttacks.Count > 0)
-            {
-                Debug.Log($"Piece {piece.Type} at {piece.Position} can attack {piece.PossibleAttacks.Count} positions");
-            }
-            else
-            {
-                Debug.Log($"Piece {piece.Type} at {piece.Position} has no attack positions");
-            }
-
-            if (piece.PossibleMoves.Count > 0)
-            {
-                Debug.Log($"Piece {piece.Type} at {piece.Position} can move to {piece.PossibleMoves.Count} positions");
-            }
-            else
-            {
-                Debug.Log($"Piece {piece.Type} at {piece.Position} has no move positions");
-            }
         }
 
         foreach (var setup in blueTeam)
         {
             GameObject obj = objectResolver.Instantiate(setup.Prefab);
             var piece = obj.GetComponent<BasePiece>();
-            piece.PieceData = setup.PieceData;
             movementExecutor.PlaceOnBoard(piece, setup.Position);
             piece.Init();
 
@@ -110,12 +91,6 @@ public class PieceSpawner : MonoBehaviour
                 return false;
             }
 
-            if (setupData.PieceData == null)
-            {
-                Debug.LogError($"Red team piece {setupData.Piece.Type} has no PieceData assigned");
-                return false;
-            }
-
             if (setupData.Piece.Team != Team.Red)
             {
                 Debug.LogError($"Red team piece {setupData.Piece.Type} has incorrect team {setupData.Piece.Team}");
@@ -127,37 +102,31 @@ public class PieceSpawner : MonoBehaviour
         {
             if (setupData.Prefab == null)
             {
-                Debug.LogError($"Red team piece {setupData.Piece.Type} has no prefab assigned");
+                Debug.LogError($"Blue team piece {setupData.Piece.Type} has no prefab assigned");
                 return false;
             }
 
             if (setupData.Piece == null)
             {
-                Debug.LogError($"Red team piece at position {setupData.Position} has no Piece component");
+                Debug.LogError($"Blue team piece at position {setupData.Position} has no Piece component");
                 return false;
             }
 
             if (!board.IsInBoard(setupData.Position))
             {
-                Debug.LogError($"Red team piece {setupData.Piece.Type} has invalid position {setupData.Position}");
+                Debug.LogError($"Blue team piece {setupData.Piece.Type} has invalid position {setupData.Position}");
                 return false;
             }
 
             if (board.Pieces.ContainsKey(setupData.Position))
             {
-                Debug.LogError($"Red team piece {setupData.Piece.Type} position {setupData.Position} is already occupied");
-                return false;
-            }
-
-            if (setupData.PieceData == null)
-            {
-                Debug.LogError($"Red team piece {setupData.Piece.Type} has no PieceData assigned");
+                Debug.LogError($"Blue team piece {setupData.Piece.Type} position {setupData.Position} is already occupied");
                 return false;
             }
 
             if (setupData.Piece.Team != Team.Blue)
             {
-                Debug.LogError($"Red team piece {setupData.Piece.Type} has incorrect team {setupData.Piece.Team}");
+                Debug.LogError($"Blue team piece {setupData.Piece.Type} has incorrect team {setupData.Piece.Team}");
                 return false;
             }
         }
@@ -171,13 +140,11 @@ public class PieceSpawner : MonoBehaviour
 public class PieceSetupData
 {
     [SerializeField] string positionLabel;
-    [SerializeField] PieceData pieceData;
     [SerializeField] GameObject prefab;
 
     public BoardCoord Position { get => GetPositionFromLabel();}
     public GameObject Prefab { get => prefab; }
     public BasePiece Piece { get => prefab.GetComponent<BasePiece>(); }
-    public PieceData PieceData { get => pieceData; }
 
     BoardCoord GetPositionFromLabel()
     {
