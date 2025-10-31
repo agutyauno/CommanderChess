@@ -60,7 +60,7 @@ public class BoardingCommand : BaseCommand
             moverBecamePassenger = carryingSystem.GetCarrier(SelectedPiece) == target;
 
             // Execute boarding movement
-            var result = movementExecutor.ExecuteBoarding(SelectedPiece, target, From, To);
+            var result = movementExecutor.ExecuteBoarding(SelectedPiece, target, From, To, moverBecamePassenger);
             if (!result.IsSuccess)
             {
                 Debug.LogError($"BoardingCommand: ExecuteBoarding failed: {result.ErrorMessage}");

@@ -187,53 +187,58 @@ public class MovementExecutor
     /// - Nếu target đang mang quân → các quân đó vẫn ở với target
     /// - CarryingSystem.TryAddCarry() sẽ tự động redistribute nếu cần
     /// </summary>
-    public MovementResult ExecuteBoarding(BasePiece mover, BasePiece target, BoardCoord from, BoardCoord to)
+    public MovementResult ExecuteBoarding(BasePiece mover, BasePiece target, BoardCoord from, BoardCoord to, bool moverBecomesPassenger)
     {
-        if (mover == null || target == null)
-            return MovementResult.Failed("Mover or target is null");
-
-        // Xác định ai mang ai (đã được CarryingSystem.TryAddCarry xử lý)
-        var carrier = carryingSystem.GetCarrier(mover);
-        var passenger = carrier == target ? mover : target;
-        var actualCarrier = carrier == target ? target : mover;
-
-        // Case 1: Mover becomes passenger
-        if (passenger == mover)
+        try
         {
-            // Remove mover from board (becomes carried)
-            board.Pieces.Remove(from);
+            if (mover == null || target == null)
+                return MovementResult.Failed("Mover or target is null");
 
-            // Update positions for mover + all its carried pieces
-            mover.Position = to;
-            UpdateCarriedPiecesPositions(mover, to);
+            // Case 1: Mover becomes passenger
+            if (moverBecomesPassenger)
+            {
+                // Remove mover from board (becomes carried)
+                board.Pieces.Remove(from);
 
-            UpdateVisualPosition(mover, to);
-            UpdateCarriedVisualPositions(mover);
+                // Update logical position
+                mover.Position = to;
+                UpdateCarriedPiecesPositions(mover, to);
+
+                // Update visual with offset for passenger
+                Vector3 carrierPos = board.BoardCoordToWorld(to);
+                UpdateCarriedVisualPositions(mover);
+
+                SendBoardingEvent(target, mover, from, to);
+            }
+            // Case 2: Mover becomes carrier
+            else
+            {
+                // Move carrier to target position
+                board.Pieces.Remove(from);
+                board.Pieces[to] = mover;
+
+                // Update carrier position & visuals (centered)
+                mover.Position = to;
+                UpdateCarriedPiecesPositions(mover, to);
+                UpdateVisualPosition(mover, to);
+
+                // Update passenger position & visuals (with offset)
+                target.Position = to;
+                UpdateCarriedPiecesPositions(target, to);
+
+                Vector3 carrierPos = board.BoardCoordToWorld(to);
+                UpdateCarriedVisualPositions(target);
+
+                SendBoardingEvent(mover, target, from, to);
+            }
+
+            return MovementResult.Success(mover, from, to);
         }
-        // Case 2: Mover becomes carrier
-        else
+        catch (System.Exception e)
         {
-            // Move carrier to target position
-            board.Pieces.Remove(from);
-            board.Pieces[to] = mover;
-
-            // Update positions for mover + all its original carried pieces
-            mover.Position = to;
-            UpdateCarriedPiecesPositions(mover, to);
-
-            // Target (passenger) is now carried (+ its carried pieces if any)
-            target.Position = to;
-            UpdateCarriedPiecesPositions(target, to);
-
-            // Update visuals for everyone
-            UpdateVisualPosition(mover, to);
-            UpdateCarriedVisualPositions(mover); // Updates ALL carried (including target and its nested)
-            UpdateVisualPosition(target, to);
-            UpdateCarriedVisualPositions(target);
+            Debug.LogError($"ExecuteBoarding failed: {e.Message}\n{e.StackTrace}");
+            return MovementResult.Failed($"Exception: {e.Message}");
         }
-
-        SendBoardingEvent(actualCarrier, passenger, from, to);
-        return MovementResult.Success(mover, from, to);
     }
 
     /// <summary>
@@ -342,7 +347,7 @@ public class MovementExecutor
             return false;
 
         if (board.Pieces.ContainsKey(position))
-            return false; 
+            return false;
         board.Pieces[position] = piece;
         piece.Position = position;
         UpdateCarriedPiecesPositions(piece, position);
@@ -394,7 +399,7 @@ public class MovementExecutor
     {
         if (piece == null) return;
         var carriedPieces = carryingSystem.GetAllCarriedPieces(piece);
-        
+
         // Remove from board
         RemoveFromBoard(piece);
 
