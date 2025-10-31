@@ -3,9 +3,9 @@ using UnityEngine;
 
 public class CaptureCommand : BaseCommand
 {
-     BasePiece pieceToCapture;
+    BasePiece defender;
     bool attackerShotDown = false;
-    bool defenderShotDown = false;
+    bool defenderDestroyed = false;
 
     public CaptureCommand(
         BoardCoord from,
@@ -14,20 +14,21 @@ public class CaptureCommand : BaseCommand
         CarryingSystem carryingSystem,
         StateBackupService backupService,
         PathChecker pathChecker,
-        MovementExecutor movementExecutor) :
-        base(from, to, board, carryingSystem, backupService, pathChecker, movementExecutor)
+        MovementExecutor movementExecutor)
+        : base(from, to, board, carryingSystem, backupService, pathChecker, movementExecutor)
     {
         SelectedPiece = board.Pieces.ContainsKey(from) ? board.Pieces[from] : null;
-        pieceToCapture = board.Pieces.ContainsKey(to) ? board.Pieces[to] : null;
+        defender = board.Pieces.ContainsKey(to) ? board.Pieces[to] : null;
     }
 
-    public override string Description => $"{SelectedPiece?.Team} {SelectedPiece?.Type} captures {pieceToCapture?.Team} {pieceToCapture?.Type} at {To.ToLabel()}";
+    public override string Description =>
+        $"{SelectedPiece?.Team} {SelectedPiece?.Type} captures {defender?.Team} {defender?.Type} at {To.ToLabel()}";
 
     public override bool CanExecute()
     {
-        if (SelectedPiece == null || pieceToCapture == null) return false;
+        if (SelectedPiece == null || defender == null) return false;
         if (!SelectedPiece.PossibleAttacks.Contains(To)) return false;
-        if (pieceToCapture.Team == SelectedPiece.Team) return false;
+        if (defender.Team == SelectedPiece.Team) return false;
         return true;
     }
 
@@ -40,32 +41,30 @@ public class CaptureCommand : BaseCommand
             switch (pathResult)
             {
                 case PathResult.GoThrough:
-                    // path goes through danger zone -> attacker is shot down before reaching target
+                    // Attacker shot down before reaching target
                     movementExecutor.RemoveFromBoard(SelectedPiece);
                     attackerShotDown = true;
+                    Debug.Log($"  {SelectedPiece.Type} shot down before reaching target!");
                     return true;
 
                 case PathResult.Inside:
-                    // destination is inside danger zone -> 1-for-1 exchange (both destroyed)
+                    // Both destroyed (1-for-1 trade)
                     movementExecutor.RemoveFromBoard(SelectedPiece);
-                    movementExecutor.RemoveFromBoard(pieceToCapture);
+                    movementExecutor.RemoveFromBoard(defender);
                     attackerShotDown = true;
-                    defenderShotDown = true;
+                    defenderDestroyed = true;
+                    Debug.Log($"  1-for-1 trade! Both pieces destroyed!");
                     return true;
 
                 case PathResult.None:
-                    // safe: normal capture - remove defender and move attacker into its square
-                    movementExecutor.RemoveFromBoard(pieceToCapture);
-                    defenderShotDown = true;
-                    if (SelectedPiece.DoMoveToTarget)
+                    // Normal capture
+                    var result = movementExecutor.ExecuteCapture(SelectedPiece, defender, From, To);
+                    if (!result.IsSuccess)
                     {
-                        var result = movementExecutor.MovePiece(SelectedPiece, From, To);
-                        if (!result.IsSuccess)
-                        {
-                            Debug.LogError($"CaptureCommand: MovePiece failed: {result.ErrorMessage}");
-                            return false;
-                        }
+                        Debug.LogError($"CaptureCommand: ExecuteCapture failed: {result.ErrorMessage}");
+                        return false;
                     }
+                    defenderDestroyed = true;
                     return true;
 
                 default:
@@ -84,38 +83,33 @@ public class CaptureCommand : BaseCommand
     {
         try
         {
-            // If attacker was shot down (GoThrough or Inside) restore it
+            // Case 1: Attacker shot down (GoThrough or Inside)
             if (attackerShotDown)
             {
                 if (!movementExecutor.PlaceOnBoard(SelectedPiece, From))
                 {
-                    Debug.LogError("CaptureCommand: Failed to restore attacker to board");
+                    Debug.LogError("CaptureCommand: Failed to restore attacker");
                     return false;
                 }
             }
 
-            // If defender was destroyed (Inside or normal capture) restore it to original pos
-            if (defenderShotDown)
+            // Case 2: Defender destroyed (Inside or normal capture)
+            if (defenderDestroyed)
             {
-                if (!movementExecutor.PlaceOnBoard(pieceToCapture, To))
+                if (!movementExecutor.PlaceOnBoard(defender, To))
                 {
-                    Debug.LogError("CaptureCommand: Failed to restore defender to board");
+                    Debug.LogError("CaptureCommand: Failed to restore defender");
                     return false;
                 }
             }
-            else if (!attackerShotDown)
-            {
-                // Normal capture case: defender removed and attacker moved -> revert attacker move and restore defender
-                if (!movementExecutor.PlaceOnBoard(pieceToCapture, To))
-                {
-                    Debug.LogError("CaptureCommand: Failed to restore defender to board (normal capture)");
-                    return false;
-                }
 
-                var res = movementExecutor.RevertMovePiece(SelectedPiece, To, From);
-                if (!res.IsSuccess)
+            // Case 3: Normal capture - need to move attacker back
+            if (!attackerShotDown && defenderDestroyed)
+            {
+                var result = movementExecutor.RevertCapture(SelectedPiece, defender, From, To);
+                if (!result.IsSuccess)
                 {
-                    Debug.LogError($"CaptureCommand: Failed to revert attacker move: {res.ErrorMessage}");
+                    Debug.LogError($"CaptureCommand: RevertCapture failed: {result.ErrorMessage}");
                     return false;
                 }
             }

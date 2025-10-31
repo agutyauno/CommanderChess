@@ -4,7 +4,6 @@ using UnityEngine;
 
 public class DetachCommand : BaseCommand
 {
-   // carrier from which we detach, passenger being detached, destination
     BasePiece carrier;
     BasePiece passenger;
     bool wasShotDown = false;
@@ -19,13 +18,8 @@ public class DetachCommand : BaseCommand
         MovementExecutor movementExecutor)
         : base(from, to, board, carryingSystem, backupService, pathChecker, movementExecutor)
     {
-        // 'from' is expected to be the carrier's board coord
         carrier = board.Pieces.ContainsKey(from) ? board.Pieces[from] : null;
-
-        // pick a passenger to detach (first direct carried). If there are multiple callers should create specific command.
         passenger = carrier != null ? carryingSystem.GetDirectCarrying(carrier).FirstOrDefault() : null;
-
-        // For description and template usage we treat passenger as SelectedPiece
         SelectedPiece = passenger;
         wasShotDown = false;
     }
@@ -37,11 +31,9 @@ public class DetachCommand : BaseCommand
 
     public override bool CanExecute()
     {
-        if (carrier == null) return false;
-        if (passenger == null) return false;
+        if (carrier == null || passenger == null) return false;
         if (!board.IsInBoard(To)) return false;
-        // destination must be empty (no plain capture here)
-        if (board.Pieces.ContainsKey(To)) return false;
+        if (board.Pieces.ContainsKey(To)) return false; // Must be empty
         return true;
     }
 
@@ -49,32 +41,32 @@ public class DetachCommand : BaseCommand
     {
         try
         {
-            // remember start position (carrier position)
-            var start = carrier.Position;
+            var carrierPos = carrier.Position;
 
-            // Perform detach in carrying system
+            // Detach from carrying system
             if (!carryingSystem.Detach(passenger))
             {
-                Debug.LogError($"DetachCommand: Failed to detach {passenger.Type} from {carrier.Type}");
+                Debug.LogError($"DetachCommand: Failed to detach {passenger.Type}");
                 return false;
             }
 
-            // Check path from carrier position -> To
-            var pathResult = pathChecker.CheckPath(passenger, start, To).Result;
+            // Check path from carrier position to destination
+            var pathResult = pathChecker.CheckPath(passenger, carrierPos, To).Result;
 
             if (pathResult == PathResult.GoThrough || pathResult == PathResult.Inside)
             {
-                // shot down during transit / landing
-                // Ensure piece is not on board and mark as destroyed
+                // Passenger shot down during detach
                 movementExecutor.RemoveFromBoard(passenger);
                 wasShotDown = true;
+                Debug.Log($"  {passenger.Type} shot down during detach!");
                 return true;
             }
 
-            // Normal: place passenger on board at destination
-            if (!movementExecutor.PlaceOnBoard(passenger, To))
+            // Normal detach
+            var result = movementExecutor.ExecuteDetach(passenger, carrierPos, To);
+            if (!result.IsSuccess)
             {
-                Debug.LogError($"DetachCommand: Failed to place {passenger.Type} at {To.ToLabel()}");
+                Debug.LogError($"DetachCommand: ExecuteDetach failed: {result.ErrorMessage}");
                 return false;
             }
 
@@ -91,27 +83,27 @@ public class DetachCommand : BaseCommand
     {
         try
         {
-            // If passenger was shot down -> reattach to carrier (restore original relationship)
             if (wasShotDown)
             {
+                // Reattach will be handled by StateBackupService
+                // Just need to ensure relationship is restored
                 if (!carryingSystem.TryAddCarry(carrier, passenger))
                 {
-                    Debug.LogError($"DetachCommand: Failed to reattach (undo) {passenger?.Type} to {carrier?.Type}");
+                    Debug.LogError($"DetachCommand: Failed to reattach {passenger.Type}");
                     return false;
                 }
                 return true;
             }
 
-            // Normal undo: remove passenger from board and reattach to carrier
-            // If passenger currently on board at To, remove it
-            movementExecutor.RemoveFromBoard(passenger);
-
-            if (!carryingSystem.TryAddCarry(carrier, passenger))
+            // Normal undo: remove from board and reattach
+            var result = movementExecutor.RevertDetach(passenger, To);
+            if (!result.IsSuccess)
             {
-                Debug.LogError($"DetachCommand: Failed to reattach (undo) {passenger?.Type} to {carrier?.Type}");
+                Debug.LogError($"DetachCommand: RevertDetach failed: {result.ErrorMessage}");
                 return false;
             }
 
+            // StateBackupService will handle reattaching
             return true;
         }
         catch (Exception e)

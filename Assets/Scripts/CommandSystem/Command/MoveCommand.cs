@@ -1,9 +1,9 @@
 using UnityEngine;
-using System.Collections.Generic;
 using System;
+
 public class MoveCommand : BaseCommand
 {
-   bool wasShotDown = false;
+    bool wasShotDown = false;
 
     public MoveCommand(
         BoardCoord from,
@@ -19,14 +19,13 @@ public class MoveCommand : BaseCommand
         wasShotDown = false;
     }
 
-    public override string Description => $"{SelectedPiece.Team} {SelectedPiece.Type} moves to {To.ToLabel()}";
+    public override string Description => $"{SelectedPiece?.Team} {SelectedPiece?.Type} moves to {To.ToLabel()}";
 
     public override bool CanExecute()
     {
         if (SelectedPiece == null) return false;
         if (!board.IsInBoard(To)) return false;
-        // Only allow plain move to empty tile (captures handled by CaptureCommand)
-        if (board.Pieces.ContainsKey(To)) return false;
+        if (board.Pieces.ContainsKey(To)) return false; // Must be empty
         if (!SelectedPiece.PossibleMoves.Contains(To)) return false;
         return true;
     }
@@ -37,19 +36,21 @@ public class MoveCommand : BaseCommand
         {
             var pathResult = pathChecker.CheckPath(SelectedPiece, From, To).Result;
 
-            // If path goes through or ends inside a danger zone -> immediately shot down
+            // Check for danger zones
             if (pathResult == PathResult.GoThrough || pathResult == PathResult.Inside)
             {
+                // Shot down during movement or at destination
                 movementExecutor.RemoveFromBoard(SelectedPiece);
                 wasShotDown = true;
+                Debug.Log($"  {SelectedPiece.Type} was shot down!");
                 return true;
             }
 
-            // Normal move
-            var mv = movementExecutor.MovePiece(SelectedPiece, From, To);
-            if (!mv.IsSuccess)
+            // Safe movement
+            var result = movementExecutor.MovePiece(SelectedPiece, From, To);
+            if (!result.IsSuccess)
             {
-                Debug.LogError($"MoveCommand: MovePiece failed: {mv.ErrorMessage}");
+                Debug.LogError($"MoveCommand: MovePiece failed: {result.ErrorMessage}");
                 return false;
             }
 
@@ -68,20 +69,20 @@ public class MoveCommand : BaseCommand
         {
             if (wasShotDown)
             {
-                // restore shot piece back to original position
+                // Restore shot down piece
                 if (!movementExecutor.PlaceOnBoard(SelectedPiece, From))
                 {
-                    Debug.LogError("MoveCommand: Failed to restore shot piece to board");
+                    Debug.LogError("MoveCommand: Failed to restore shot piece");
                     return false;
                 }
                 return true;
             }
 
-            // revert normal move (current = To, previous = From)
-            var res = movementExecutor.RevertMovePiece(SelectedPiece, To, From);
-            if (!res.IsSuccess)
+            // Revert normal move
+            var result = movementExecutor.RevertMovePiece(SelectedPiece, To, From);
+            if (!result.IsSuccess)
             {
-                Debug.LogError($"MoveCommand: Failed to revert move: {res.ErrorMessage}");
+                Debug.LogError($"MoveCommand: RevertMovePiece failed: {result.ErrorMessage}");
                 return false;
             }
 
