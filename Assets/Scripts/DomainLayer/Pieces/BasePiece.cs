@@ -31,28 +31,33 @@ public abstract class BasePiece : MonoBehaviour
     [SerializeField] protected PieceData pieceData;
     #endregion
 
+    #region Fields
+    bool canBeBlocked;
+    bool canBeHero;
+    #endregion
+
     #region Properties
-    public abstract PieceType Type { get;  }
+    public abstract PieceType Type { get; }
     public Team Team { get => team; set => team = value; }
     public PieceData PieceData { get => pieceData; set => pieceData = value; }
     public BoardCoord Position { get; set; }
     public BoardCoord InitialPosition { get; protected set; }
-    
+
     // Cache
     protected List<BoardCoord> cachedMoves = new();
     protected List<BoardCoord> cachedAttacks = new();
     protected List<BoardCoord> cachedRingOfFireZones = new();
-    
+
     public List<BoardCoord> PossibleMoves => cachedMoves;
     public List<BoardCoord> PossibleAttacks => cachedAttacks;
     public List<BoardCoord> RingOfFireZones => cachedRingOfFireZones;
-    
+
     // Properties from PieceData
     public HashSet<PieceType> AllowedCarryTypes { get; protected set; } = new HashSet<PieceType>();
     public bool DoMoveToTarget { get; protected set; } = true;
     public bool HadRingOfFire { get; protected set; } = false;
     public bool IsHero { get; set; } = false;
-    
+
     #endregion
 
     #region Piece Types Enum
@@ -83,10 +88,10 @@ public abstract class BasePiece : MonoBehaviour
 
         ApplyPieceData(pieceData);
         InitialPosition = Position;
-        
+
         // Call subclass initialization if needed
         OnInit();
-        
+
         RecalculateCache();
 
         Debug.Log($"[{GetType().Name}.Init] {team} {Type}: {cachedMoves.Count} moves, {cachedAttacks.Count} attacks");
@@ -106,7 +111,8 @@ public abstract class BasePiece : MonoBehaviour
             foreach (var carryType in data.AllowedCarryTypes)
                 AllowedCarryTypes.Add(carryType);
         }
-
+        canBeBlocked = data.CanBeBlocked;
+        canBeHero = data.CanBeHero;
         DoMoveToTarget = data.DoMoveToTarget;
         HadRingOfFire = data.HadRingOfFire;
     }
@@ -203,11 +209,11 @@ public abstract class BasePiece : MonoBehaviour
                 if (dx == 0 && dy == 0) continue;
 
                 int distance = Mathf.Abs(dx) + Mathf.Abs(dy);
-                
+
                 if (distance <= range)
                 {
                     var targetPos = new BoardCoord(Position.x + dx, Position.y + dy);
-                    
+
                     if (board.IsInBoard(targetPos))
                         cachedRingOfFireZones.Add(targetPos);
                 }
@@ -222,72 +228,75 @@ public abstract class BasePiece : MonoBehaviour
     /// <summary>
     /// Add moves in a direction - Helper cho subclasses
     /// </summary>
-    protected void AddMovesInDirection((int dx, int dy) dir, int maxRange, bool canPassThrough = false)
+    protected void AddMovesInDirection((int dx, int dy) dir, int maxRange)
     {
         for (int distance = 1; distance <= maxRange; distance++)
         {
-            var targetPos = new BoardCoord(
-                Position.x + dir.dx * distance,
-                Position.y + dir.dy * distance
-            );
+            var targetPos = new BoardCoord(Position.x + dir.dx * distance, Position.y + dir.dy * distance);
 
-            // Out of bounds
-            if (!board.IsInBoard(targetPos))
+            if (!board.IsInBoard(targetPos) || !IsTerrainAllowed(targetPos))
                 break;
 
-            // Terrain check
-            if (!IsTerrainAllowed(targetPos))
-                break;
-
-            // Occupied
             if (board.Pieces.TryGetValue(targetPos, out BasePiece occupant))
             {
-                if (occupant.Team != Team)
-                    break;
-                if (occupant.Team == Team)
+                bool isAlly = occupant.Team == Team;
+                bool carryable = occupant.AllowedCarryTypes.Contains(Type) || AllowedCarryTypes.Contains(occupant.Type);
+
+                if (canBeBlocked)
                 {
-                    if (occupant.AllowedCarryTypes.Contains(Type) || AllowedCarryTypes.Contains(occupant.Type))
+                    if (!isAlly) // enemy blocks movement
+                        break;
+
+                    if (carryable) // ally can carry -> can move onto it, then stop
                     {
                         if (!cachedMoves.Contains(targetPos))
                             cachedMoves.Add(targetPos);
+                        break;
                     }
                 }
-                if (!canPassThrough)
-                    break;
+                else
+                {
+                    if (!isAlly) // enemy doesn't block, but cannot move onto it -> skip
+                        continue;
+
+                    if (carryable && !cachedMoves.Contains(targetPos))
+                        cachedMoves.Add(targetPos);
+
+                    continue;
+                }
             }
 
-            // Valid move!
+            // empty square -> valid move
             if (!cachedMoves.Contains(targetPos))
                 cachedMoves.Add(targetPos);
         }
     }
 
-    /// <summary>
-    /// Add attacks in a direction - Helper cho subclasses
-    /// </summary>
-    protected void AddAttacksInDirection((int dx, int dy) dir, int maxRange, bool canPassThrough = false)
+    protected void AddAttacksInDirection((int dx, int dy) dir, int maxRange)
     {
         for (int distance = 1; distance <= maxRange; distance++)
         {
-            var targetPos = new BoardCoord(
-                Position.x + dir.dx * distance,
-                Position.y + dir.dy * distance
-            );
+            var targetPos = new BoardCoord(Position.x + dir.dx * distance, Position.y + dir.dy * distance);
 
             if (!board.IsInBoard(targetPos))
                 break;
 
             if (board.Pieces.TryGetValue(targetPos, out BasePiece occupant))
             {
-                // Can attack enemy
-                if (occupant.Team != this.Team)
-                {
-                    if (!cachedAttacks.Contains(targetPos))
-                        cachedAttacks.Add(targetPos);
-                }
+                bool isEnemy = occupant.Team != Team;
 
-                if (!canPassThrough)
+                if (canBeBlocked)
+                {
+                    if (isEnemy && !cachedAttacks.Contains(targetPos))
+                        cachedAttacks.Add(targetPos);
                     break;
+                }
+                else
+                {
+                    if (isEnemy && !cachedAttacks.Contains(targetPos))
+                        cachedAttacks.Add(targetPos);
+                    continue;
+                }
             }
         }
     }
@@ -318,7 +327,7 @@ public abstract class BasePiece : MonoBehaviour
     /// </summary>
     protected bool IsOccupiedByAlly(BoardCoord pos, out BasePiece ally)
     {
-        var ok = board.Pieces.TryGetValue(pos, out BasePiece occupant) && occupant.Team == this.Team;
+        var ok = board.Pieces.TryGetValue(pos, out BasePiece occupant) && occupant.Team == Team;
         if (ok)
         {
             ally = occupant;
@@ -332,7 +341,7 @@ public abstract class BasePiece : MonoBehaviour
 
     protected bool IsOccupiedByEnemy(BoardCoord pos, out BasePiece enemy)
     {
-        var ok = board.Pieces.TryGetValue(pos, out BasePiece occupant) && occupant.Team != this.Team;
+        var ok = board.Pieces.TryGetValue(pos, out BasePiece occupant) && occupant.Team != Team;
         if (ok)
         {
             enemy = occupant;
@@ -350,6 +359,7 @@ public abstract class BasePiece : MonoBehaviour
 
     public virtual void BecomeHero()
     {
+        if (!canBeHero) return;
         if (IsHero) return;
         IsHero = true;
         RecalculateCache();

@@ -4,6 +4,7 @@ using UnityEngine;
 public class PieceData : ScriptableObject
 {
     [Header("Movement")]
+    [SerializeField] bool canBeBlocked = true;
     [SerializeField] private bool canMoveStraight = true;
     [Range(1, 100), SerializeField] private int straightMoveRange = 1;
     [SerializeField] private bool canMoveDiagonal = false;
@@ -25,6 +26,7 @@ public class PieceData : ScriptableObject
 
     [Header("Other")]
     [SerializeField] private bool doMoveToTarget = true;
+    [SerializeField] bool canBeHero = true;
 
     #region properties
     public bool CanMoveStraight { get => canMoveStraight; set => canMoveStraight = value; }
@@ -40,6 +42,8 @@ public class PieceData : ScriptableObject
     public int RingOfFireRange { get => ringOfFireRange; set => ringOfFireRange = value; }
     public BasePiece.PieceType[] AllowedCarryTypes { get => allowedCarryTypes; set => allowedCarryTypes = value; }
     public bool DoMoveToTarget { get => doMoveToTarget; set => doMoveToTarget = value; }
+    public bool CanBeBlocked { get => canBeBlocked; }
+    public bool CanBeHero { get => canBeHero;}
     #endregion
 }
 
