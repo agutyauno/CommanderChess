@@ -1,0 +1,91 @@
+using UnityEngine;
+using CommanderChess.Domain;
+
+namespace CommanderChess.GameState
+{
+    /// <summary>
+    /// ExecutingActionState - Trạng thái khi đang thực thi action
+    /// Block input và chờ animation/command hoàn thành
+    /// </summary>
+    public class ExecutingActionState : IGameState
+    {
+        public GameStateData Data { get; }
+        public GameStateManager Manager { get; }
+
+        bool isExecuting = false;
+
+        public ExecutingActionState(GameStateData data, GameStateManager manager)
+        {
+            Data = data;
+            Manager = manager;
+        }
+
+        public void Enter()
+        {
+            Debug.Log("Entered ExecutingActionState - blocking input");
+            isExecuting = true;
+
+            // TODO: Nếu có animation system, chờ animation complete
+            // Hiện tại chỉ transition ngay về Idle
+
+            // Simulate instant execution
+            OnCommandCompleted();
+        }
+
+        public void Exit()
+        {
+            Debug.Log("Exited ExecutingActionState");
+            isExecuting = false;
+        }
+
+        public void HandleBoardClick(BoardCoord coord)
+        {
+            // Input blocked during execution
+            Debug.Log("Input blocked - command executing");
+        }
+
+        public void HandlePieceClick(BasePiece piece)
+        {
+            // Input blocked during execution
+            Debug.Log("Input blocked - command executing");
+        }
+
+        public void HandleCancel()
+        {
+            // Cannot cancel during execution
+            Debug.Log("Cannot cancel - command executing");
+        }
+
+        public void Update()
+        {
+            // Check if execution is complete
+            // Trong thực tế, sẽ check animation state hoặc async operation
+
+            if (!isExecuting)
+            {
+                OnCommandCompleted();
+            }
+        }
+
+        private void OnCommandCompleted()
+        {
+            Debug.Log("Command execution completed");
+
+            // Clear selection
+            Data.Clear();
+
+            // TODO: Check win condition
+            // if (Manager.CheckWinCondition()) 
+            // {
+            //     Manager.ChangeState(GameState.GameOver);
+            //     return;
+            // }
+
+            // End turn (hoặc giữ turn nếu là detach + continue move)
+            Manager.TurnManager.EndTurn();
+
+            // Return to Idle
+            Manager.ChangeState(GameState.Idle);
+        }
+    }
+}
