@@ -244,28 +244,10 @@ namespace CommanderChess.Domain
                     bool isAlly = occupant.Team == Team;
                     bool carryable = occupant.AllowedCarryTypes.Contains(Type) || AllowedCarryTypes.Contains(occupant.Type);
 
-                    if (canBeBlocked)
-                    {
-                        if (!isAlly) // enemy blocks movement
-                            break;
-
-                        if (carryable) // ally can carry -> can move onto it, then stop
-                        {
-                            if (!cachedMoves.Contains(targetPos))
-                                cachedMoves.Add(targetPos);
-                            break;
-                        }
-                    }
-                    else
-                    {
-                        if (!isAlly) // enemy doesn't block, but cannot move onto it -> skip
-                            continue;
-
-                        if (carryable && !cachedMoves.Contains(targetPos))
-                            cachedMoves.Add(targetPos);
-
-                        continue;
-                    }
+                    if (isAlly && carryable && !cachedMoves.Contains(targetPos)) // ally can carry -> can move onto it, then stop
+                        cachedMoves.Add(targetPos);
+                    if (canBeBlocked) break;
+                    continue;
                 }
 
                 // empty square -> valid move
@@ -287,18 +269,10 @@ namespace CommanderChess.Domain
                 {
                     bool isEnemy = occupant.Team != Team;
 
-                    if (canBeBlocked)
-                    {
-                        if (isEnemy && !cachedAttacks.Contains(targetPos))
-                            cachedAttacks.Add(targetPos);
-                        break;
-                    }
-                    else
-                    {
-                        if (isEnemy && !cachedAttacks.Contains(targetPos))
-                            cachedAttacks.Add(targetPos);
-                        continue;
-                    }
+                    if (isEnemy && !cachedAttacks.Contains(targetPos))
+                        cachedAttacks.Add(targetPos);
+                    if (canBeBlocked) break;
+                    continue;
                 }
             }
         }

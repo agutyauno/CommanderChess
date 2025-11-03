@@ -25,7 +25,7 @@ namespace CommanderChess.Services
 
             foreach (var setup in redTeam)
             {
-                GameObject obj = objectResolver.Instantiate(setup.Prefab);
+                GameObject obj = objectResolver.Instantiate(setup.Prefab, transform);
                 var piece = obj.GetComponent<BasePiece>();
                 movementExecutor.PlaceOnBoard(piece, setup.Position);
                 piece.Init();
@@ -33,7 +33,7 @@ namespace CommanderChess.Services
 
             foreach (var setup in blueTeam)
             {
-                GameObject obj = objectResolver.Instantiate(setup.Prefab);
+                GameObject obj = objectResolver.Instantiate(setup.Prefab, transform);
                 var piece = obj.GetComponent<BasePiece>();
                 movementExecutor.PlaceOnBoard(piece, setup.Position);
                 piece.Init();

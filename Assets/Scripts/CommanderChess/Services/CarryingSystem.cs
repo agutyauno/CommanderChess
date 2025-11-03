@@ -263,7 +263,7 @@ namespace CommanderChess.Services
                 return false;
             }
 
-            // LOGIC MỚI: Kiểm tra tổng group size
+            // Kiểm tra tổng group size
             // Group size = carrier's group + passenger's group
             int carrierGroupSize = CountGroupSize(carrier);
             int passengerGroupSize = CountGroupSize(passenger);
@@ -289,7 +289,7 @@ namespace CommanderChess.Services
         /// </summary>
         private bool IsAncestorOf(BasePiece ancestor, BasePiece descendant)
         {
-            if (!carryingNodes.TryGetValue(descendant, out var node))
+            if (!carryingNodes.TryGetValue(descendant, out _))
                 return false;
 
             var current = descendant;
@@ -342,7 +342,7 @@ namespace CommanderChess.Services
             if (carrierNode.HasFreeSlot)
             {
                 // Nếu passenger đang mang quân, thử redistribute
-                if (passengerNode.Carrying.Count > 0)
+                if (carrierNode.Carrying.Count > 0 || passengerNode.Carrying.Count > 0)
                 {
                     return TryPlaceWithRedistribution(carrier, passenger);
                 }
