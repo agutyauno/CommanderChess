@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace CommanderChess.Domain
 {
-    public readonly struct BoardCoord : IEquatable<BoardCoord>
+    public struct BoardCoord
     {
         public readonly int x;
         public readonly int y;
@@ -24,7 +24,20 @@ namespace CommanderChess.Domain
         public static bool operator ==(BoardCoord a, BoardCoord b) => a.x == b.x && a.y == b.y;
         public static bool operator !=(BoardCoord a, BoardCoord b) => !(a == b);
 
-        public override string ToString() => $"({x},{y})";
+        // Operator overloads for vector-like operations
+        public static BoardCoord operator +(BoardCoord a, BoardCoord b)
+            => new BoardCoord(a.x + b.x, a.y + b.y);
+
+        public static BoardCoord operator -(BoardCoord a, BoardCoord b)
+            => new BoardCoord(a.x - b.x, a.y - b.y);
+
+        public static BoardCoord operator *(BoardCoord a, int scalar)
+            => new BoardCoord(a.x * scalar, a.y * scalar);
+
+        public static BoardCoord operator /(BoardCoord a, int scalar)
+            => new BoardCoord(a.x / scalar, a.y / scalar);
+
+        public override string ToString() => $"({x}, {y})";
 
         // Convert to label like "A1", "B3", "AA10"
         public string ToLabel()
@@ -69,6 +82,58 @@ namespace CommanderChess.Domain
             // letters -> x (1-based), digits -> y (1-based)
             coord = new BoardCoord(col, row);
             return true;
+        }
+
+        // Utility methods for common operations
+        public int ManhattanDistance(BoardCoord other)
+            => Mathf.Abs(x - other.x) + Mathf.Abs(y - other.y);
+
+        public float EuclideanDistance(BoardCoord other)
+            => Mathf.Sqrt(Mathf.Pow(x - other.x, 2) + Mathf.Pow(y - other.y, 2));
+
+        public bool IsAdjacent(BoardCoord other)
+            => ManhattanDistance(other) == 1;
+
+        public bool IsDiagonal(BoardCoord other)
+            => Mathf.Abs(x - other.x) == 1 && Mathf.Abs(y - other.y) == 1;
+
+        // Direction vectors for common movements
+        public static readonly BoardCoord Up = new BoardCoord(0, 1);
+        public static readonly BoardCoord Down = new BoardCoord(0, -1);
+        public static readonly BoardCoord Left = new BoardCoord(-1, 0);
+        public static readonly BoardCoord Right = new BoardCoord(1, 0);
+
+        public static readonly BoardCoord UpLeft = new BoardCoord(-1, 1);
+        public static readonly BoardCoord UpRight = new BoardCoord(1, 1);
+        public static readonly BoardCoord DownLeft = new BoardCoord(-1, -1);
+        public static readonly BoardCoord DownRight = new BoardCoord(1, -1);
+
+        // Helper method to get all adjacent coordinates
+        public BoardCoord[] GetAdjacentCoords()
+        {
+            return new BoardCoord[]
+            {
+                this + Up,
+                this + Right,
+                this + Down,
+                this + Left
+            };
+        }
+
+        // Helper method to get all surrounding coordinates (including diagonals)
+        public BoardCoord[] GetSurroundingCoords()
+        {
+            return new BoardCoord[]
+            {
+                this + Up,
+                this + UpRight,
+                this + Right,
+                this + DownRight,
+                this + Down,
+                this + DownLeft,
+                this + Left,
+                this + UpLeft
+            };
         }
 
         // IEquatable implementation + overrides

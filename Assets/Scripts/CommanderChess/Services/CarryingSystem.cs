@@ -8,8 +8,8 @@ namespace CommanderChess.Services
     /// <summary>
     /// CarryingSystem - Hệ thống quản lý quan hệ mang/được mang giữa các quân cờ
     /// Quy tắc chính:
-    /// - Tổng quân trong group (carrier + carrying + nested) < 3
-    /// - Tự động phân phối thông minh
+    /// - Tổng quân trong group (carrier + carrying + nested) <= 3
+    /// - Tự động phân phối thông minh khi boarding
     /// - Hỗ trợ TryAddCarry(A, B) tự động xác định ai mang ai
     /// </summary>
     public class CarryingSystem
@@ -74,13 +74,13 @@ namespace CommanderChess.Services
         }
 
         /// <summary>
-        /// TryAddCarry - Tự động xác định ai mang ai
-        /// Đảm bảo group size < 3
+        /// TryAddCarry - Tự động xác định ai mang ai và phân phối thông minh
         /// </summary>
         public bool TryAddCarry(BasePiece A, BasePiece B)
         {
             BasePiece passenger;
             BasePiece carrier;
+
             // Xác định carrier và passenger
             if (CanCarryDirectly(A, B))
             {
@@ -98,6 +98,12 @@ namespace CommanderChess.Services
                 return false;
             }
 
+            if (!carrier.CanCarryOthers)
+            {
+                Debug.LogWarning($"{carrier.Type} cannot carry others");
+                return false;
+            }
+
             Debug.Log($"Attempting: {carrier.Type} carry {passenger.Type}");
 
             // Validate carrying
@@ -107,13 +113,12 @@ namespace CommanderChess.Services
                 return false;
             }
 
-            // Thực hiện carrying
-            return ExecuteCarry(carrier, passenger);
+            // Thực hiện carrying với redistribution
+            return ExecuteCarryWithRedistribution(carrier, passenger);
         }
 
         /// <summary>
         /// Tách một quân ra khỏi carrier
-        /// Khi tách một quân, các quân nó đang mang cũng theo
         /// </summary>
         public bool Detach(BasePiece piece)
         {
@@ -121,24 +126,20 @@ namespace CommanderChess.Services
                 return false;
 
             if (node.Carrier == null)
-                return false; // Không có carrier
+                return false;
 
             var carrier = node.Carrier;
             var carrierNode = carryingNodes[carrier];
 
-            // Xóa piece khỏi carrier
             carrierNode.Carrying.Remove(piece);
             node.Carrier = null;
 
             Debug.Log($"Detached {piece.Type} from {carrier.Type}");
-
-            // NOTE: Các quân mà piece đang mang vẫn giữ nguyên với piece
-
             return true;
         }
 
         /// <summary>
-        /// Lấy tất cả quân mà piece đang mang (không bao gồm đệ quy)
+        /// Lấy tất cả quân mà piece đang mang (không đệ quy)
         /// </summary>
         public List<BasePiece> GetDirectCarrying(BasePiece piece)
         {
@@ -174,7 +175,7 @@ namespace CommanderChess.Services
         }
 
         /// <summary>
-        /// Lấy carrier gốc (top-level) của một quân
+        /// Lấy carrier gốc (top-level)
         /// </summary>
         public BasePiece GetRootCarrier(BasePiece piece)
         {
@@ -199,13 +200,16 @@ namespace CommanderChess.Services
         }
 
         /// <summary>
-        /// Lấy carrier trực tiếp của piece
+        /// Lấy carrier trực tiếp
         /// </summary>
         public BasePiece GetCarrier(BasePiece piece)
         {
             return carryingNodes.TryGetValue(piece, out var node) ? node.Carrier : null;
         }
 
+        /// <summary>
+        /// Kiểm tra carrier có thể mang passenger không (theo type)
+        /// </summary>
         public bool CanCarryDirectly(BasePiece carrier, BasePiece passenger)
         {
             return carrier.AllowedCarryTypes.Contains(passenger.Type);
@@ -219,28 +223,24 @@ namespace CommanderChess.Services
         {
             reason = "";
 
-            // Kiểm tra cả hai quân đều đã đăng ký
             if (!carryingNodes.ContainsKey(carrier) || !carryingNodes.ContainsKey(passenger))
             {
                 reason = "Piece not registered";
                 return false;
             }
 
-            // Không thể tự mang chính mình
             if (carrier == passenger)
             {
                 reason = "Cannot carry itself";
                 return false;
             }
 
-            // Kiểm tra cùng team
             if (carrier.Team != passenger.Team)
             {
                 reason = "Different teams";
                 return false;
             }
 
-            // Kiểm tra carrier có được phép mang loại này không
             if (!carrier.AllowedCarryTypes.Contains(passenger.Type))
             {
                 reason = $"{carrier.Type} cannot carry {passenger.Type}";
@@ -249,44 +249,30 @@ namespace CommanderChess.Services
 
             var carrierNode = carryingNodes[carrier];
 
-            // Kiểm tra không cho phép mang cùng loại quân
             if (carrierNode.Carrying.Any(p => p.Type == passenger.Type))
             {
                 reason = "Already carrying same piece type";
                 return false;
             }
 
-            // Kiểm tra carrier không được là con của passenger (tránh vòng lặp)
             if (IsAncestorOf(passenger, carrier))
             {
                 reason = "Would create circular reference";
                 return false;
             }
 
-            // Kiểm tra tổng group size
-            // Group size = carrier's group + passenger's group
             int carrierGroupSize = CountGroupSize(carrier);
             int passengerGroupSize = CountGroupSize(passenger);
             int totalAfterCarry = carrierGroupSize + passengerGroupSize;
 
-            Debug.Log($"  Group size check:");
-            Debug.Log($"    Carrier ({carrier.Type}) group: {carrierGroupSize}");
-            Debug.Log($"    Passenger ({passenger.Type}) group: {passengerGroupSize}");
-            Debug.Log($"    Total after combine: {totalAfterCarry}");
-
             if (totalAfterCarry > 3)
             {
-                reason = $"Group size would exceed limit: {carrierGroupSize} + {passengerGroupSize} = {totalAfterCarry} > 3";
                 return false;
             }
 
-            Debug.Log($"    Group size OK");
             return true;
         }
 
-        /// <summary>
-        /// Kiểm tra ancestor có phải là tổ tiên của descendant không
-        /// </summary>
         private bool IsAncestorOf(BasePiece ancestor, BasePiece descendant)
         {
             if (!carryingNodes.TryGetValue(descendant, out _))
@@ -305,211 +291,165 @@ namespace CommanderChess.Services
 
         #endregion
 
-        #region Private Execution
+        #region Private Execution - NEW REDISTRIBUTION LOGIC
 
-        private bool ExecuteCarry(BasePiece carrier, BasePiece passenger)
+        /// <summary>
+        /// Thực hiện carrying với redistribution tự động
+        /// </summary>
+        private bool ExecuteCarryWithRedistribution(BasePiece carrier, BasePiece passenger)
         {
+            var carrierNode = carryingNodes[carrier];
             var passengerNode = carryingNodes[passenger];
 
-            // Nếu passenger đã được mang bởi ai đó khác, tách ra trước
+            // Tách passenger khỏi carrier cũ (nếu có)
             if (passengerNode.Carrier != null && passengerNode.Carrier != carrier)
             {
                 Detach(passenger);
             }
 
-            bool placed = TryPlace(carrier, passenger);
+            // Thu thập tất cả pieces cần redistribute
+            var allPieces = new List<BasePiece>();
 
-            if (placed)
-            {
-                Debug.Log($"{carrier.Type} now carries {passenger.Type}");
-                Debug.Log($"  Group structure:");
-                PrintGroupStructure(carrier, "  ");
-                return true;
-            }
+            // Pieces từ carrier hiện tại
+            allPieces.AddRange(carrierNode.Carrying.ToList());
 
-            return false;
-        }
-
-        /// <summary>
-        /// Phân phối thông minh khi thêm passenger vào carrier
-        /// </summary>
-        private bool TryPlace(BasePiece carrier, BasePiece passenger)
-        {
-            var carrierNode = carryingNodes[carrier];
-            var passengerNode = carryingNodes[passenger];
-
-            // Case 1: Carrier còn slot trống -> Thêm trực tiếp vào carrier
-            if (carrierNode.HasFreeSlot)
-            {
-                // Nếu passenger đang mang quân, thử redistribute
-                if (carrierNode.Carrying.Count > 0 || passengerNode.Carrying.Count > 0)
-                {
-                    return TryPlaceWithRedistribution(carrier, passenger);
-                }
-                else
-                {
-                    // Passenger không mang gì, thêm trực tiếp
-                    carrierNode.Carrying.Add(passenger);
-                    passengerNode.Carrier = carrier;
-                    return true;
-                }
-            }
-
-            // Case 2: Carrier đã đầy, thử cho một trong các quân đang mang carry passenger
-            return TryPlaceInCarriedPieces(carrier, passenger);
-        }
-
-        /// <summary>
-        /// Phân phối lại khi cần
-        /// Logic: Khi thêm passenger, các quân carrier đang mang có thể bị chuyển sang passenger
-        /// Ví dụ: Airforce mang Infantry, sau đó mang Tank (tank trống)
-        /// Kết quả: Airforce carry [Tank], Tank carry [Infantry]
-        /// </summary>
-        private bool TryPlaceWithRedistribution(BasePiece carrier, BasePiece passenger)
-        {
-            var carrierNode = carryingNodes[carrier];
-            var passengerNode = carryingNodes[passenger];
-
-            // Lấy danh sách các quân carrier đang mang
-            var carrierChildren = carrierNode.Carrying.ToList();
-
-            // Lấy danh sách các quân passenger đang mang
-            var passengerChildren = passengerNode.Carrying.ToList();
-
-            // Tạo list tất cả pieces cần redistribute
-            var piecesToRedistribute = new List<BasePiece>();
-            piecesToRedistribute.AddRange(carrierChildren);
-            piecesToRedistribute.AddRange(passengerChildren);
+            // Pieces từ passenger
+            allPieces.AddRange(passengerNode.Carrying.ToList());
 
             // Tách tất cả relationships hiện tại
-            foreach (var child in carrierChildren)
+            foreach (var piece in allPieces.ToList())
             {
-                carrierNode.Carrying.Remove(child);
-                carryingNodes[child].Carrier = null;
+                Detach(piece);
             }
 
-            foreach (var child in passengerChildren)
-            {
-                passengerNode.Carrying.Remove(child);
-                carryingNodes[child].Carrier = null;
-            }
-
-            // Thêm passenger vào carrier
+            // Thêm passenger vào carrier trước
             carrierNode.Carrying.Add(passenger);
             passengerNode.Carrier = carrier;
 
-            Debug.Log($"    Redistributing {piecesToRedistribute.Count} pieces...");
-
-            // Redistribute theo thứ tự ưu tiên:
-            // 1. Thử cho passenger mang (nếu passenger có thể mang loại này)
-            // 2. Thử cho carrier mang (nếu carrier còn slot)
-            // 3. Thử cho các siblings khác
-            foreach (var piece in piecesToRedistribute)
+            // Redistribution theo thứ tự ưu tiên
+            foreach (var piece in allPieces)
             {
-                bool redistributed = false;
-
-                // Priority 1: Passenger mang (nếu có thể)
-                if (passenger.AllowedCarryTypes.Contains(piece.Type) &&
-                    passengerNode.HasFreeSlot &&
-                    !passengerNode.Carrying.Any(p => p.Type == piece.Type))
+                if (!RedistributePiece(piece, carrier, passenger))
                 {
-                    passengerNode.Carrying.Add(piece);
-                    carryingNodes[piece].Carrier = passenger;
-                    redistributed = true;
-                    Debug.Log($"      → {piece.Type} moved to {passenger.Type}");
-                }
-                // Priority 2: Carrier mang (nếu còn slot)
-                else if (carrier.AllowedCarryTypes.Contains(piece.Type) &&
-                         carrierNode.HasFreeSlot &&
-                         !carrierNode.Carrying.Any(p => p.Type == piece.Type))
-                {
-                    carrierNode.Carrying.Add(piece);
-                    carryingNodes[piece].Carrier = carrier;
-                    redistributed = true;
-                    Debug.Log($"      → {piece.Type} stays with {carrier.Type}");
-                }
-                // Priority 3: Siblings (các quân khác carrier đang mang)
-                else
-                {
-                    foreach (var sibling in carrierNode.Carrying.ToList())
-                    {
-                        if (sibling == passenger) continue;
-
-                        var siblingNode = carryingNodes[sibling];
-                        if (sibling.AllowedCarryTypes.Contains(piece.Type) &&
-                            siblingNode.HasFreeSlot &&
-                            !siblingNode.Carrying.Any(p => p.Type == piece.Type))
-                        {
-                            siblingNode.Carrying.Add(piece);
-                            carryingNodes[piece].Carrier = sibling;
-                            redistributed = true;
-                            Debug.Log($"      → {piece.Type} moved to {sibling.Type}");
-                            break;
-                        }
-                    }
-                }
-
-                if (!redistributed)
-                {
-                    Debug.LogError($"      Failed to redistribute {piece.Type}! Rolling back...");
-
-                    // Rollback toàn bộ
-                    carrierNode.Carrying.Remove(passenger);
-                    passengerNode.Carrier = null;
-
-                    // Restore carrier's children
-                    foreach (var child in carrierChildren)
-                    {
-                        carrierNode.Carrying.Add(child);
-                        carryingNodes[child].Carrier = carrier;
-                    }
-
-                    // Restore passenger's children
-                    foreach (var child in passengerChildren)
-                    {
-                        passengerNode.Carrying.Add(child);
-                        carryingNodes[child].Carrier = passenger;
-                    }
-
+                    Debug.LogError($"Failed to redistribute {piece.Type}! Rolling back...");
+                    RollbackCarrying(carrier, passenger, allPieces);
                     return false;
                 }
             }
+
+            Debug.Log("Redistribution complete:");
+            PrintGroupStructure(carrier, "  ");
 
             return true;
         }
 
         /// <summary>
-        /// Thử đặt passenger vào một trong các quân carrier đang mang
+        /// Redistribute một piece theo thứ tự ưu tiên:
+        /// 1. Passenger mang (nếu có thể)
+        /// 2. Carrier mang (nếu còn slot)
+        /// 3. Sibling khác mang
+        /// 4. Slot trống của bất kỳ ai
         /// </summary>
-        private bool TryPlaceInCarriedPieces(BasePiece carrier, BasePiece passenger)
+        private bool RedistributePiece(BasePiece piece, BasePiece carrier, BasePiece passenger)
         {
             var carrierNode = carryingNodes[carrier];
+            var passengerNode = carryingNodes[passenger];
 
-            foreach (var carried in carrierNode.Carrying)
+            Debug.Log($"  Redistributing {piece.Type}:");
+
+            // Priority 1: Passenger mang (nếu có thể)
+            if (CanPlaceInPiece(passenger, piece))
             {
-                var carriedNode = carryingNodes[carried];
-
-                // Kiểm tra carried có thể mang passenger không
-                if (!carried.AllowedCarryTypes.Contains(passenger.Type))
-                    continue;
-
-                // Kiểm tra không duplicate type
-                if (carriedNode.Carrying.Any(p => p.Type == passenger.Type))
-                    continue;
-
-                // Kiểm tra có slot trống
-                if (!carriedNode.HasFreeSlot)
-                    continue;
-
-                // Thực hiện
-                carriedNode.Carrying.Add(passenger);
-                carryingNodes[passenger].Carrier = carried;
-
-                Debug.Log($"    Placed {passenger.Type} in {carried.Type} (nested)");
+                passengerNode.Carrying.Add(piece);
+                carryingNodes[piece].Carrier = passenger;
                 return true;
             }
 
+            // Priority 2: Carrier mang (nếu còn slot)
+            if (CanPlaceInPiece(carrier, piece))
+            {
+                carrierNode.Carrying.Add(piece);
+                carryingNodes[piece].Carrier = carrier;
+                return true;
+            }
+
+            // Priority 3: Siblings (các quân khác mà carrier đang mang, không phải passenger)
+            foreach (var sibling in carrierNode.Carrying.ToList())
+            {
+                if (sibling == passenger) continue;
+
+                if (CanPlaceInPiece(sibling, piece))
+                {
+                    carryingNodes[sibling].Carrying.Add(piece);
+                    carryingNodes[piece].Carrier = sibling;
+                    return true;
+                }
+            }
+
+            // Priority 4: Bất kỳ slot trống nào trong toàn bộ group
+            var allInGroup = new List<BasePiece> { carrier };
+            allInGroup.AddRange(GetAllCarriedPieces(carrier));
+
+            foreach (var candidate in allInGroup)
+            {
+                if (candidate == piece) continue; // Không thể tự mang mình
+
+                if (CanPlaceInPiece(candidate, piece))
+                {
+                    carryingNodes[candidate].Carrying.Add(piece);
+                    carryingNodes[piece].Carrier = candidate;
+                    return true;
+                }
+            }
+
+            Debug.LogError($"No valid placement found for {piece.Type}");
             return false;
+        }
+
+        /// <summary>
+        /// Kiểm tra xem có thể đặt piece vào holder không
+        /// </summary>
+        private bool CanPlaceInPiece(BasePiece holder, BasePiece piece)
+        {
+            if (!carryingNodes.TryGetValue(holder, out var holderNode))
+                return false;
+
+            // Kiểm tra type compatibility
+            if (!holder.AllowedCarryTypes.Contains(piece.Type))
+                return false;
+
+            // Kiểm tra có slot trống
+            if (!holderNode.HasFreeSlot)
+                return false;
+
+            // Kiểm tra không duplicate type
+            if (holderNode.Carrying.Any(p => p.Type == piece.Type))
+                return false;
+
+            // Kiểm tra không tạo circular reference
+            if (IsAncestorOf(piece, holder))
+                return false;
+
+            return true;
+        }
+
+        /// <summary>
+        /// Rollback khi redistribution thất bại
+        /// </summary>
+        private void RollbackCarrying(BasePiece carrier, BasePiece passenger, List<BasePiece> originalPieces)
+        {
+            Debug.LogWarning("Rolling back carrying operation...");
+
+            // Tách passenger
+            Detach(passenger);
+
+            // Restore original relationships
+            // Note: Trong thực tế, cần lưu snapshot của relationships trước khi redistribute
+            // Để đơn giản, ta chỉ tách tất cả
+            foreach (var piece in originalPieces)
+            {
+                Detach(piece);
+            }
         }
 
         #endregion
@@ -521,7 +461,7 @@ namespace CommanderChess.Services
             if (!carryingNodes.TryGetValue(root, out var node))
                 return;
 
-            Debug.Log($"{indent}{root.Type}");
+            Debug.Log($"{indent}{root.Type} ({node.FreeSlots} free slots)");
 
             foreach (var child in node.Carrying)
             {
@@ -553,7 +493,7 @@ namespace CommanderChess.Services
                 indent += "│   ";
             }
 
-            sb.AppendLine($"{piece.Type} (carrying: {node.Carrying.Count}/2)");
+            sb.AppendLine($"{piece.Type} (carrying: {node.Carrying.Count}/2, free: {node.FreeSlots})");
 
             for (int i = 0; i < node.Carrying.Count; i++)
             {

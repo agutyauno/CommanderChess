@@ -34,8 +34,17 @@ namespace CommanderChess.Domain
         #endregion
 
         #region Fields
-        bool canBeBlocked;
-        bool canBeHero;
+        protected bool canBeBlocked;
+        protected bool canBeHero;
+        protected bool canCarryOthers = true; // default
+        protected bool canMoveStraight;
+        protected bool canMoveDiagonal;
+        protected bool canAttackStraight;
+        protected bool canAttackDiagonal;
+        protected int straightMoveRange;
+        protected int diagonalMoveRange;
+        protected int straightAttackRange;
+        protected int diagonalAttackRange;
         #endregion
 
         #region Properties
@@ -59,6 +68,7 @@ namespace CommanderChess.Domain
         public bool DoMoveToTarget { get; protected set; } = true;
         public bool HadRingOfFire { get; protected set; } = false;
         public bool IsHero { get; set; } = false;
+        public bool CanCarryOthers { get => canCarryOthers; }
 
         #endregion
 
@@ -117,6 +127,16 @@ namespace CommanderChess.Domain
             canBeHero = data.CanBeHero;
             DoMoveToTarget = data.DoMoveToTarget;
             HadRingOfFire = data.HadRingOfFire;
+
+            canMoveStraight = data.CanMoveStraight;
+            canMoveDiagonal = data.CanMoveDiagonal;
+            canAttackStraight = data.CanAttackStraight;
+            canAttackDiagonal = data.CanAttackDiagonal;
+
+            straightMoveRange = data.StraightMoveRange;
+            diagonalMoveRange = data.DiagonalMoveRange;
+            straightAttackRange = data.StraightAttackRange;
+            diagonalAttackRange = data.DiagonalAttackRange;
         }
 
         #endregion
@@ -149,20 +169,20 @@ namespace CommanderChess.Domain
         protected virtual void CalculateMoves()
         {
             // Default: Straight moves
-            if (pieceData.CanMoveStraight && pieceData.StraightMoveRange > 0)
+            if (canMoveStraight && straightMoveRange > 0)
             {
                 foreach (var dir in straightDirs)
                 {
-                    AddMovesInDirection(dir, pieceData.StraightMoveRange);
+                    AddMovesInDirection(dir, straightMoveRange);
                 }
             }
 
             // Default: Diagonal moves
-            if (pieceData.CanMoveDiagonal && pieceData.DiagonalMoveRange > 0)
+            if (canMoveDiagonal && diagonalMoveRange > 0)
             {
                 foreach (var dir in diagonalDirs)
                 {
-                    AddMovesInDirection(dir, pieceData.DiagonalMoveRange);
+                    AddMovesInDirection(dir, diagonalMoveRange);
                 }
             }
         }
@@ -174,20 +194,20 @@ namespace CommanderChess.Domain
         protected virtual void CalculateAttacks()
         {
             // Default: Straight attacks
-            if (pieceData.CanAttackStraight && pieceData.StraightAttackRange > 0)
+            if (canAttackStraight && straightAttackRange > 0)
             {
                 foreach (var dir in straightDirs)
                 {
-                    AddAttacksInDirection(dir, pieceData.StraightAttackRange);
+                    AddAttacksInDirection(dir, straightAttackRange);
                 }
             }
 
             // Default: Diagonal attacks
-            if (pieceData.CanAttackDiagonal && pieceData.DiagonalAttackRange > 0)
+            if (canAttackDiagonal && diagonalAttackRange > 0)
             {
                 foreach (var dir in diagonalDirs)
                 {
-                    AddAttacksInDirection(dir, pieceData.DiagonalAttackRange);
+                    AddAttacksInDirection(dir, diagonalAttackRange);
                 }
             }
         }
@@ -236,23 +256,21 @@ namespace CommanderChess.Domain
             {
                 var targetPos = new BoardCoord(Position.x + dir.dx * distance, Position.y + dir.dy * distance);
 
-                if (!board.IsInBoard(targetPos) || !IsTerrainAllowed(targetPos))
+                if (!board.IsInBoard(targetPos) || !IsTerrainAllowed(targetPos) || cachedMoves.Contains(targetPos))
                     break;
 
                 if (board.Pieces.TryGetValue(targetPos, out BasePiece occupant))
                 {
                     bool isAlly = occupant.Team == Team;
-                    bool carryable = occupant.AllowedCarryTypes.Contains(Type) || AllowedCarryTypes.Contains(occupant.Type);
+                    bool thisPieceIsCarrier = AllowedCarryTypes.Contains(occupant.Type);
+                    bool carryable = occupant.AllowedCarryTypes.Contains(Type) || thisPieceIsCarrier;
 
-                    if (isAlly && carryable && !cachedMoves.Contains(targetPos)) // ally can carry -> can move onto it, then stop
+                    if (isAlly && ((thisPieceIsCarrier && canCarryOthers) || (carryable && occupant.CanCarryOthers)))
                         cachedMoves.Add(targetPos);
                     if (canBeBlocked) break;
                     continue;
                 }
-
-                // empty square -> valid move
-                if (!cachedMoves.Contains(targetPos))
-                    cachedMoves.Add(targetPos);
+                cachedMoves.Add(targetPos);
             }
         }
 
@@ -338,6 +356,13 @@ namespace CommanderChess.Domain
             if (!canBeHero) return;
             if (IsHero) return;
             IsHero = true;
+            canMoveDiagonal = true;
+            canAttackDiagonal = true;
+            straightMoveRange += 1;
+            diagonalMoveRange += 1;
+            straightAttackRange += 1;
+            diagonalAttackRange += 1;
+
             RecalculateCache();
         }
 
