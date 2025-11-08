@@ -53,7 +53,7 @@ namespace CommanderChess.Domain
 
             // set sea (A1..L2 in your earlier spec)
             from = new BoardCoord(1, 1);
-            to = new BoardCoord(12, 2);
+            to = new BoardCoord(2, 12);
             SetTerrainRange(from, to, Terrains.Sea);
 
             // seaside ranges
@@ -101,7 +101,7 @@ namespace CommanderChess.Domain
             if (!IsInBoard(position))
                 throw new ArgumentOutOfRangeException("Position is out of board range.");
             Vector3Int offsetPos = Vector3Int.RoundToInt(transform.position) + (Vector3Int)offset;
-            return position + offsetPos;
+            return (Vector3Int)position + offsetPos;
         }
         public Vector3Int BoardCoordToCell(string label)
         {
@@ -131,9 +131,9 @@ namespace CommanderChess.Domain
         #endregion
         public void SetTerrainRange(BoardCoord from, BoardCoord to, Terrains type)
         {
-            for (int y = Math.Min(from.x, to.x); y <= Math.Max(from.x, to.x); y++)
+            for (int x = Math.Min(from.x, to.x); x <= Math.Max(from.x, to.x); x++)
             {
-                for (int x = Math.Min(from.y, to.y); x <= Math.Max(from.y, to.y); x++)
+                for (int y = Math.Min(from.y, to.y); y <= Math.Max(from.y, to.y); y++)
                 {
                     var pos = new BoardCoord(x, y);
                     if (IsInBoard(pos)) zoneMap[pos] = type;

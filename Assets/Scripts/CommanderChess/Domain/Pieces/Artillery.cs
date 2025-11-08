@@ -25,11 +25,11 @@ namespace CommanderChess.Domain
             }
         }
 
-        void AddMoves((int dx, int dy) dir, int maxRange)
+        void AddMoves(BoardCoord dir, int maxRange)
         {
             for (int distance = 1; distance <= maxRange; distance++)
             {
-                var targetPos = new BoardCoord(Position.x + dir.dx * distance, Position.y + dir.dy * distance);
+                var targetPos = Position + (dir * distance);
 
                 if (!ValidateMove(targetPos, dir))
                     break;
@@ -49,25 +49,32 @@ namespace CommanderChess.Domain
             }
         }
         
-        bool ValidateMove(BoardCoord targetPos, (int dx, int dy) dir)
+        bool ValidateMove(BoardCoord targetPos, BoardCoord dir)
         {
             if (!board.IsInBoard(targetPos) || !IsTerrainAllowed(targetPos) || cachedMoves.Contains(targetPos))
                 return false;
             board.TryGetTerrain(targetPos, out Terrains terrain);
             if (terrain == Terrains.Riverside)
             {
-                // tính trước 2 bước
-                var nextPos1 = new BoardCoord(targetPos.x + dir.dx, targetPos.y + dir.dy);
-                var nextPos2 = new BoardCoord(nextPos1.x + dir.dx, nextPos1.y + dir.dy);
+                // tính trước nước đi
+                var nextPos1 = targetPos + dir;
+                var ok = board.TryGetTerrain(nextPos1, out Terrains nextTerrain1);
 
-                // nếu 2 bước tiếp theo không phải là river thì không được đi qua riverside
-                board.TryGetTerrain(nextPos1, out Terrains terrain1);
-                board.TryGetTerrain(nextPos2, out Terrains terrain2);
-                if ( terrain1 == Terrains.Riverside)
+                if (ok && nextTerrain1 == Terrains.Riverside)
                 {
-                    if (terrain2 != Terrains.Riverside)
-                        return false;
+                    return true;
                 }
+
+                if (ok && nextTerrain1 == Terrains.Shallow)
+                {
+                    var nextPos2 = nextPos1 + (dir * 2);
+                    ok = board.TryGetTerrain(nextPos2, out Terrains nextTerrain2);
+                    if (ok && nextTerrain2 == Terrains.Riverside)
+                    {
+                        return true;
+                    }
+                }
+                return false;
             }
             return true;
         }

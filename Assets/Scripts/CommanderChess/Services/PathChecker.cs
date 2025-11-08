@@ -1,7 +1,7 @@
 using System.Collections.Generic;
-using UnityEngine;
 using VContainer;
 using CommanderChess.Domain;
+using UnityEngine;
 
 namespace CommanderChess.Services
 {
@@ -22,11 +22,13 @@ namespace CommanderChess.Services
         }
 
         public List<BoardCoord> GeneratePath(BoardCoord from, BoardCoord to)
-         {
+        {
             var path = new List<BoardCoord>();
 
-            int dx = to.x - from.x;
-            int dy = to.y - from.y;
+            // Sử dụng operator - để tính delta
+            var delta = to - from;
+            int dx = delta.x;
+            int dy = delta.y;
 
             // Xác định hướng di chuyển
             int stepX = dx == 0 ? 0 : (dx > 0 ? 1 : -1);
@@ -41,11 +43,14 @@ namespace CommanderChess.Services
             // Tính số bước
             int steps = Mathf.Max(Mathf.Abs(dx), Mathf.Abs(dy));
 
-            // Generate path từng bước
+            // Generate path từng bước - sử dụng direction vector
+            var direction = new BoardCoord(stepX, stepY);
             var current = from;
+            
             for (int i = 0; i < steps; i++)
             {
-                current = new BoardCoord(current.x + stepX, current.y + stepY);
+                // Sử dụng operator + để di chuyển
+                current = current + direction;
             
                 if (board.IsInBoard(current))
                 {
@@ -134,6 +139,14 @@ namespace CommanderChess.Services
                 }
             }
             return result;
+        }
+
+        /// <summary>
+        /// Kiểm tra xem path có đi qua một vị trí cụ thể không
+        /// </summary>
+        public bool PathPassesThrough(List<BoardCoord> path, BoardCoord position)
+        {
+            return path.Contains(position);
         }
     }
 }

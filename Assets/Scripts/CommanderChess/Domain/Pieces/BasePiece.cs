@@ -10,15 +10,15 @@ namespace CommanderChess.Domain
 {
     public abstract class BasePiece : MonoBehaviour
     {
-        #region Static Directions
-        protected static readonly (int dx, int dy)[] straightDirs = new[]
+        #region Directions
+        protected readonly BoardCoord[] straightDirs = new[]
         {
-            (1, 0), (-1, 0), (0, 1), (0, -1)
+            BoardCoord.Left, BoardCoord.Right, BoardCoord.Up, BoardCoord.Down
         };
 
-        protected static readonly (int dx, int dy)[] diagonalDirs = new[]
+        protected readonly BoardCoord[] diagonalDirs = new[]
         {
-            (1, 1), (1, -1), (-1, 1), (-1, -1)
+            BoardCoord.UpLeft, BoardCoord.UpRight, BoardCoord.DownLeft, BoardCoord.DownRight
         };
         #endregion
 
@@ -250,11 +250,11 @@ namespace CommanderChess.Domain
         /// <summary>
         /// Add moves in a direction - Helper cho subclasses
         /// </summary>
-        protected void AddMovesInDirection((int dx, int dy) dir, int maxRange)
+        protected void AddMovesInDirection(BoardCoord dir, int maxRange)
         {
             for (int distance = 1; distance <= maxRange; distance++)
             {
-                var targetPos = new BoardCoord(Position.x + dir.dx * distance, Position.y + dir.dy * distance);
+                var targetPos = Position + (dir * distance);
 
                 if (!board.IsInBoard(targetPos) || !IsTerrainAllowed(targetPos) || cachedMoves.Contains(targetPos))
                     break;
@@ -274,11 +274,11 @@ namespace CommanderChess.Domain
             }
         }
 
-        protected void AddAttacksInDirection((int dx, int dy) dir, int maxRange)
+        protected void AddAttacksInDirection(BoardCoord dir, int maxRange)
         {
             for (int distance = 1; distance <= maxRange; distance++)
             {
-                var targetPos = new BoardCoord(Position.x + dir.dx * distance, Position.y + dir.dy * distance);
+                var targetPos = Position + (dir * distance);
 
                 if (!board.IsInBoard(targetPos))
                     break;

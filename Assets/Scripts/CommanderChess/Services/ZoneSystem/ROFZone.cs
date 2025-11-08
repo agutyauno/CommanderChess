@@ -106,9 +106,9 @@ namespace CommanderChess.Services
 
             if (enemyThreats.Count == 0) return null;
 
-            // Trả về piece gần nhất
+            // Trả về piece gần nhất - SỬ DỤNG BoardCoord.ManhattanDistance()
             return enemyThreats
-                .OrderBy(p => ManhattanDistance(p.Position, position))
+                .OrderBy(p => position.ManhattanDistance(p.Position))
                 .FirstOrDefault();
         }
 
@@ -131,10 +131,47 @@ namespace CommanderChess.Services
             return intersections;
         }
 
-        // helper method
-        private int ManhattanDistance(BoardCoord a, BoardCoord b)
+        /// <summary>
+        /// Kiểm tra xem một vị trí có nằm trong ROF của team không
+        /// </summary>
+        public bool IsInROF(BoardCoord position, Team team)
         {
-            return Mathf.Abs(a.x - b.x) + Mathf.Abs(a.y - b.y);
+            if (isDirty) RecalculateAll();
+            return ROFByTeam[team].Contains(position);
+        }
+
+        /// <summary>
+        /// Lấy tất cả các source pieces tại một vị trí
+        /// </summary>
+        public List<BasePiece> GetAllSourcesAtPosition(BoardCoord position)
+        {
+            if (isDirty) RecalculateAll();
+            return ROFSourcePieces.TryGetValue(position, out var sources) 
+                ? new List<BasePiece>(sources) 
+                : new List<BasePiece>();
+        }
+
+        /// <summary>
+        /// Kiểm tra xem piece có trong vùng ROF của enemy không
+        /// </summary>
+        public bool IsPieceInEnemyROF(BasePiece piece)
+        {
+            if (isDirty) RecalculateAll();
+            var enemyTeam = piece.Team == Team.Red ? Team.Blue : Team.Red;
+            return ROFByTeam[enemyTeam].Contains(piece.Position);
+        }
+
+        /// <summary>
+        /// Lấy tất cả các vị trí trong ROF trong khoảng cách nhất định từ position
+        /// </summary>
+        public List<BoardCoord> GetROFZonesInRange(BoardCoord position, int range, Team team)
+        {
+            if (isDirty) RecalculateAll();
+            var zones = ROFByTeam[team];
+            
+            return zones
+                .Where(zone => position.ManhattanDistance(zone) <= range)
+                .ToList();
         }
     }
 }

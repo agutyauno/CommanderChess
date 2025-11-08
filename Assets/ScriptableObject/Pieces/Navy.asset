@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 83b4585d6c457964c84d2f48d0b8b5f3, type: 3}
   m_Name: Navy
   m_EditorClassIdentifier: Assembly-CSharp::PieceData
+  canBeBlocked: 0
   canMoveStraight: 1
   straightMoveRange: 4
   canMoveDiagonal: 1
@@ -25,3 +26,4 @@ MonoBehaviour:
   ringOfFireRange: 1
   allowedCarryTypes: 000000000100000002000000030000000400000008000000
   doMoveToTarget: 1
+  canBeHero: 1
