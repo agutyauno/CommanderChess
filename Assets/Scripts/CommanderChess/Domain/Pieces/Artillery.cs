@@ -27,13 +27,13 @@ namespace CommanderChess.Domain
 
         void AddMoves(BoardCoord dir, int maxRange)
         {
+            bool isDiagonal = dir.x != 0 && dir.y != 0;
             for (int distance = 1; distance <= maxRange; distance++)
             {
                 var targetPos = Position + (dir * distance);
-
-                if (!ValidateMove(targetPos, dir))
+                if (!board.IsInBoard(targetPos) || !IsTerrainAllowed(targetPos))
                     break;
-
+                if (cachedMoves.Contains(targetPos)) continue;
                 if (board.Pieces.TryGetValue(targetPos, out BasePiece occupant))
                 {
                     bool isAlly = occupant.Team == Team;
@@ -41,43 +41,49 @@ namespace CommanderChess.Domain
                     bool carryable = occupant.AllowedCarryTypes.Contains(Type) || thisPieceIsCarrier;
 
                     if (isAlly && ((thisPieceIsCarrier && canCarryOthers) || (carryable && occupant.CanCarryOthers)))
-                        cachedMoves.Add(targetPos);
+                    {
+                        if (canBeBlocked)
+                        {
+                            cachedMoves.Add(targetPos);
+                            break;
+                        }
+                    }
+
                     if (canBeBlocked) break;
                     continue;
+                }
+
+                var ok = board.TryGetTerrain(targetPos, out var targetTerrain);
+                if (ok && targetTerrain == Terrains.Riverside)
+                {
+                    var nextPos1 = targetPos + dir;
+                    ok = board.TryGetTerrain(nextPos1, out var terrain1);
+                    if (!isDiagonal)
+                    {
+                        if (ok && terrain1 != Terrains.Land)
+                        {
+                            cachedMoves.Add(targetPos);
+                            continue;
+                        }
+                        else if (!ok || terrain1 == Terrains.Sea)
+                        {
+                            cachedMoves.Add(targetPos);
+                            break;
+                        }
+                    }
+                    else if (!ok || terrain1 == Terrains.Shallow)
+                    {
+                        cachedMoves.Add(targetPos);
+                        break;
+                    }
+                    break;
+                }
+                else if (isDiagonal && ok && targetTerrain == Terrains.Shallow)
+                {
+                    break;
                 }
                 cachedMoves.Add(targetPos);
             }
         }
-        
-        bool ValidateMove(BoardCoord targetPos, BoardCoord dir)
-        {
-            if (!board.IsInBoard(targetPos) || !IsTerrainAllowed(targetPos) || cachedMoves.Contains(targetPos))
-                return false;
-            board.TryGetTerrain(targetPos, out Terrains terrain);
-            if (terrain == Terrains.Riverside)
-            {
-                // tính trước nước đi
-                var nextPos1 = targetPos + dir;
-                var ok = board.TryGetTerrain(nextPos1, out Terrains nextTerrain1);
-
-                if (ok && nextTerrain1 == Terrains.Riverside)
-                {
-                    return true;
-                }
-
-                if (ok && nextTerrain1 == Terrains.Shallow)
-                {
-                    var nextPos2 = nextPos1 + (dir * 2);
-                    ok = board.TryGetTerrain(nextPos2, out Terrains nextTerrain2);
-                    if (ok && nextTerrain2 == Terrains.Riverside)
-                    {
-                        return true;
-                    }
-                }
-                return false;
-            }
-            return true;
-        }
-
     }
 }
