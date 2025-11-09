@@ -118,54 +118,145 @@ namespace CommanderChess.CommandSystem
         }
 
         protected override bool DoUndo()
+{
+    try
+    {
+        // ===================================
+        // 🔧 FIX: Xử lý rõ ràng từng case
+        // ===================================
+        
+        Debug.Log($"[CaptureCommand.DoUndo] Starting undo:");
+        Debug.Log($"  - Attacker: {SelectedPiece?.Type} (ShotDown: {attackerShotDown})");
+        Debug.Log($"  - Defender: {defender?.Type} (Destroyed: {defenderDestroyed})");
+        Debug.Log($"  - Snapshot: {(snapshot != null ? $"{snapshot.PieceData.Count} pieces" : "NULL")}");
+
+        if (attackerShotDown && defenderDestroyed)
         {
-            try
+            // Case 1: Inside (1-for-1 trade)
+            // Cả 2 piece đều bị shot down
+            
+            Debug.Log($"Undo Case 1: Inside (1-for-1) - Restoring both pieces");
+            
+            // StateBackupService sẽ restore positions và relationships
+            // Chỉ cần enable lại visuals
+            if (SelectedPiece.gameObject != null)
             {
-                // Case 1: Attacker shot down (GoThrough or Inside)
-                if (attackerShotDown)
-                {
-                    if (!movementExecutor.PlaceOnBoard(SelectedPiece, From))
-                    {
-                        Debug.LogError("CaptureCommand: Failed to restore attacker");
-                        return false;
-                    }
-                }
-
-                // Case 2: Defender destroyed (Inside or normal capture)
-                if (defenderDestroyed)
-                {
-                    if (!movementExecutor.PlaceOnBoard(defender, To))
-                    {
-                        Debug.LogError("CaptureCommand: Failed to restore defender");
-                        return false;
-                    }
-                }
-
-                // Case 3: Normal capture với shouldMoveToTarget
-                if (!attackerShotDown && defenderDestroyed)
-                {
-                    var result = movementExecutor.RevertCapture(
-                        SelectedPiece, 
-                        defender, 
-                        From, 
-                        To,
-                        shouldMoveToTarget // Truyền flag để revert đúng
-                    );
-                    
-                    if (!result.IsSuccess)
-                    {
-                        Debug.LogError($"CaptureCommand: RevertCapture failed: {result.ErrorMessage}");
-                        return false;
-                    }
-                }
-
-                return true;
+                SelectedPiece.gameObject.SetActive(true);
             }
-            catch (Exception e)
+            
+            if (defender.gameObject != null)
             {
-                Debug.LogError($"CaptureCommand DoUndo failed: {e.Message}\n{e.StackTrace}");
-                return false;
+                defender.gameObject.SetActive(true);
             }
+            
+            // Restore carried pieces visuals
+            var attackerCarried = carryingSystem.GetAllCarriedPieces(SelectedPiece);
+            foreach (var carried in attackerCarried)
+            {
+                if (carried?.gameObject != null)
+                {
+                    carried.gameObject.SetActive(true);
+                }
+            }
+            
+            var defenderCarried = carryingSystem.GetAllCarriedPieces(defender);
+            foreach (var carried in defenderCarried)
+            {
+                if (carried?.gameObject != null)
+                {
+                    carried.gameObject.SetActive(true);
+                }
+            }
+            
+            return true;
         }
+        else if (attackerShotDown && !defenderDestroyed)
+        {
+            // Case 2: GoThrough
+            // Chỉ attacker bị shot down trước khi đến target
+            
+            Debug.Log($"Undo Case 2: GoThrough - Restoring attacker only");
+            
+            // StateBackupService sẽ restore position
+            // Chỉ cần enable lại visuals
+            if (SelectedPiece.gameObject != null)
+            {
+                SelectedPiece.gameObject.SetActive(true);
+            }
+            
+            // Restore carried pieces visuals
+            var attackerCarried = carryingSystem.GetAllCarriedPieces(SelectedPiece);
+            foreach (var carried in attackerCarried)
+            {
+                if (carried?.gameObject != null)
+                {
+                    carried.gameObject.SetActive(true);
+                }
+            }
+            
+            return true;
+        }
+        else if (!attackerShotDown && defenderDestroyed)
+        {
+            // Case 3: Normal capture (PathResult.None)
+            // Attacker thành công, defender bị destroyed
+            
+            Debug.Log($"Undo Case 3: Normal Capture - Restoring defender, reverting attacker movement");
+            
+            // Enable defender visuals
+            if (defender.gameObject != null)
+            {
+                defender.gameObject.SetActive(true);
+            }
+            
+            // Restore defender's carried pieces visuals
+            var defenderCarried = carryingSystem.GetAllCarriedPieces(defender);
+            foreach (var carried in defenderCarried)
+            {
+                if (carried?.gameObject != null)
+                {
+                    carried.gameObject.SetActive(true);
+                }
+            }
+            
+            // Revert attacker movement CHỈ NẾU có di chuyển
+            if (shouldMoveToTarget)
+            {
+                var result = movementExecutor.RevertCapture(
+                    SelectedPiece, 
+                    defender, 
+                    From, 
+                    To,
+                    shouldMoveToTarget
+                );
+                
+                if (!result.IsSuccess)
+                {
+                    Debug.LogError($"CaptureCommand: RevertCapture failed: {result.ErrorMessage}");
+                    return false;
+                }
+            }
+            else
+            {
+                // Attacker không di chuyển, chỉ cần restore defender
+                Debug.Log($"Attacker didn't move, only restoring defender");
+            }
+            
+            return true;
+        }
+        else
+        {
+            // Case không xác định
+            Debug.LogError($"CaptureCommand DoUndo: Unknown case - attackerShotDown={attackerShotDown}, defenderDestroyed={defenderDestroyed}");
+            return false;
+        }
+    }
+    catch (Exception e)
+    {
+        Debug.LogError($"CaptureCommand DoUndo failed: {e.Message}\n{e.StackTrace}");
+        return false;
+    }
+}
+
     }
 }

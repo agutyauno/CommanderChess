@@ -117,10 +117,6 @@ namespace CommanderChess.Services
     if (!board.IsInBoard(from) || !board.IsInBoard(to))
         return MovementResult.Failed("Invalid coordinates");
 
-    // Get carried pieces info
-    var attackerCarried = carryingSystem.GetAllCarriedPieces(attacker);
-    var defenderCarried = carryingSystem.GetAllCarriedPieces(defender);
-
     // 1. Remove defender + all carried pieces from board
     ShotDownPiece(defender);
 
