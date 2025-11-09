@@ -10,6 +10,7 @@ namespace CommanderChess.CommandSystem
         BasePiece defender;
         bool attackerShotDown = false;
         bool defenderDestroyed = false;
+        bool shouldMoveToTarget = true; // Mặc định là di chuyển
 
         public CaptureCommand(
             BoardCoord from,
@@ -23,10 +24,29 @@ namespace CommanderChess.CommandSystem
         {
             SelectedPiece = board.Pieces.ContainsKey(from) ? board.Pieces[from] : null;
             defender = board.Pieces.ContainsKey(to) ? board.Pieces[to] : null;
+            
+            // Xác định xem có nên di chuyển tới target không
+            DetermineMoveToTarget();
         }
 
         public override string Description =>
             $"{SelectedPiece?.Team} {SelectedPiece?.Type} captures {defender?.Team} {defender?.Type} at {To.ToLabel()}";
+
+        /// <summary>
+        /// Xác định xem attacker có nên di chuyển tới vị trí defender không
+        /// Logic đặc biệt cho Navy và các piece khác
+        /// </summary>
+        void DetermineMoveToTarget()
+        {
+            if (SelectedPiece == null || defender == null)
+            {
+                shouldMoveToTarget = true; // fallback
+                return;
+            }
+
+            // Case 3: Các piece khác - dùng DoMoveToTarget từ PieceData
+            shouldMoveToTarget = SelectedPiece.ShouldMoveToTarget(To);
+        }
 
         public override bool CanExecute()
         {
@@ -62,13 +82,27 @@ namespace CommanderChess.CommandSystem
 
                     case PathResult.None:
                         // Normal capture
-                        var result = movementExecutor.ExecuteCapture(SelectedPiece, defender, From, To);
+                        var result = movementExecutor.ExecuteCapture(
+                            SelectedPiece, 
+                            defender, 
+                            From, 
+                            To, 
+                            shouldMoveToTarget  // Truyền flag vào đây
+                        );
+                        
                         if (!result.IsSuccess)
                         {
                             Debug.LogError($"CaptureCommand: ExecuteCapture failed: {result.ErrorMessage}");
                             return false;
                         }
+                        
                         defenderDestroyed = true;
+                        
+                        if (!shouldMoveToTarget)
+                        {
+                            Debug.Log($"  {SelectedPiece.Type} captured {defender.Type} without moving (ranged attack)");
+                        }
+                        
                         return true;
 
                     default:
@@ -107,10 +141,17 @@ namespace CommanderChess.CommandSystem
                     }
                 }
 
-                // Case 3: Normal capture - need to move attacker back
+                // Case 3: Normal capture với shouldMoveToTarget
                 if (!attackerShotDown && defenderDestroyed)
                 {
-                    var result = movementExecutor.RevertCapture(SelectedPiece, defender, From, To);
+                    var result = movementExecutor.RevertCapture(
+                        SelectedPiece, 
+                        defender, 
+                        From, 
+                        To,
+                        shouldMoveToTarget // Truyền flag để revert đúng
+                    );
+                    
                     if (!result.IsSuccess)
                     {
                         Debug.LogError($"CaptureCommand: RevertCapture failed: {result.ErrorMessage}");

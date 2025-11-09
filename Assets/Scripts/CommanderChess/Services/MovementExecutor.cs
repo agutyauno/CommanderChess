@@ -109,72 +109,86 @@ namespace CommanderChess.Services
         /// <summary>
         /// Thực hiện capture: remove defender (+ carried), move attacker (+ carried) vào vị trí
         /// </summary>
-        public MovementResult ExecuteCapture(BasePiece attacker, BasePiece defender, BoardCoord from, BoardCoord to)
+        public MovementResult ExecuteCapture(BasePiece attacker, BasePiece defender, BoardCoord from, BoardCoord to, bool shouldMoveToTarget)
         {
             if (attacker == null || defender == null)
-                return MovementResult.Failed("Attacker or defender is null");
+        return MovementResult.Failed("Attacker or defender is null");
 
-            if (!board.IsInBoard(from) || !board.IsInBoard(to))
-                return MovementResult.Failed("Invalid coordinates");
+    if (!board.IsInBoard(from) || !board.IsInBoard(to))
+        return MovementResult.Failed("Invalid coordinates");
 
-            // Get carried pieces info
-            var attackerCarried = carryingSystem.GetAllCarriedPieces(attacker);
-            var defenderCarried = carryingSystem.GetAllCarriedPieces(defender);
+    // Get carried pieces info
+    var attackerCarried = carryingSystem.GetAllCarriedPieces(attacker);
+    var defenderCarried = carryingSystem.GetAllCarriedPieces(defender);
 
-            // 1. Remove defender + all carried pieces from board
-            ShotDownPiece(defender);
+    // 1. Remove defender + all carried pieces from board
+    ShotDownPiece(defender);
 
-            // 2. Move attacker + all carried pieces (nếu DoMoveToTarget = true)
-            if (attacker.DoMoveToTarget)
-            {
-                board.Pieces.Remove(from);
-                board.Pieces[to] = attacker;
+    // 2. Move attacker + all carried pieces (CHỈ NÕU shouldMoveToTarget = true)
+    if (shouldMoveToTarget)
+    {
+        board.Pieces.Remove(from);
+        board.Pieces[to] = attacker;
 
-                // Update positions for attacker + all carried
-                attacker.Position = to;
-                UpdateCarriedPiecesPositions(attacker, to);
+        // Update positions for attacker + all carried
+        attacker.Position = to;
+        UpdateCarriedPiecesPositions(attacker, to);
 
-                // Update visuals for attacker + all carried
-                UpdateVisualPosition(attacker, to);
-                UpdateCarriedVisualPositions(attacker);
-            }
+        // Update visuals for attacker + all carried
+        UpdateVisualPosition(attacker, to);
+        UpdateCarriedVisualPositions(attacker);
+        
+        Debug.Log($"Attacker moved from {from.ToLabel()} to {to.ToLabel()}");
+    }
+    else
+    {
+        // Attacker stays at original position (ranged attack)
+        Debug.Log($"Attacker stays at {from.ToLabel()} (ranged attack)");
+    }
 
-            // 3. Send events
-            SendCaptureEvent(attacker, defender, from, to);
+    // 3. Send events
+    SendCaptureEvent(attacker, defender, from, to);
 
-            return MovementResult.Success(attacker, from, to);
+    return MovementResult.Success(attacker, from, to);
         }
 
         /// <summary>
         /// Revert capture (dùng cho Undo)
         /// Restore defender (+ carried), move attacker (+ carried) về vị trí cũ
         /// </summary>
-        public MovementResult RevertCapture(BasePiece attacker, BasePiece defender, BoardCoord attackerOriginalPos, BoardCoord defenderPos)
+        public MovementResult RevertCapture(BasePiece attacker, BasePiece defender, BoardCoord attackerOriginalPos, BoardCoord defenderPos, bool attackerHadMoved)
         {
-            // 1. Restore defender + carried pieces được xử lý bởi StateBackupService
-            PlaceOnBoard(defender, defenderPos);
+           // 1. Restore defender + carried pieces được xử lý bởi StateBackupService
+    PlaceOnBoard(defender, defenderPos);
 
-            // Defender's carried pieces positions sẽ được restore bởi StateBackupService
-            // Chỉ cần update visual
-            UpdateVisualPosition(defender, defenderPos);
-            UpdateCarriedVisualPositions(defender);
+    // Defender's carried pieces positions sẽ được restore bởi StateBackupService
+    // Chỉ cần update visual
+    UpdateVisualPosition(defender, defenderPos);
+    UpdateCarriedVisualPositions(defender);
 
-            // 2. Move attacker + carried pieces back (nếu đã di chuyển)
-            if (attacker.DoMoveToTarget)
-            {
-                board.Pieces.Remove(defenderPos);
-                board.Pieces[attackerOriginalPos] = attacker;
+    // 2. Move attacker + carried pieces back (CHỈ NẾU attacker đã di chuyển)
+    if (attackerHadMoved)
+    {
+        board.Pieces.Remove(defenderPos);
+        board.Pieces[attackerOriginalPos] = attacker;
 
-                // Update positions for attacker + carried
-                attacker.Position = attackerOriginalPos;
-                UpdateCarriedPiecesPositions(attacker, attackerOriginalPos);
+        // Update positions for attacker + carried
+        attacker.Position = attackerOriginalPos;
+        UpdateCarriedPiecesPositions(attacker, attackerOriginalPos);
 
-                // Update visuals for attacker + carried
-                UpdateVisualPosition(attacker, attackerOriginalPos);
-                UpdateCarriedVisualPositions(attacker);
-            }
+        // Update visuals for attacker + carried
+        UpdateVisualPosition(attacker, attackerOriginalPos);
+        UpdateCarriedVisualPositions(attacker);
+        
+        Debug.Log($"Attacker moved back from {defenderPos.ToLabel()} to {attackerOriginalPos.ToLabel()}");
+    }
+    else
+    {
+        // Attacker didn't move, nothing to revert
+        Debug.Log($"Attacker stayed at {attackerOriginalPos.ToLabel()}, no position change");
+    }
 
-            return MovementResult.Success(attacker, defenderPos, attackerOriginalPos);
+    return MovementResult.Success(attacker, defenderPos, attackerOriginalPos);
         }
 
         #endregion

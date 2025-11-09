@@ -42,14 +42,14 @@ namespace CommanderChess.Domain
 
                     if (isAlly && ((thisPieceIsCarrier && canCarryOthers) || (carryable && occupant.CanCarryOthers)))
                     {
-                        if (canBeBlocked)
+                        if (moveCanBeBlocked)
                         {
                             cachedMoves.Add(targetPos);
                             break;
                         }
                     }
 
-                    if (canBeBlocked) break;
+                    if (moveCanBeBlocked) break;
                     continue;
                 }
 

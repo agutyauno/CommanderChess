@@ -5,7 +5,7 @@ using CommanderChess.Domain;
 public class PieceData : ScriptableObject
 {
     [Header("Movement")]
-    [SerializeField] bool canBeBlocked = true;
+    [SerializeField] bool moveCanBeBlocked = true;
     [SerializeField] private bool canMoveStraight = true;
     [Range(1, 100), SerializeField] private int straightMoveRange = 1;
     [SerializeField] private bool canMoveDiagonal = false;
@@ -13,6 +13,7 @@ public class PieceData : ScriptableObject
     [SerializeField] private Terrains[] allowedMoveTerrains;
 
     [Header("Attack")]
+    [SerializeField] bool attackCanBeBlocked = true;
     [SerializeField] private bool canAttackStraight = true;
     [Range(1, 100), SerializeField] private int straightAttackRange = 1;
     [SerializeField] private bool canAttackDiagonal = false;
@@ -43,8 +44,9 @@ public class PieceData : ScriptableObject
     public int RingOfFireRange { get => ringOfFireRange; set => ringOfFireRange = value; }
     public BasePiece.PieceType[] AllowedCarryTypes { get => allowedCarryTypes; set => allowedCarryTypes = value; }
     public bool DoMoveToTarget { get => doMoveToTarget; set => doMoveToTarget = value; }
-    public bool CanBeBlocked { get => canBeBlocked; }
+    public bool CanBeBlocked { get => moveCanBeBlocked; }
     public bool CanBeHero { get => canBeHero;}
+    public bool AttackCanBeBlocked { get => attackCanBeBlocked; set => attackCanBeBlocked = value; }
     #endregion
 }
 

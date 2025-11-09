@@ -34,7 +34,8 @@ namespace CommanderChess.Domain
         #endregion
 
         #region Fields
-        protected bool canBeBlocked;
+        protected bool moveCanBeBlocked;
+        protected bool attackCanBeBlocked;
         protected bool canBeHero;
         protected bool canCarryOthers = true; // default
         protected bool canMoveStraight;
@@ -123,7 +124,8 @@ namespace CommanderChess.Domain
                 foreach (var carryType in data.AllowedCarryTypes)
                     AllowedCarryTypes.Add(carryType);
             }
-            canBeBlocked = data.CanBeBlocked;
+            moveCanBeBlocked = data.CanBeBlocked;
+            attackCanBeBlocked = data.AttackCanBeBlocked;
             canBeHero = data.CanBeHero;
             DoMoveToTarget = data.DoMoveToTarget;
             HadRingOfFire = data.HadRingOfFire;
@@ -243,6 +245,11 @@ namespace CommanderChess.Domain
             }
         }
 
+        public virtual bool ShouldMoveToTarget(BoardCoord targetPos)
+        {
+            return DoMoveToTarget;
+        }
+
         #endregion
 
         #region Helper Methods - Dùng trong subclasses
@@ -267,7 +274,7 @@ namespace CommanderChess.Domain
 
                     if (isAlly && ((thisPieceIsCarrier && canCarryOthers) || (carryable && occupant.CanCarryOthers)))
                         cachedMoves.Add(targetPos);
-                    if (canBeBlocked) break;
+                    if (moveCanBeBlocked) break;
                     continue;
                 }
                 cachedMoves.Add(targetPos);
@@ -289,7 +296,7 @@ namespace CommanderChess.Domain
 
                     if (isEnemy && !cachedAttacks.Contains(targetPos))
                         cachedAttacks.Add(targetPos);
-                    if (canBeBlocked) break;
+                    if (attackCanBeBlocked) break;
                     continue;
                 }
             }
