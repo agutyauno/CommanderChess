@@ -23,16 +23,16 @@ public class GameLifeTimeScope : LifetimeScope
     {
         // Core Systems
         builder.RegisterComponent(board).AsSelf();
-
+        builder.Register<EventBus>(Lifetime.Singleton).AsSelf().AsImplementedInterfaces();
         // Services (Singleton)
-        builder.Register<CarryingSystem>(Lifetime.Singleton).AsSelf();
-        builder.Register<StateBackupService>(Lifetime.Singleton).AsSelf();
-        builder.Register<PathChecker>(Lifetime.Singleton).AsSelf();
-        builder.Register<MovementExecutor>(Lifetime.Singleton).AsSelf();
-        builder.Register<ZoneProvider>(Lifetime.Singleton).AsSelf();
-        builder.Register<CommandManager>(Lifetime.Singleton).AsSelf();
-        builder.Register<TurnManager>(Lifetime.Singleton).AsSelf();
-        builder.Register<ActionValidator>(Lifetime.Singleton).AsSelf();
+        builder.Register<CarryingSystem>(Lifetime.Singleton).AsSelf().AsImplementedInterfaces();
+        builder.Register<StateBackupService>(Lifetime.Singleton).AsSelf().AsImplementedInterfaces();
+        builder.Register<PathChecker>(Lifetime.Singleton).AsSelf().AsImplementedInterfaces();
+        builder.Register<MovementExecutor>(Lifetime.Singleton).AsSelf().AsImplementedInterfaces();
+        builder.Register<ZoneProvider>(Lifetime.Singleton).AsSelf().AsImplementedInterfaces();
+        builder.Register<CommandManager>(Lifetime.Singleton).AsSelf().AsImplementedInterfaces();
+        builder.Register<TurnManager>(Lifetime.Singleton).AsSelf().AsImplementedInterfaces();
+        builder.Register<ActionValidator>(Lifetime.Singleton).AsSelf().AsImplementedInterfaces();
         builder.RegisterComponent(pieceSpawner).AsSelf();
 
         // Managers

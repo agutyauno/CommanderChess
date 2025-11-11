@@ -24,7 +24,7 @@ namespace CommanderChess.Domain
         [SerializeField] Vector2Int offset;
         [SerializeField] Grid grid;
         Size boardSize = new(width: 11, height: 12);
-        readonly Dictionary<BoardCoord, Terrains> zoneMap = new();
+        readonly Dictionary<BoardCoord, Terrains> terrainMap = new();
         readonly Dictionary<BoardCoord, BasePiece> pieces = new();
         public Grid Grid { get => grid; }
         public Size BoardSize { get => boardSize; }
@@ -136,7 +136,7 @@ namespace CommanderChess.Domain
                 for (int y = Math.Min(from.y, to.y); y <= Math.Max(from.y, to.y); y++)
                 {
                     var pos = new BoardCoord(x, y);
-                    if (IsInBoard(pos)) zoneMap[pos] = type;
+                    if (IsInBoard(pos)) terrainMap[pos] = type;
                 }
             }
         }
@@ -144,7 +144,7 @@ namespace CommanderChess.Domain
         {
             type = default;
             if (!IsInBoard(coord)) return false;
-            return zoneMap.TryGetValue(coord, out type);
+            return terrainMap.TryGetValue(coord, out type);
         }
         public bool TryGetPiece(BoardCoord coord, out BasePiece piece)
         {

@@ -4,86 +4,149 @@ namespace CommanderChess.Domain
     {
         public override PieceType Type => PieceType.Navy;
 
-        protected override void CalculateAttacks()
+        protected override void CalculateMoves()
         {
-            // Navy có thể tấn công quân trên bờ (Coast) và trên biển
-            // Default: Straight attacks
-            if (canAttackStraight && straightAttackRange > 0)
+            // Straight moves
+            if (canMoveStraight && straightMoveRange > 0)
             {
                 foreach (var dir in straightDirs)
                 {
-                    AddNavyAttacksInDirection(dir, straightAttackRange);
+                    AddMoves(dir, straightMoveRange);
                 }
             }
 
-            // Default: Diagonal attacks
-            if (canAttackDiagonal && diagonalAttackRange > 0)
+            // Diagonal moves
+            if (canMoveDiagonal && diagonalMoveRange > 0)
             {
                 foreach (var dir in diagonalDirs)
                 {
-                    AddNavyAttacksInDirection(dir, diagonalAttackRange);
+                    AddMoves(dir, diagonalMoveRange);
                 }
             }
         }
 
-        /// <summary>
-        /// Thêm các nước tấn công của Navy
-        /// Navy có thể tấn công:
-        /// - Quân trên biển (Sea, Shallow) -> DoMoveToTarget = true (thế chỗ)
-        /// - Quân trên bờ (Coast) -> DoMoveToTarget = false (đứng yên)
-        /// </summary>
-        void AddNavyAttacksInDirection(BoardCoord dir, int maxRange)
+        void AddMoves(BoardCoord dir, int maxRange)
         {
             for (int distance = 1; distance <= maxRange; distance++)
             {
                 var targetPos = Position + (dir * distance);
 
-                if (!board.IsInBoard(targetPos))
+                // Out of bounds or terrain không hợp lệ
+                if (!IsTerrainAllowed(targetPos))
                     break;
 
-                if (board.Pieces.TryGetValue(targetPos, out BasePiece occupant))
-                {
-                    bool isEnemy = occupant.Team != Team;
-
-                    if (isEnemy && !cachedAttacks.Contains(targetPos))
-                    {
-                        cachedAttacks.Add(targetPos);
-
-                        // Kiểm tra terrain của target để set DoMoveToTarget
-                        board.TryGetTerrain(targetPos, out Terrains targetTerrain);
-
-                        // Nếu target ở trên bờ (Coast) -> không di chuyển tới đó
-                        // Nếu target ở trên biển (Sea, Shallow) -> di chuyển tới đó
-                        // 
-                        // NOTE: DoMoveToTarget được set trong PieceData, nhưng Navy cần logic đặc biệt
-                        // Vì vậy ta cần xử lý riêng trong CaptureCommand
-                    }
-
-                    if (attackCanBeBlocked)
-                        break;
+                // Skip nếu đã có trong cache
+                if (cachedMoves.Contains(targetPos))
                     continue;
+
+                // Evaluate position
+                var (shouldAdd, shouldBreak) = EvaluatePosition(targetPos);
+                bool isDiagonal = dir.x != 0 && dir.y != 0;
+                if (board.TryGetTerrain(targetPos, out var terrain) && terrain != Terrains.Sea && isDiagonal)
+                {
+                    var nextPos = targetPos + dir;
+                    bool ok = board.TryGetTerrain(nextPos, out var nextTerrain);
+                    if (ok && (terrain == Terrains.Coast && nextTerrain == Terrains.Riverside || 
+                               terrain == Terrains.Riverside && nextTerrain == Terrains.Coast))
+                    {
+                        shouldBreak = true;
+                    }
                 }
+
+                if (shouldAdd)
+                    cachedMoves.Add(targetPos);
+
+                if (shouldBreak)
+                    break;
             }
         }
 
         /// <summary>
-        /// Kiểm tra xem Navy có nên di chuyển tới vị trí target không
-        /// - Target trên Sea/Shallow -> TRUE (thế chỗ)
-        /// - Target trên Coast -> FALSE (đứng yên, bắn từ xa)
+        /// Đánh giá vị trí có thể di chuyển được không
         /// </summary>
+        private (bool shouldAdd, bool shouldBreak) EvaluatePosition(BoardCoord targetPos)
+        {
+            // Check occupant
+            if (board.Pieces.TryGetValue(targetPos, out BasePiece occupant))
+            {
+                return EvaluateOccupiedPosition(occupant);
+            }
+
+            // Default: add và continue
+            return (true, false);
+        }
+
+        /// <summary>
+        /// Đánh giá vị trí có quân cờ
+        /// </summary>
+        private (bool shouldAdd, bool shouldBreak) EvaluateOccupiedPosition(BasePiece occupant)
+        {
+            bool isAlly = occupant.Team == Team;
+            bool thisPieceIsCarrier = AllowedCarryTypes.Contains(occupant.Type);
+            bool carryable = occupant.AllowedCarryTypes.Contains(Type) || thisPieceIsCarrier;
+            bool canBoard = isAlly &&
+                           ((thisPieceIsCarrier && canCarryOthers) ||
+                            (carryable && occupant.CanCarryOthers));
+
+            if (canBoard)
+            {
+                // Có thể boarding
+                return (true, moveCanBeBlocked);
+            }
+
+            // Không thể boarding - stop nếu blocked
+            return (false, moveCanBeBlocked);
+        }
+
+        /// <summary>
+        /// Check nếu path từ start đến end có đi qua Land/Coast/Riverside
+        /// </summary>
+        private bool HasNonSeaInDiagonalPath(BoardCoord start, BoardCoord end)
+        {
+            // Get direction
+            int dx = end.x - start.x;
+            int dy = end.y - start.y;
+
+            // Normalize direction
+            int stepX = dx == 0 ? 0 : (dx > 0 ? 1 : -1);
+            int stepY = dy == 0 ? 0 : (dy > 0 ? 1 : -1);
+
+            // Check each position in path (bao gồm cả end, không bao gồm start)
+            var current = start;
+            bool isDiagonal = stepX != 0 && stepY != 0;
+            if (!isDiagonal)
+                return false; // Chỉ check diagonal path
+            while (true)
+            {
+                // Move to next position
+                current = new BoardCoord(current.x + stepX, current.y + stepY);
+
+                // Check if current position is NOT Sea
+                if (board.TryGetTerrain(current, out var terrain) && terrain != Terrains.Sea)
+                {
+                    return true; // Found non-Sea terrain in path
+                }
+
+                // Reached end - break after checking
+                if (current == end)
+                    break;
+            }
+
+            return false; // All positions are Sea
+        }
+
         public override bool ShouldMoveToTarget(BoardCoord targetPos)
         {
             if (!board.TryGetTerrain(targetPos, out Terrains terrain))
                 return DoMoveToTarget; // fallback to default
 
-            switch (terrain)
-            {
-                case Terrains.Land:
-                    return false; // Đứng yên (bắn từ xa)
+            if (terrain == Terrains.Land)
+                return false;
 
-                default:
-                    return DoMoveToTarget;
-            }
+            if (HasNonSeaInDiagonalPath(Position, targetPos))
+                return false;
+            
+            return DoMoveToTarget;
         }
     }
 }

@@ -8,6 +8,7 @@ namespace CommanderChess.Services
     /// <summary>
     /// CarryingSystem - Hệ thống quản lý quan hệ mang/được mang giữa các quân cờ
     /// Quy tắc chính:
+    /// - Mỗi piece có maxCarryCapacity riêng (từ PieceData khi register)
     /// - Tổng quân trong group (carrier + carrying + nested) <= 3
     /// - Tự động phân phối thông minh khi boarding
     /// - Hỗ trợ TryAddCarry(A, B) tự động xác định ai mang ai
@@ -24,28 +25,36 @@ namespace CommanderChess.Services
         {
             public BasePiece Piece { get; }
             public BasePiece Carrier { get; set; } // Quân đang mang mình
-            public List<BasePiece> Carrying { get; } = new(2); // Tối đa 2 quân
+            public List<BasePiece> Carrying { get; } // Dynamic capacity
+            
+            private readonly int maxCapacity;
 
-            public CarryingNode(BasePiece piece)
+            public CarryingNode(BasePiece piece, int capacity)
             {
                 Piece = piece;
+                maxCapacity = capacity;
+                Carrying = new List<BasePiece>(capacity);
             }
 
-            public bool HasFreeSlot => Carrying.Count < 2;
-            public int FreeSlots => 2 - Carrying.Count;
+            public int MaxCapacity => maxCapacity;
+            public int CurrentLoad => Carrying.Count;
+            public bool HasFreeSlot => Carrying.Count < maxCapacity;
+            public int FreeSlots => maxCapacity - Carrying.Count;
             public bool IsCarried => Carrier != null;
         }
 
         #region Public API
 
         /// <summary>
-        /// Đăng ký một quân cờ vào hệ thống
+        /// Đăng ký một quân cờ vào hệ thống với capacity từ PieceData
         /// </summary>
         public void RegisterPiece(BasePiece piece)
         {
             if (!carryingNodes.ContainsKey(piece))
             {
-                carryingNodes[piece] = new CarryingNode(piece);
+                int capacity = piece.MaxCarryCapacity; // Lấy từ PieceData
+                carryingNodes[piece] = new CarryingNode(piece, capacity);
+                Debug.Log($"Registered {piece.Type} with capacity {capacity}");
             }
         }
 
@@ -104,7 +113,8 @@ namespace CommanderChess.Services
                 return false;
             }
 
-            Debug.Log($"Attempting: {carrier.Type} carry {passenger.Type}");
+            var carrierNode = carryingNodes[carrier];
+            Debug.Log($"Attempting: {carrier.Type} (capacity {carrierNode.CurrentLoad}/{carrierNode.MaxCapacity}) carry {passenger.Type}");
 
             // Validate carrying
             if (!CanCarry(carrier, passenger, out string reason))
@@ -134,7 +144,7 @@ namespace CommanderChess.Services
             carrierNode.Carrying.Remove(piece);
             node.Carrier = null;
 
-            Debug.Log($"Detached {piece.Type} from {carrier.Type}");
+            Debug.Log($"Detached {piece.Type} from {carrier.Type} (carrier now: {carrierNode.CurrentLoad}/{carrierNode.MaxCapacity})");
             return true;
         }
 
@@ -172,6 +182,18 @@ namespace CommanderChess.Services
         public int CountGroupSize(BasePiece piece)
         {
             return 1 + GetAllCarriedPieces(piece).Count;
+        }
+
+        /// <summary>
+        /// Lấy thông tin capacity của piece
+        /// </summary>
+        public (int current, int max) GetCapacityInfo(BasePiece piece)
+        {
+            if (carryingNodes.TryGetValue(piece, out var node))
+            {
+                return (node.CurrentLoad, node.MaxCapacity);
+            }
+            return (0, 0);
         }
 
         /// <summary>
@@ -249,6 +271,13 @@ namespace CommanderChess.Services
 
             var carrierNode = carryingNodes[carrier];
 
+            // ✅ Check capacity
+            if (carrierNode.MaxCapacity == 0)
+            {
+                reason = $"{carrier.Type} has 0 capacity";
+                return false;
+            }
+
             if (carrierNode.Carrying.Any(p => p.Type == passenger.Type))
             {
                 reason = "Already carrying same piece type";
@@ -267,6 +296,7 @@ namespace CommanderChess.Services
 
             if (totalAfterCarry > 3)
             {
+                reason = $"Group size would exceed 3 ({totalAfterCarry})";
                 return false;
             }
 
@@ -291,7 +321,7 @@ namespace CommanderChess.Services
 
         #endregion
 
-        #region Private Execution - NEW REDISTRIBUTION LOGIC
+        #region Private Execution - REDISTRIBUTION LOGIC
 
         /// <summary>
         /// Thực hiện carrying với redistribution tự động
@@ -300,6 +330,10 @@ namespace CommanderChess.Services
         {
             var carrierNode = carryingNodes[carrier];
             var passengerNode = carryingNodes[passenger];
+
+            Debug.Log($"Before redistribution:");
+            Debug.Log($"  Carrier {carrier.Type}: {carrierNode.CurrentLoad}/{carrierNode.MaxCapacity}");
+            Debug.Log($"  Passenger {passenger.Type}: {passengerNode.CurrentLoad}/{passengerNode.MaxCapacity}");
 
             // Tách passenger khỏi carrier cũ (nếu có)
             if (passengerNode.Carrier != null && passengerNode.Carrier != carrier)
@@ -326,6 +360,8 @@ namespace CommanderChess.Services
             carrierNode.Carrying.Add(passenger);
             passengerNode.Carrier = carrier;
 
+            Debug.Log($"Added {passenger.Type} to {carrier.Type} ({carrierNode.CurrentLoad}/{carrierNode.MaxCapacity})");
+
             // Redistribution theo thứ tự ưu tiên
             foreach (var piece in allPieces)
             {
@@ -345,10 +381,10 @@ namespace CommanderChess.Services
 
         /// <summary>
         /// Redistribute một piece theo thứ tự ưu tiên:
-        /// 1. Passenger mang (nếu có thể)
+        /// 1. Passenger mang (nếu có capacity)
         /// 2. Carrier mang (nếu còn slot)
-        /// 3. Sibling khác mang
-        /// 4. Slot trống của bất kỳ ai
+        /// 3. Sibling khác mang (có capacity)
+        /// 4. Slot trống của bất kỳ ai trong group
         /// </summary>
         private bool RedistributePiece(BasePiece piece, BasePiece carrier, BasePiece passenger)
         {
@@ -357,11 +393,12 @@ namespace CommanderChess.Services
 
             Debug.Log($"  Redistributing {piece.Type}:");
 
-            // Priority 1: Passenger mang (nếu có thể)
+            // Priority 1: Passenger mang (nếu có capacity)
             if (CanPlaceInPiece(passenger, piece))
             {
                 passengerNode.Carrying.Add(piece);
                 carryingNodes[piece].Carrier = passenger;
+                Debug.Log($"    → Placed in passenger {passenger.Type} ({passengerNode.CurrentLoad}/{passengerNode.MaxCapacity})");
                 return true;
             }
 
@@ -370,6 +407,7 @@ namespace CommanderChess.Services
             {
                 carrierNode.Carrying.Add(piece);
                 carryingNodes[piece].Carrier = carrier;
+                Debug.Log($"    → Placed in carrier {carrier.Type} ({carrierNode.CurrentLoad}/{carrierNode.MaxCapacity})");
                 return true;
             }
 
@@ -380,8 +418,10 @@ namespace CommanderChess.Services
 
                 if (CanPlaceInPiece(sibling, piece))
                 {
-                    carryingNodes[sibling].Carrying.Add(piece);
+                    var siblingNode = carryingNodes[sibling];
+                    siblingNode.Carrying.Add(piece);
                     carryingNodes[piece].Carrier = sibling;
+                    Debug.Log($"    → Placed in sibling {sibling.Type} ({siblingNode.CurrentLoad}/{siblingNode.MaxCapacity})");
                     return true;
                 }
             }
@@ -396,13 +436,15 @@ namespace CommanderChess.Services
 
                 if (CanPlaceInPiece(candidate, piece))
                 {
-                    carryingNodes[candidate].Carrying.Add(piece);
+                    var candidateNode = carryingNodes[candidate];
+                    candidateNode.Carrying.Add(piece);
                     carryingNodes[piece].Carrier = candidate;
+                    Debug.Log($"    → Placed in {candidate.Type} ({candidateNode.CurrentLoad}/{candidateNode.MaxCapacity})");
                     return true;
                 }
             }
 
-            Debug.LogError($"No valid placement found for {piece.Type}");
+            Debug.LogError($"    ✗ No valid placement found for {piece.Type}");
             return false;
         }
 
@@ -414,21 +456,33 @@ namespace CommanderChess.Services
             if (!carryingNodes.TryGetValue(holder, out var holderNode))
                 return false;
 
+            // ✅ Kiểm tra capacity
+            if (!holderNode.HasFreeSlot)
+            {
+                Debug.Log($"      {holder.Type} has no free slots ({holderNode.CurrentLoad}/{holderNode.MaxCapacity})");
+                return false;
+            }
+
             // Kiểm tra type compatibility
             if (!holder.AllowedCarryTypes.Contains(piece.Type))
+            {
+                Debug.Log($"      {holder.Type} cannot carry {piece.Type}");
                 return false;
-
-            // Kiểm tra có slot trống
-            if (!holderNode.HasFreeSlot)
-                return false;
+            }
 
             // Kiểm tra không duplicate type
             if (holderNode.Carrying.Any(p => p.Type == piece.Type))
+            {
+                Debug.Log($"      {holder.Type} already carrying {piece.Type}");
                 return false;
+            }
 
             // Kiểm tra không tạo circular reference
             if (IsAncestorOf(piece, holder))
+            {
+                Debug.Log($"      Would create circular reference");
                 return false;
+            }
 
             return true;
         }
@@ -461,7 +515,7 @@ namespace CommanderChess.Services
             if (!carryingNodes.TryGetValue(root, out var node))
                 return;
 
-            Debug.Log($"{indent}{root.Type} ({node.FreeSlots} free slots)");
+            Debug.Log($"{indent}{root.Type} (carrying: {node.CurrentLoad}/{node.MaxCapacity}, free: {node.FreeSlots})");
 
             foreach (var child in node.Carrying)
             {
@@ -493,7 +547,7 @@ namespace CommanderChess.Services
                 indent += "│   ";
             }
 
-            sb.AppendLine($"{piece.Type} (carrying: {node.Carrying.Count}/2, free: {node.FreeSlots})");
+            sb.AppendLine($"{piece.Type} (carrying: {node.CurrentLoad}/{node.MaxCapacity}, free: {node.FreeSlots})");
 
             for (int i = 0; i < node.Carrying.Count; i++)
             {

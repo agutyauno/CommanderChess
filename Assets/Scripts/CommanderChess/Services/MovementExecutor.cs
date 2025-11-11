@@ -8,7 +8,7 @@ namespace CommanderChess.Services
     /// <summary>
     /// MovementExecutor - Service xử lý việc cập nhật vị trí quân cờ
     /// </summary>
-    public class MovementExecutor
+    public class MovementExecutor : BaseService
     {
         [Inject] readonly Board board;
         [Inject] readonly CarryingSystem carryingSystem;
@@ -74,22 +74,19 @@ namespace CommanderChess.Services
             if (board.Pieces.ContainsKey(to))
                 return MovementResult.Failed($"Destination {to.ToLabel()} is occupied");
 
-            // 1. Remove from old position
+            // 1. Execute movement
             board.Pieces.Remove(from);
-
-            // 2. Place at new position
             board.Pieces[to] = piece;
 
-            // 3. Update logical positions (piece + all carried)
             piece.Position = to;
             UpdateCarriedPiecesPositions(piece, to);
 
-            // 4. Update visual positions (piece + all carried)
             UpdateVisualPosition(piece, to);
             UpdateCarriedVisualPositions(piece);
 
-            // 5. Send event
-            SendMoveEvent(piece, from, to);
+            // 2. ✅ Publish event AFTER success
+            eventBus.Publish(new PieceMovedEvent(piece, from, to));
+            
             return MovementResult.Success(piece, from, to);
         }
 
@@ -112,40 +109,30 @@ namespace CommanderChess.Services
         public MovementResult ExecuteCapture(BasePiece attacker, BasePiece defender, BoardCoord from, BoardCoord to, bool shouldMoveToTarget)
         {
             if (attacker == null || defender == null)
-        return MovementResult.Failed("Attacker or defender is null");
+                return MovementResult.Failed("Attacker or defender is null");
 
-    if (!board.IsInBoard(from) || !board.IsInBoard(to))
-        return MovementResult.Failed("Invalid coordinates");
+            if (!board.IsInBoard(from) || !board.IsInBoard(to))
+                return MovementResult.Failed("Invalid coordinates");
 
-    // 1. Remove defender + all carried pieces from board
-    ShotDownPiece(defender);
+            // 1. Execute capture
+            ShotDownPiece(defender);
 
-    // 2. Move attacker + all carried pieces (CHỈ NÕU shouldMoveToTarget = true)
-    if (shouldMoveToTarget)
-    {
-        board.Pieces.Remove(from);
-        board.Pieces[to] = attacker;
+            if (shouldMoveToTarget)
+            {
+                board.Pieces.Remove(from);
+                board.Pieces[to] = attacker;
 
-        // Update positions for attacker + all carried
-        attacker.Position = to;
-        UpdateCarriedPiecesPositions(attacker, to);
+                attacker.Position = to;
+                UpdateCarriedPiecesPositions(attacker, to);
 
-        // Update visuals for attacker + all carried
-        UpdateVisualPosition(attacker, to);
-        UpdateCarriedVisualPositions(attacker);
-        
-        Debug.Log($"Attacker moved from {from.ToLabel()} to {to.ToLabel()}");
-    }
-    else
-    {
-        // Attacker stays at original position (ranged attack)
-        Debug.Log($"Attacker stays at {from.ToLabel()} (ranged attack)");
-    }
+                UpdateVisualPosition(attacker, to);
+                UpdateCarriedVisualPositions(attacker);
+            }
 
-    // 3. Send events
-    SendCaptureEvent(attacker, defender, from, to);
+            // 2. ✅ Publish event AFTER success
+            eventBus.Publish(new PieceCapturedEvent(attacker, defender, from, to));
 
-    return MovementResult.Success(attacker, from, to);
+            return MovementResult.Success(attacker, from, to);
         }
 
         /// <summary>
@@ -207,42 +194,36 @@ namespace CommanderChess.Services
                 if (mover == null || target == null)
                     return MovementResult.Failed("Mover or target is null");
 
-                // Case 1: Mover becomes passenger
+                // Execute boarding logic...
                 if (moverBecomesPassenger)
                 {
-                    // Remove mover from board (becomes carried)
                     board.Pieces.Remove(from);
-
-                    // Update logical position
                     mover.Position = to;
                     UpdateCarriedPiecesPositions(mover, to);
-
-                    // Update visual with offset for passenger
+                    
                     Vector3 carrierPos = board.BoardCoordToWorld(to);
                     UpdateCarriedVisualPositions(target);
 
-                    SendBoardingEvent(target, mover, from, to);
+                    // ✅ Publish event
+                    eventBus.Publish(new PieceBoardedEvent(target, mover, from, to));
                 }
-                // Case 2: Mover becomes carrier
                 else
                 {
-                    // Move carrier to target position
                     board.Pieces.Remove(from);
                     board.Pieces[to] = mover;
 
-                    // Update carrier position & visuals (centered)
                     mover.Position = to;
                     UpdateCarriedPiecesPositions(mover, to);
                     UpdateVisualPosition(mover, to);
 
-                    // Update passenger position & visuals (with offset)
                     target.Position = to;
                     UpdateCarriedPiecesPositions(target, to);
 
                     Vector3 carrierPos = board.BoardCoordToWorld(to);
                     UpdateCarriedVisualPositions(mover);
 
-                    SendBoardingEvent(mover, target, from, to);
+                    // ✅ Publish event
+                    eventBus.Publish(new PieceBoardedEvent(mover, target, from, to));
                 }
 
                 return MovementResult.Success(mover, from, to);
@@ -312,17 +293,15 @@ namespace CommanderChess.Services
             if (!board.IsInBoard(passengerDestination))
                 return MovementResult.Failed("Invalid destination");
 
-            // Place passenger on board at new position
+            // Execute detach
             PlaceOnBoard(passenger, passengerDestination);
-
-            // Update positions for passenger + all its carried pieces
             UpdateCarriedPiecesPositions(passenger, passengerDestination);
-
-            // Update visuals for passenger + carried
             UpdateVisualPosition(passenger, passengerDestination);
             UpdateCarriedVisualPositions(passenger);
 
-            SendDetachEvent(passenger, carrierPos, passengerDestination);
+            // ✅ Publish event
+            eventBus.Publish(new PieceDetachedEvent(passenger, carrierPos, passengerDestination));
+            
             return MovementResult.Success(passenger, carrierPos, passengerDestination);
         }
 
@@ -464,34 +443,6 @@ namespace CommanderChess.Services
                     p.transform.position = carrier.transform.position + offset;
                 }
             }
-        }
-
-        #endregion
-
-        #region Events
-
-        private void SendMoveEvent(BasePiece piece, BoardCoord from, BoardCoord to)
-        {
-            // TODO: Implement với EventBus hoặc UnityEvent
-            // eventBus.Publish(new PieceMovedEvent(piece, from, to));
-        }
-
-        private void SendCaptureEvent(BasePiece attacker, BasePiece defender, BoardCoord from, BoardCoord to)
-        {
-            // TODO: Implement với EventBus
-            // eventBus.Publish(new PieceCapturedEvent(attacker, defender, from, to));
-        }
-
-        private void SendBoardingEvent(BasePiece carrier, BasePiece passenger, BoardCoord from, BoardCoord to)
-        {
-            // TODO: Implement với EventBus
-            // eventBus.Publish(new PieceBoardedEvent(carrier, passenger, from, to));
-        }
-
-        private void SendDetachEvent(BasePiece passenger, BoardCoord from, BoardCoord to)
-        {
-            // TODO: Implement với EventBus
-            // eventBus.Publish(new PieceDetachedEvent(passenger, from, to));
         }
 
         #endregion

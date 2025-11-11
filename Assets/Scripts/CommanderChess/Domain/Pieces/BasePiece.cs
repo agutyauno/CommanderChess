@@ -46,6 +46,7 @@ namespace CommanderChess.Domain
         protected int diagonalMoveRange;
         protected int straightAttackRange;
         protected int diagonalAttackRange;
+        private int maxCarryCapacity;
         #endregion
 
         #region Properties
@@ -70,6 +71,7 @@ namespace CommanderChess.Domain
         public bool HadRingOfFire { get; protected set; } = false;
         public bool IsHero { get; set; } = false;
         public bool CanCarryOthers { get => canCarryOthers; }
+        public int MaxCarryCapacity { get => maxCarryCapacity; }
 
         #endregion
 
@@ -139,6 +141,7 @@ namespace CommanderChess.Domain
             diagonalMoveRange = data.DiagonalMoveRange;
             straightAttackRange = data.StraightAttackRange;
             diagonalAttackRange = data.DiagonalAttackRange;
+            maxCarryCapacity = data.MaxCarryCapacity;
         }
 
         #endregion
@@ -263,8 +266,10 @@ namespace CommanderChess.Domain
             {
                 var targetPos = Position + (dir * distance);
 
-                if (!board.IsInBoard(targetPos) || !IsTerrainAllowed(targetPos) || cachedMoves.Contains(targetPos))
+                if (!IsTerrainAllowed(targetPos))
                     break;
+                if (cachedMoves.Contains(targetPos))
+                    continue;
 
                 if (board.Pieces.TryGetValue(targetPos, out BasePiece occupant))
                 {

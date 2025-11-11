@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 using VContainer;
+using CommanderChess.Services;
 using CommanderChess.Domain;
 
 namespace CommanderChess.Presentation
@@ -12,6 +13,7 @@ namespace CommanderChess.Presentation
     public class BoardHighlighter : MonoBehaviour
     {
         [Inject] readonly Board board;
+        [Inject] EventBus eventBus;
 
         #region Tilemaps
         [Header("Tilemaps")]
@@ -264,5 +266,47 @@ namespace CommanderChess.Presentation
         }
 
         #endregion
+
+        void OnEnable()
+        {
+            // ✅ Subscribe to movement events
+            eventBus.Subscribe<PieceMovedEvent>(OnPieceMoved);
+            eventBus.Subscribe<PieceCapturedEvent>(OnPieceCaptured);
+            eventBus.Subscribe<PieceBoardedEvent>(OnPieceBoarded);
+            eventBus.Subscribe<PieceDetachedEvent>(OnPieceDetached);
+        }
+
+        void OnDisable()
+        {
+            // ✅ Always unsubscribe
+            eventBus.Unsubscribe<PieceMovedEvent>(OnPieceMoved);
+            eventBus.Unsubscribe<PieceCapturedEvent>(OnPieceCaptured);
+            eventBus.Unsubscribe<PieceBoardedEvent>(OnPieceBoarded);
+            eventBus.Unsubscribe<PieceDetachedEvent>(OnPieceDetached);
+        }
+
+        void OnPieceMoved(PieceMovedEvent evt)
+        {
+            // Update highlights
+            ClearAll();
+        }
+
+        void OnPieceCaptured(PieceCapturedEvent evt)
+        {
+            // Show capture effect
+            // PlayCaptureEffect(evt.To);
+        }
+
+        void OnPieceBoarded(PieceBoardedEvent evt)
+        {
+            // Show boarding animation
+            // PlayBoardingAnimation(evt.Carrier, evt.Passenger);
+        }
+
+        void OnPieceDetached(PieceDetachedEvent evt)
+        {
+            // Show detach animation
+            // PlayDetachAnimation(evt.Passenger, evt.DetachPosition);
+        }
     }
 }
