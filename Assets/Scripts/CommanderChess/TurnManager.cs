@@ -1,11 +1,13 @@
-using System;
 using UnityEngine;
+using VContainer;
 using CommanderChess.Domain;
+using CommanderChess.Services;
 
 /// <summary>
 /// TurnManager - Quản lý lượt chơi trong game
+/// REFACTORED: Sử dụng EventBus thay vì C# events
 /// </summary>
-public class TurnManager
+public class TurnManager : BaseService
 {
     Team currentTurn = Team.Red;
     int turnNumber = 1;
@@ -13,11 +15,6 @@ public class TurnManager
     #region Properties
     public Team CurrentTurn => currentTurn;
     public int TurnNumber => turnNumber;
-    #endregion
-
-    #region Events
-    public event Action<Team> OnTurnChanged;
-    public event Action<Team> OnTurnStarted;
     #endregion
 
     #region Public API
@@ -44,9 +41,16 @@ public class TurnManager
 
         Debug.Log($"Turn {turnNumber}: {currentTurn}'s turn");
 
-        // Emit events
-        OnTurnChanged?.Invoke(currentTurn);
-        OnTurnStarted?.Invoke(currentTurn);
+        eventBus.Publish(new TurnChangedEvent(
+            newTurn: currentTurn,
+            previousTurn: previousTurn,
+            turnNumber: turnNumber
+        ));
+        
+        eventBus.Publish(new TurnStartedEvent(
+            team: currentTurn,
+            turnNumber: turnNumber
+        ));
     }
 
     /// <summary>
@@ -58,7 +62,11 @@ public class TurnManager
         turnNumber = 1;
 
         Debug.Log($"Turn reset: {currentTurn}'s turn");
-        OnTurnStarted?.Invoke(currentTurn);
+        
+        eventBus.Publish(new TurnStartedEvent(
+            team: currentTurn,
+            turnNumber: turnNumber
+        ));
     }
 
     /// <summary>
@@ -66,12 +74,62 @@ public class TurnManager
     /// </summary>
     public void SetTurn(Team team, int turn)
     {
+        var previousTurn = currentTurn;
         currentTurn = team;
         turnNumber = turn;
 
         Debug.Log($"Turn set to {turnNumber}: {currentTurn}'s turn");
-        OnTurnChanged?.Invoke(currentTurn);
+        
+        eventBus.Publish(new TurnChangedEvent(
+            newTurn: currentTurn,
+            previousTurn: previousTurn,
+            turnNumber: turnNumber
+        ));
     }
 
+    #endregion
+
+    #region Optional: Timer Support (Future Feature)
+    
+    // Để lại cấu trúc cho tương lai nếu muốn thêm timer
+    
+    /*
+    float currentTurnTime = 0f;
+    float maxTurnTime = 60f; // 60 seconds per turn
+    bool isTimerEnabled = false;
+    
+    public void EnableTimer(float maxSeconds)
+    {
+        isTimerEnabled = true;
+        maxTurnTime = maxSeconds;
+        currentTurnTime = maxSeconds;
+    }
+    
+    public void DisableTimer()
+    {
+        isTimerEnabled = false;
+    }
+    
+    void Update()
+    {
+        if (!isTimerEnabled) return;
+        
+        currentTurnTime -= Time.deltaTime;
+        
+        // Publish timer update event
+        eventBus.Publish(new TurnTimeUpdatedEvent(
+            team: currentTurn,
+            remainingSeconds: currentTurnTime
+        ));
+        
+        // Auto end turn when time runs out
+        if (currentTurnTime <= 0f)
+        {
+            Debug.LogWarning($"{currentTurn} ran out of time!");
+            EndTurn();
+        }
+    }
+    */
+    
     #endregion
 }

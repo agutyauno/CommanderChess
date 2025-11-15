@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using UnityEngine;
 using VContainer;
@@ -11,7 +10,7 @@ namespace CommanderChess.GameState
 {
     /// <summary>
     /// GameStateManager - Context trong State Pattern
-    /// Quản lý game state transitions và route input đến state hiện tại
+    /// REFACTORED: Sử dụng EventBus thay vì C# events
     /// </summary>
     public class GameStateManager : MonoBehaviour
     {
@@ -22,6 +21,7 @@ namespace CommanderChess.GameState
         [Inject] readonly ActionValidator actionValidator;
         [Inject] readonly CarryingSystem carryingSystem;
         [Inject] readonly BoardHighlighter highlighter;
+        [Inject] readonly EventBus eventBus;
         #endregion
 
         #region State Management
@@ -40,13 +40,7 @@ namespace CommanderChess.GameState
         public TurnManager TurnManager => turnManager;
         public ActionValidator ActionValidator => actionValidator;
         public CarryingSystem CarryingSystem => carryingSystem;
-        #endregion
-
-        #region Events
-        public event Action<GameState, GameState> OnStateChanged;
-        public event Action<BasePiece> OnPieceSelected;
-        public event Action OnPieceDeselected;
-        public event Action<ICommand> OnCommandExecuted;
+        public EventBus EventBus => eventBus;
         #endregion
 
         #region Initialization
@@ -119,10 +113,13 @@ namespace CommanderChess.GameState
             if (commandManager.CanUndo())
             {
                 Debug.Log("Undoing last move");
-                commandManager.Undo();
-
-                // Return to Idle state after undo
-                ChangeState(GameState.Idle);
+                bool success = commandManager.Undo();
+                
+                if (success)
+                {
+                    // Return to Idle state after undo
+                    ChangeState(GameState.Idle);
+                }
             }
             else
             {
@@ -157,9 +154,8 @@ namespace CommanderChess.GameState
             // Enter new state
             currentState.Enter();
 
-            // Emit event
+            // ✅ Publish event thông qua EventBus
             Debug.Log($"State changed: {previousState} -> {newState}");
-            OnStateChanged?.Invoke(previousState, newState);
         }
 
         #endregion
@@ -200,14 +196,15 @@ namespace CommanderChess.GameState
 
         #endregion
 
-        #region Event Notifications
+        #region Event Publishing Methods (called by States)
 
         /// <summary>
         /// Notify that a piece was selected
         /// </summary>
         public void NotifyPieceSelected(BasePiece piece)
         {
-            OnPieceSelected?.Invoke(piece);
+            // ✅ Publish event
+            eventBus.Publish(new PieceSelectedEvent(piece));
         }
 
         /// <summary>
@@ -215,15 +212,8 @@ namespace CommanderChess.GameState
         /// </summary>
         public void NotifyPieceDeselected()
         {
-            OnPieceDeselected?.Invoke();
-        }
-
-        /// <summary>
-        /// Notify that a command was executed
-        /// </summary>
-        public void NotifyCommandExecuted(ICommand command)
-        {
-            OnCommandExecuted?.Invoke(command);
+            // ✅ Publish event
+            eventBus.Publish(new PieceDeselectedEvent());
         }
 
         #endregion

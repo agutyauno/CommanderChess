@@ -6,6 +6,7 @@ using CommanderChess.GameState;
 
 /// <summary>
 /// GameManager - Entry point và initialization
+/// REFACTORED: Sử dụng EventBus thay vì trực tiếp subscribe events
 /// </summary>
 public class GameManager : MonoBehaviour
 {
@@ -13,6 +14,7 @@ public class GameManager : MonoBehaviour
     [Inject] readonly TurnManager turnManager;
     [Inject] readonly GameStateManager gameStateManager;
     [Inject] readonly PieceSpawner pieceSpawner;
+    [Inject] readonly EventBus eventBus;
 
     void Start()
     {
@@ -27,7 +29,7 @@ public class GameManager : MonoBehaviour
         board.Init();
         Debug.Log("Board initialized");
 
-        // 2. Setup pieces (TODO: Load from configuration)
+        // 2. Setup pieces
         SetupPieces();
         Debug.Log("Pieces setup completed");
 
@@ -35,89 +37,112 @@ public class GameManager : MonoBehaviour
         turnManager.ResetTurn();
         Debug.Log("Turn manager initialized");
 
-        // 4. Subscribe to events
+        // 4. Subscribe to events VIA EVENTBUS
         SubscribeToEvents();
         Debug.Log("Event subscriptions completed");
+
+        // 5. ✅ Publish game initialized event
+        eventBus.Publish(new GameInitializedEvent());
 
         Debug.Log("=== Game Ready ===");
     }
 
     void SetupPieces()
     {
-        pieceSpawner.Spawn();        
+        pieceSpawner.Spawn();
     }
+
+    #region Event Subscription via EventBus
 
     void SubscribeToEvents()
     {
-        // Subscribe to turn changes
-        turnManager.OnTurnChanged += OnTurnChanged;
-        turnManager.OnTurnStarted += OnTurnStarted;
-
-        // Subscribe to state changes
-        gameStateManager.OnStateChanged += OnStateChanged;
-        gameStateManager.OnPieceSelected += OnPieceSelected;
-        gameStateManager.OnPieceDeselected += OnPieceDeselected;
+        // ✅ Subscribe thông qua EventBus thay vì trực tiếp
+        eventBus.Subscribe<TurnChangedEvent>(OnTurnChanged);
+        eventBus.Subscribe<TurnStartedEvent>(OnTurnStarted);
+        eventBus.Subscribe<PieceSelectedEvent>(OnPieceSelected);
+        eventBus.Subscribe<PieceDeselectedEvent>(OnPieceDeselected);
+        
+        // Subscribe to movement events for feedback
+        eventBus.Subscribe<PieceMovedEvent>(OnPieceMoved);
+        eventBus.Subscribe<PieceCapturedEvent>(OnPieceCaptured);
     }
 
     void OnDestroy()
     {
-        // Unsubscribe from events
-        if (turnManager != null)
-        {
-            turnManager.OnTurnChanged -= OnTurnChanged;
-            turnManager.OnTurnStarted -= OnTurnStarted;
-        }
-
-        if (gameStateManager != null)
-        {
-            gameStateManager.OnStateChanged -= OnStateChanged;
-            gameStateManager.OnPieceSelected -= OnPieceSelected;
-            gameStateManager.OnPieceDeselected -= OnPieceDeselected;
-        }
+        // ✅ Unsubscribe tất cả
+        UnsubscribeFromEvents();
     }
+
+    void UnsubscribeFromEvents()
+    {
+        if (eventBus == null) return;
+
+        eventBus.Unsubscribe<TurnChangedEvent>(OnTurnChanged);
+        eventBus.Unsubscribe<TurnStartedEvent>(OnTurnStarted);
+        eventBus.Unsubscribe<PieceSelectedEvent>(OnPieceSelected);
+        eventBus.Unsubscribe<PieceDeselectedEvent>(OnPieceDeselected);
+        eventBus.Unsubscribe<PieceMovedEvent>(OnPieceMoved);
+        eventBus.Unsubscribe<PieceCapturedEvent>(OnPieceCaptured);
+    }
+
+    #endregion
 
     #region Event Handlers
 
-    void OnTurnChanged(Team newTurn)
+    void OnTurnChanged(TurnChangedEvent evt)
     {
-        Debug.Log($">>> Turn changed to: {newTurn}");
+        Debug.Log($">>> Turn changed: {evt.PreviousTurn} -> {evt.NewTurn} (Turn {evt.TurnNumber})");
         // TODO: Update UI to show current turn
+        // TODO: Play turn change sound/animation
     }
 
-    void OnTurnStarted(Team team)
+    void OnTurnStarted(TurnStartedEvent evt)
     {
-        Debug.Log($">>> {team}'s turn started");
+        Debug.Log($">>> {evt.Team}'s turn started (Turn {evt.TurnNumber})");
         // TODO: Play turn start animation/sound
+        // TODO: Show turn indicator
     }
 
-    void OnStateChanged(GameState oldState, GameState newState)
+    void OnPieceSelected(PieceSelectedEvent evt)
     {
-        Debug.Log($">>> State: {oldState} -> {newState}");
-        // TODO: Update UI to show current state
-    }
-
-    void OnPieceSelected(BasePiece piece)
-    {
-        Debug.Log($">>> Selected: {piece.Team} {piece.Type} at {piece.Position.ToLabel()}");
+        Debug.Log($">>> Selected: {evt.Piece.Team} {evt.Piece.Type} at {evt.Piece.Position.ToLabel()}");
         // TODO: Show piece info panel
+        // TODO: Play selection sound
+        // TODO: Highlight piece sprite
     }
 
-    void OnPieceDeselected()
+    void OnPieceDeselected(PieceDeselectedEvent evt)
     {
         Debug.Log($">>> Piece deselected");
         // TODO: Hide piece info panel
+        // TODO: Clear highlights
+    }
+
+    void OnPieceMoved(PieceMovedEvent evt)
+    {
+        Debug.Log($">>> Piece moved: {evt.Piece.Type} from {evt.From.ToLabel()} to {evt.To.ToLabel()}");
+        // TODO: Play movement sound
+        // TODO: Update minimap
+    }
+
+    void OnPieceCaptured(PieceCapturedEvent evt)
+    {
+        Debug.Log($">>> Piece captured: {evt.Attacker.Type} captured {evt.Defender.Type}");
+        // TODO: Play capture sound/animation
+        // TODO: Update captured pieces display
+        // TODO: Show score update
     }
 
     #endregion
 
     #region Public API (for UI buttons)
 
-    public void OnCancelButtonClicked()
+    public void OnUndoButtonClicked()
     {
         gameStateManager.UndoLastMove();
     }
 
-    public void OnConfirmButtonClicked()
+    public void OnEndTurnButtonClicked()
     {
         if (gameStateManager.CurrentState == GameState.Idle)
         {
@@ -132,11 +157,42 @@ public class GameManager : MonoBehaviour
     public void OnRestartGameButtonClicked()
     {
         Debug.Log("Restarting game...");
-        // TODO: Implement game restart logic
+        // Reload scene
         UnityEngine.SceneManagement.SceneManager.LoadScene(
             UnityEngine.SceneManagement.SceneManager.GetActiveScene().name
         );
     }
+
+    #endregion
+
+    #region Game End Detection (Future Feature)
+
+    // Để lại cấu trúc cho việc detect game end
+    
+    /*
+    void CheckWinCondition()
+    {
+        ///Check if commander is captured
+        ///Check if no valid moves remain
+        etc.
+        
+        Team? winner = DetectWinner();
+        
+        if (winner.HasValue)
+        {
+            eventBus.Publish(new GameEndedEvent(
+                winner: winner.Value,
+                reason: "Commander captured"
+            ));
+        }
+    }
+    
+    Team? DetectWinner()
+    {
+        // Implementation
+        return null;
+    }
+    */
 
     #endregion
 }
