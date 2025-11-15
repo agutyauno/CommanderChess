@@ -112,12 +112,12 @@ public class GameManager : MonoBehaviour
 
     #region Public API (for UI buttons)
 
-    public void OnUndoButtonClicked()
+    public void OnCancelButtonClicked()
     {
         gameStateManager.UndoLastMove();
     }
 
-    public void OnEndTurnButtonClicked()
+    public void OnConfirmButtonClicked()
     {
         if (gameStateManager.CurrentState == GameState.Idle)
         {

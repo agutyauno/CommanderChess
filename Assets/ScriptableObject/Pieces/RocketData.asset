@@ -12,11 +12,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 83b4585d6c457964c84d2f48d0b8b5f3, type: 3}
   m_Name: RocketData
   m_EditorClassIdentifier: Assembly-CSharp::PieceData
+  moveCanBeBlocked: 1
   canMoveStraight: 1
   straightMoveRange: 2
   canMoveDiagonal: 1
   diagonalMoveRange: 1
   allowedMoveTerrains: 01000000020000000300000004000000
+  attackCanBeBlocked: 1
   canAttackStraight: 1
   straightAttackRange: 2
   canAttackDiagonal: 1
@@ -25,3 +27,5 @@ MonoBehaviour:
   ringOfFireRange: 2
   allowedCarryTypes: 
   doMoveToTarget: 1
+  canBeHero: 1
+  maxCarryCapacity: 0

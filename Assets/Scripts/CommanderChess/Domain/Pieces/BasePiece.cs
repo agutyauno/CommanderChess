@@ -233,8 +233,6 @@ namespace CommanderChess.Domain
             {
                 for (int dy = -range; dy <= range; dy++)
                 {
-                    if (dx == 0 && dy == 0) continue;
-
                     int distance = Mathf.Abs(dx) + Mathf.Abs(dy);
 
                     if (distance <= range)

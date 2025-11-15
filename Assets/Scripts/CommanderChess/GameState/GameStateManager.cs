@@ -98,7 +98,7 @@ namespace CommanderChess.GameState
         }
 
         /// <summary>
-        /// Cancel current action (right click hoặc ESC)
+        /// Cancel current action
         /// </summary>
         public void CancelCurrentAction()
         {

@@ -41,6 +41,7 @@ namespace CommanderChess.Domain
 
                 // Evaluate position
                 var (shouldAdd, shouldBreak) = EvaluatePosition(targetPos);
+                
                 bool isDiagonal = dir.x != 0 && dir.y != 0;
                 if (board.TryGetTerrain(targetPos, out var terrain) && terrain != Terrains.Sea && isDiagonal)
                 {

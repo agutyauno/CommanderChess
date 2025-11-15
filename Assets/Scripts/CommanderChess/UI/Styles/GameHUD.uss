@@ -1,0 +1,47 @@
+:root {
+}
+
+.button {
+    width: 160px;
+    height: 80px;
+    font-size: 35px;
+    margin-bottom: 15px;
+}
+
+.piece-image {
+    width: 60px;
+    height: 60px;
+    background-size: 80% 80%;
+}
+
+.piece-name {
+    font-size: 25px;
+    -unity-font-style: bold;
+}
+
+.info-panel {
+    align-content: center;
+    justify-content: center;
+    align-items: flex-start;
+}
+
+.info-panel-item {
+    background-color: rgb(204, 204, 204);
+    border-top-width: 2px;
+    border-right-width: 2px;
+    border-bottom-width: 2px;
+    border-left-width: 2px;
+    border-left-color: rgb(0, 0, 0);
+    border-right-color: rgb(0, 0, 0);
+    border-top-color: rgb(0, 0, 0);
+    border-bottom-color: rgb(0, 0, 0);
+    border-top-left-radius: 10%;
+    border-top-right-radius: 10%;
+    border-bottom-right-radius: 10%;
+    border-bottom-left-radius: 10%;
+    margin-bottom: 5px;
+}
+
+.selected {
+    background-color: rgb(255, 127, 80);
+}

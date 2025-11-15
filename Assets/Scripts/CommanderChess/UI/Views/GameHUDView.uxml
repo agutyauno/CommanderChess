@@ -1,0 +1,26 @@
+<ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="project://database/Assets/Scripts/CommanderChess/UI/Styles/GameHUD.uss?fileID=7433441132597879392&amp;guid=d7dc47138f960d542a7c9d0a757e4e3d&amp;type=3#GameHUD" />
+    <ui:VisualElement style="flex-grow: 1;">
+        <ui:VisualElement style="flex-grow: 1; align-items: center; justify-content: space-between; align-self: center; height: 80%; flex-direction: column; max-height: none; position: absolute; top: 148px; left: 883px;">
+            <ui:VisualElement name="info-panel" class="info-panel">
+                <ui:VisualElement name="info-panel-item" class="info-panel-item selected" style="flex-grow: 1;">
+                    <ui:VisualElement name="piece-image" class="piece-image" style="background-image: url(&quot;project://database/Assets/Sprites/Pieces/Commander_RedSide.png?fileID=-6004285800791726923&amp;guid=f453015bdb294824c84227a14656c092&amp;type=3#Commander_RedSide_0&quot;);" />
+                    <ui:Label name="piece-name" text="Commander" class="piece-name" />
+                </ui:VisualElement>
+                <ui:VisualElement name="info-panel-item" class="info-panel-item" style="flex-grow: 1;">
+                    <ui:VisualElement name="piece-image" class="piece-image" style="background-image: url(&quot;project://database/Assets/Sprites/Pieces/Commander_RedSide.png?fileID=-6004285800791726923&amp;guid=f453015bdb294824c84227a14656c092&amp;type=3#Commander_RedSide_0&quot;);" />
+                    <ui:Label name="piece-name" text="Commander" class="piece-name" />
+                </ui:VisualElement>
+                <ui:VisualElement name="info-panel-item" class="info-panel-item" style="flex-grow: 1;">
+                    <ui:VisualElement name="piece-image" class="piece-image" style="background-image: url(&quot;project://database/Assets/Sprites/Pieces/Commander_RedSide.png?fileID=-6004285800791726923&amp;guid=f453015bdb294824c84227a14656c092&amp;type=3#Commander_RedSide_0&quot;);" />
+                    <ui:Label name="piece-name" text="Commander" class="piece-name" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:VisualElement name="button-group" style="flex-grow: 1; position: relative; justify-content: space-between; top: auto; left: auto; align-items: center; max-height: 35%; height: 35%;">
+                <ui:Button text="ROF" triple-click-selects-line="false" display-tooltip-when-elided="true" name="btn_rof" class="button" />
+                <ui:Button text="Confirm" triple-click-selects-line="false" display-tooltip-when-elided="true" name="btn_confirm" class="button" />
+                <ui:Button text="Cancel" triple-click-selects-line="false" display-tooltip-when-elided="true" name="btn_cancel" class="button" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

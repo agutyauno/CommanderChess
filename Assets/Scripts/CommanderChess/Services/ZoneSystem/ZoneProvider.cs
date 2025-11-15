@@ -27,6 +27,11 @@ namespace CommanderChess.Services
             }
         }
 
+        public IZone GetROF()
+        {
+            return ROF;
+        }
+
         protected override void SubscribeEvents()
         {
             eventBus.Subscribe<PieceMovedEvent>(OnPieceMoved);

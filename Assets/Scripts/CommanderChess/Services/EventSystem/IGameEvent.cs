@@ -67,4 +67,18 @@ namespace CommanderChess.Services
             DetachPosition = detachPos;
         }
     }
+
+    public readonly struct PieceSelectedEvent : IGameEvent
+    {
+        public readonly BasePiece Piece;
+
+        public PieceSelectedEvent(BasePiece piece)
+        {
+            Piece = piece;
+        }
+    }
+
+    public readonly struct PieceDeselectedEvent : IGameEvent
+    {
+    }
 }

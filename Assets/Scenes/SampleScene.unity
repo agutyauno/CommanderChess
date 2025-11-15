@@ -151,7 +151,8 @@ MonoBehaviour:
   parentReference:
     TypeName: 
   autoRun: 1
-  autoInjectGameObjects: []
+  autoInjectGameObjects:
+  - {fileID: 1989112121}
   board: {fileID: 955386419}
   gameStateManager: {fileID: 1353720679}
   inputHandler: {fileID: 1568376566}
@@ -470,7 +471,7 @@ Transform:
   m_GameObject: {fileID: 519420028}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 7, y: 1.5, z: -10}
+  m_LocalPosition: {x: 8, y: 1.5, z: -10}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2832,6 +2833,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1989112123}
   - component: {fileID: 1989112122}
+  - component: {fileID: 1989112124}
   m_Layer: 5
   m_Name: UIDocument
   m_TagString: Untagged
@@ -2853,7 +2855,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: UnityEngine.dll::UnityEngine.UIElements.UIDocument
   m_PanelSettings: {fileID: 11400000, guid: 6d42b3ec9c6bb434e987fca81cb22425, type: 2}
   m_ParentUI: {fileID: 0}
-  sourceAsset: {fileID: 0}
+  sourceAsset: {fileID: 9197481963319205126, guid: 38d746dbafd5cd44c88de7adb2a29ef8, type: 3}
   m_SortingOrder: 0
   m_Position: 0
   m_WorldSpaceSizeMode: 1
@@ -2877,6 +2879,18 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1989112124
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1989112121}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: be6f8c260716d20408f25a88ed2b8b57, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CommanderChess.UI.Controllers.GameHUDController
 --- !u!1 &2101911417
 GameObject:
   m_ObjectHideFlags: 0
