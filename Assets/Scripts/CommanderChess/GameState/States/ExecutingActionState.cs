@@ -81,10 +81,8 @@ namespace CommanderChess.GameState
             //     return;
             // }
 
-            // End turn (hoặc giữ turn nếu là detach + continue move)
-            Manager.TurnManager.EndTurn();
-
-            // Return to Idle
+            // DON'T auto end turn here - TurnManager handles that via ConfirmEndTurn()
+            // Just return to Idle and wait for player confirmation
             Manager.ChangeState(GameState.Idle);
         }
     }

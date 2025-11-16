@@ -53,6 +53,12 @@ public class TurnManager : BaseService
     private readonly List<TurnSnapshot> replayHistory = new List<TurnSnapshot>();
     
     private const int maxTurnHistory = 20; // Giới hạn số turn có thể undo
+    // End-turn evaluation state
+    bool endConditionPending = false;
+
+    // Detach-specific state: when a detach occurs, only the carrier may continue actions
+    bool detachActive = false;
+    BasePiece allowedPieceAfterDetach = null;
     #endregion
 
     #region Properties
@@ -72,7 +78,25 @@ public class TurnManager : BaseService
     {
         base.OnInitialize();
         Debug.Log("[TurnManager] Initializing with turn-level backup system");
+        
+        // Subscribe to movement events
+        eventBus.Subscribe<PieceMovedEvent>(OnPieceMoved);
+        eventBus.Subscribe<PieceCapturedEvent>(OnPieceCaptured);
+        eventBus.Subscribe<PieceBoardedEvent>(OnPieceBoarded);
+        eventBus.Subscribe<PieceDetachedEvent>(OnPieceDetached);
+        
         SaveCurrentTurnState();
+    }
+
+    protected override void OnDispose()
+    {
+        base.OnDispose();
+        
+        // Unsubscribe from events
+        eventBus.Unsubscribe<PieceMovedEvent>(OnPieceMoved);
+        eventBus.Unsubscribe<PieceCapturedEvent>(OnPieceCaptured);
+        eventBus.Unsubscribe<PieceBoardedEvent>(OnPieceBoarded);
+        eventBus.Unsubscribe<PieceDetachedEvent>(OnPieceDetached);
     }
 
     /// <summary>
@@ -94,8 +118,172 @@ public class TurnManager : BaseService
         {
             currentTurnSnapshot.Commands.Add(command);
             Debug.Log($"[TurnManager] Recorded command: {command.Description} (Total: {currentTurnSnapshot.Commands.Count})");
+            
+            // Evaluate end-turn conditions based on command type
+            if (!endConditionPending)
+            {
+                var typeName = command.GetType().Name;
+
+                // These commands trigger end-turn condition
+                if (typeName.Contains("MoveCommand") || typeName.Contains("CaptureCommand") || typeName.Contains("BoardingCommand"))
+                {
+                    endConditionPending = true;
+
+                    // Publish event so HUD can show confirm/cancel
+                    eventBus.Publish(new TurnEndConditionReachedEvent(
+                        team: currentTurn,
+                        turnNumber: turnNumber,
+                        commandDescription: command.Description,
+                        timestamp: command.Timestamp
+                    ));
+                }
+                else if (typeName.Contains("DetachCommand"))
+                {
+                    // Detach does not end turn — the detach event handler will set allowed piece
+                    detachActive = true;
+                    // HUD shouldn't show confirm yet; allowed piece will be published by PieceDetachedEvent handler
+                }
+            }
         }
     }
+
+    #endregion
+
+    #region Event Handlers - Movement Events
+
+    private void OnPieceMoved(PieceMovedEvent evt)
+    {
+        // Movement already recorded via RecordCommand, just ensure logic consistency
+        Debug.Log($"[TurnManager] OnPieceMoved: {evt.Piece.Type} {evt.From.ToLabel()}→{evt.To.ToLabel()}");
+    }
+
+    private void OnPieceCaptured(PieceCapturedEvent evt)
+    {
+        Debug.Log($"[TurnManager] OnPieceCaptured: {evt.Attacker.Type} captured {evt.Defender.Type}");
+    }
+
+    private void OnPieceBoarded(PieceBoardedEvent evt)
+    {
+        Debug.Log($"[TurnManager] OnPieceBoarded: {evt.Passenger.Type} boarded {evt.Carrier.Type}");
+    }
+
+    private void OnPieceDetached(PieceDetachedEvent evt)
+    {
+        // After a detach, only the carrier at carrierPos is allowed to continue actions
+        Debug.Log($"[TurnManager] OnPieceDetached: {evt.Passenger.Type} detached");
+        
+        if (board.Pieces.ContainsKey(evt.CarrierPosition))
+        {
+            allowedPieceAfterDetach = board.Pieces[evt.CarrierPosition];
+            detachActive = true;
+            eventBus.Publish(new TurnDetachOccurredEvent(allowedPieceAfterDetach, currentTurn, turnNumber));
+        }
+    }
+
+    #endregion
+
+    #region Turn Confirmation/Cancellation
+
+    /// <summary>
+    /// Called by HUD when player confirms end-turn (Confirm button)
+    /// </summary>
+    public void ConfirmEndTurn()
+    {
+        if (!endConditionPending)
+        {
+            Debug.LogWarning("[TurnManager] ConfirmEndTurn called but no end condition pending");
+            return;
+        }
+
+        Debug.Log($"[TurnManager] Turn {turnNumber} confirmed by {currentTurn}");
+
+        // Publish TurnEnded event BEFORE EndTurn
+        eventBus.Publish(new TurnEndedEvent(currentTurn, turnNumber));
+
+        // Reset flags
+        endConditionPending = false;
+        detachActive = false;
+        allowedPieceAfterDetach = null;
+
+        // Finalize end turn (switches to next team)
+        EndTurn();
+    }
+
+    /// <summary>
+    /// Called by HUD when player cancels the end-turn confirmation (Cancel button).
+    /// This will revert the current turn back to the snapshot saved at turn start.
+    /// </summary>
+    public void CancelEndTurn()
+    {
+        if (!endConditionPending && !detachActive)
+        {
+            Debug.LogWarning("[TurnManager] CancelEndTurn called but nothing to cancel");
+            return;
+        }
+
+        if (currentTurnSnapshot == null)
+        {
+            Debug.LogError("[TurnManager] No current turn snapshot available to cancel");
+            return;
+        }
+
+        Debug.Log($"[TurnManager] Cancelling turn {turnNumber} for {currentTurn}");
+
+        // Restore to snapshot at start of current turn
+        backupService.RestoreSnapshot(currentTurnSnapshot.GameState);
+        bool valid = backupService.ValidateSnapshotRestored(currentTurnSnapshot.GameState);
+        if (!valid)
+        {
+            Debug.LogError("[TurnManager] Failed to restore snapshot on CancelEndTurn");
+            return;
+        }
+
+        // Clear recorded commands for this turn
+        currentTurnSnapshot.Commands.Clear();
+
+        // Reset flags
+        endConditionPending = false;
+        detachActive = false;
+        allowedPieceAfterDetach = null;
+
+        // Notify listeners
+        eventBus.Publish(new TurnEndCancelledEvent(currentTurn, turnNumber));
+        
+        Debug.Log($"[TurnManager] Turn cancelled successfully");
+    }
+
+    /// <summary>
+    /// Query helper for other systems (e.g., UI / GameState) to check if a piece is allowed to act now.
+    /// </summary>
+    public bool IsPieceAllowedToAct(BasePiece piece)
+    {
+        if (piece == null) return false;
+        
+        // If detach is active, only the carrier can act
+        if (detachActive)
+        {
+            return piece == allowedPieceAfterDetach;
+        }
+        
+        // If end condition is pending, no piece can act
+        if (endConditionPending)
+        {
+            return false;
+        }
+        
+        // Normal case: piece must be current team
+        return piece.Team == currentTurn;
+    }
+
+    /// <summary>
+    /// Check if turn end condition has been reached (for UI to show confirm/cancel)
+    /// </summary>
+    public bool IsEndConditionPending => endConditionPending;
+
+    /// <summary>
+    /// Check if detach is active and waiting for carrier action
+    /// </summary>
+    public bool IsDetachActive => detachActive;
 
     /// <summary>
     /// Kết thúc lượt hiện tại và chuyển sang lượt tiếp theo
@@ -131,6 +319,11 @@ public class TurnManager : BaseService
         // Chuyển lượt
         currentTurn = currentTurn == Team.Red ? Team.Blue : Team.Red;
         turnNumber++;
+
+        // Reset turn state flags for new turn
+        endConditionPending = false;
+        detachActive = false;
+        allowedPieceAfterDetach = null;
 
         Debug.Log($"Turn {turnNumber}: {currentTurn}'s turn");
 
@@ -188,6 +381,11 @@ public class TurnManager : BaseService
             currentTurn = previousSnapshot.Team;
             turnNumber = previousSnapshot.TurnNumber;
 
+            // Reset turn state flags
+            endConditionPending = false;
+            detachActive = false;
+            allowedPieceAfterDetach = null;
+
             Debug.Log($"[TurnManager] Turn undo successful - Now at turn {turnNumber}, {currentTurn}'s turn");
             Debug.Log($"[TurnManager] Board has {board.Pieces.Count} pieces");
 
@@ -244,6 +442,11 @@ public class TurnManager : BaseService
         turnHistory.Clear();
         replayHistory.Clear();
         currentTurnSnapshot = null;
+
+        // Reset turn state flags
+        endConditionPending = false;
+        detachActive = false;
+        allowedPieceAfterDetach = null;
 
         Debug.Log($"Turn reset: {currentTurn}'s turn");
         

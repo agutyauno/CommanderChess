@@ -30,8 +30,6 @@ namespace CommanderChess.Services
             // BoardState removed - calculated from PieceData.Position
         }
 
-        // CreateSnapshot() removed - use CreateFullBoardSnapshot() instead
-
         /// <summary>
         /// Create snapshot of entire board state
         /// </summary>
@@ -159,11 +157,6 @@ namespace CommanderChess.Services
                     Debug.LogError($"[Validate] Board missing {piece.Type} at {data.Position}");
                     valid = false;
                 }
-            }
-
-            if (valid)
-            {
-                Debug.Log("[Validate] ✅ Passed");
             }
 
             return valid;

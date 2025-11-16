@@ -131,7 +131,7 @@ namespace CommanderChess.GameState
 
                 // Case 2b: Change selection to new piece (if not carried)
                 if (!Manager.CarryingSystem.IsCarried(clickedPiece) &&
-                    Manager.TurnManager.IsCurrentPlayerPiece(clickedPiece))
+                    Manager.TurnManager.IsPieceAllowedToAct(clickedPiece))
                 {
                     TryChangePieceSelection(clickedPiece);
                     return;

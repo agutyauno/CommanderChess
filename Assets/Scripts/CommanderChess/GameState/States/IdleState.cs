@@ -41,10 +41,21 @@ namespace CommanderChess.GameState
 
         public void HandlePieceClick(BasePiece piece)
         {
-            // Kiểm tra xem có phải quân của người chơi hiện tại không
-            if (!Manager.TurnManager.IsCurrentPlayerPiece(piece))
+            // Kiểm tra xem piece có được phép hành động không (respects detach logic and end-condition)
+            if (!Manager.TurnManager.IsPieceAllowedToAct(piece))
             {
-                Debug.LogWarning($"Cannot select {piece.Team} {piece.Type} - not your turn");
+                if (Manager.TurnManager.IsDetachActive)
+                {
+                    Debug.LogWarning($"Cannot select {piece.Type} - only the carrier can act after detach");
+                }
+                else if (Manager.TurnManager.IsEndConditionPending)
+                {
+                    Debug.LogWarning($"Cannot select {piece.Type} - turn end pending, please confirm or cancel");
+                }
+                else
+                {
+                    Debug.LogWarning($"Cannot select {piece.Team} {piece.Type} - not your turn");
+                }
                 return;
             }
 

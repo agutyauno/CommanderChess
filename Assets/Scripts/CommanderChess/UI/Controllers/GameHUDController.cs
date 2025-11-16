@@ -80,6 +80,10 @@ namespace CommanderChess.UI.Controllers
             btnRof.clicked += OnRofButtonClicked;
             btnConfirm.clicked += OnConfirmButtonClicked;
             btnCancel.clicked += OnCancelButtonClicked;
+            
+            // Initially hide confirm/cancel buttons
+            btnConfirm.visible = false;
+            btnCancel.visible = false;
         }
         #endregion
 
@@ -87,13 +91,21 @@ namespace CommanderChess.UI.Controllers
         void SubscribeToEvents()
         {
             eventBus.Subscribe<PieceSelectedEvent>(OnPieceSelected);
-            eventBus.Subscribe<PieceDeselectedEvent>(OnPieceDeselected);   
+            eventBus.Subscribe<PieceDeselectedEvent>(OnPieceDeselected);
+            eventBus.Subscribe<TurnEndConditionReachedEvent>(OnTurnEndConditionReached);
+            eventBus.Subscribe<TurnDetachOccurredEvent>(OnTurnDetachOccurred);
+            eventBus.Subscribe<TurnEndedEvent>(OnTurnEnded);
+            eventBus.Subscribe<TurnEndCancelledEvent>(OnTurnEndCancelled);
         }
 
         void UnsubscribeFromEvents()
         {
             eventBus.Unsubscribe<PieceSelectedEvent>(OnPieceSelected);
-            eventBus.Unsubscribe<PieceDeselectedEvent>(OnPieceDeselected);   
+            eventBus.Unsubscribe<PieceDeselectedEvent>(OnPieceDeselected);
+            eventBus.Unsubscribe<TurnEndConditionReachedEvent>(OnTurnEndConditionReached);
+            eventBus.Unsubscribe<TurnDetachOccurredEvent>(OnTurnDetachOccurred);
+            eventBus.Unsubscribe<TurnEndedEvent>(OnTurnEnded);
+            eventBus.Unsubscribe<TurnEndCancelledEvent>(OnTurnEndCancelled);
         }
         #endregion
 
@@ -112,6 +124,36 @@ namespace CommanderChess.UI.Controllers
             infoPanelItems.Clear();
             currentSelectedPiece = null;
             infoPanel.visible = false;
+        }
+
+        void OnTurnEndConditionReached(TurnEndConditionReachedEvent evt)
+        {
+            // Show confirm/cancel buttons
+            btnConfirm.visible = true;
+            btnCancel.visible = true;
+            Debug.Log($"[GameHUD] Turn end condition reached: {evt.CommandDescription}");
+        }
+
+        void OnTurnDetachOccurred(TurnDetachOccurredEvent evt)
+        {
+            // Detach happened - carrier can still act, don't show confirm yet
+            Debug.Log($"[GameHUD] Detach occurred - {evt.AllowedPiece.Type} can continue acting");
+        }
+
+        void OnTurnEnded(TurnEndedEvent evt)
+        {
+            // Hide confirm/cancel buttons
+            btnConfirm.visible = false;
+            btnCancel.visible = false;
+            Debug.Log($"[GameHUD] Turn ended for {evt.Team}");
+        }
+
+        void OnTurnEndCancelled(TurnEndCancelledEvent evt)
+        {
+            // Hide confirm/cancel buttons
+            btnConfirm.visible = false;
+            btnCancel.visible = false;
+            Debug.Log($"[GameHUD] Turn cancelled for {evt.Team}");
         }
         #endregion
 
@@ -204,12 +246,14 @@ namespace CommanderChess.UI.Controllers
 
         void OnConfirmButtonClicked()
         {
-            
+            Debug.Log("[GameHUD] Confirm button clicked - ending turn");
+            turnManager.ConfirmEndTurn();
         }
 
         void OnCancelButtonClicked()
         {
-            
+            Debug.Log("[GameHUD] Cancel button clicked - cancelling turn");
+            turnManager.CancelEndTurn();
         }
 
         void ShowRof()
