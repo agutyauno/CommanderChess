@@ -8,7 +8,6 @@ namespace CommanderChess.CommandSystem
         DateTime Timestamp { get; }
         bool WasSuccessful { get; }
         bool Execute();
-        bool Undo();
         bool CanExecute();
     }
 }

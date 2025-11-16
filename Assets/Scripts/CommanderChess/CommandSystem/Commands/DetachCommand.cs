@@ -10,7 +10,6 @@ namespace CommanderChess.CommandSystem
     {
         BasePiece carrier;
         BasePiece passenger;
-        bool wasShotDown = false;
 
         public DetachCommand(
             BoardCoord from,
@@ -25,7 +24,6 @@ namespace CommanderChess.CommandSystem
             carrier = board.Pieces.ContainsKey(from) ? board.Pieces[from] : null;
             passenger = carrier != null ? carryingSystem.GetDirectCarrying(carrier).FirstOrDefault() : null;
             SelectedPiece = passenger;
-            wasShotDown = false;
         }
 
         public override string Description =>
@@ -61,7 +59,6 @@ namespace CommanderChess.CommandSystem
                 {
                     // Passenger shot down during detach
                     movementExecutor.ShotDownPiece(passenger);
-                    wasShotDown = true;
                     Debug.Log($"  {passenger.Type} shot down during detach!");
                     return true;
                 }
@@ -79,40 +76,6 @@ namespace CommanderChess.CommandSystem
             catch (Exception e)
             {
                 Debug.LogError($"DetachCommand DoExecute failed: {e.Message}\n{e.StackTrace}");
-                return false;
-            }
-        }
-
-        protected override bool DoUndo()
-        {
-            try
-            {
-                if (wasShotDown)
-                {
-                    // Reattach will be handled by StateBackupService
-                    // Just need to ensure relationship is restored
-                    if (!carryingSystem.TryAddCarry(carrier, passenger))
-                    {
-                        Debug.LogError($"DetachCommand: Failed to reattach {passenger.Type}");
-                        return false;
-                    }
-                    return true;
-                }
-
-                // Normal undo: remove from board and reattach
-                var result = movementExecutor.RevertDetach(passenger, To);
-                if (!result.IsSuccess)
-                {
-                    Debug.LogError($"DetachCommand: RevertDetach failed: {result.ErrorMessage}");
-                    return false;
-                }
-
-                // StateBackupService will handle reattaching
-                return true;
-            }
-            catch (Exception e)
-            {
-                Debug.LogError($"DetachCommand DoUndo failed: {e.Message}\n{e.StackTrace}");
                 return false;
             }
         }

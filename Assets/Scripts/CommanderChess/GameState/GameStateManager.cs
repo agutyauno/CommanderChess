@@ -106,14 +106,14 @@ namespace CommanderChess.GameState
         }
 
         /// <summary>
-        /// Undo last move
+        /// Undo current turn - restore to beginning of turn
         /// </summary>
         public void UndoLastMove()
         {
             if (commandManager.CanUndo())
             {
-                Debug.Log("Undoing last move");
-                bool success = commandManager.Undo();
+                Debug.Log("Undoing current turn");
+                bool success = commandManager.UndoTurn();
                 
                 if (success)
                 {

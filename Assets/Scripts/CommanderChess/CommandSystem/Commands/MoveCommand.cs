@@ -7,7 +7,6 @@ namespace CommanderChess.CommandSystem
 {
     public class MoveCommand : BaseCommand
     {
-        bool wasShotDown = false;
 
         public MoveCommand(
             BoardCoord from,
@@ -20,7 +19,6 @@ namespace CommanderChess.CommandSystem
             : base(from, to, board, carryingSystem, backupService, pathChecker, movementExecutor)
         {
             SelectedPiece = board.Pieces.ContainsKey(from) ? board.Pieces[from] : null;
-            wasShotDown = false;
         }
 
         public override string Description => $"{SelectedPiece?.Team} {SelectedPiece?.Type} moves to {To.ToLabel()}";
@@ -44,7 +42,6 @@ namespace CommanderChess.CommandSystem
                 if (pathResult == PathResult.GoThrough || pathResult == PathResult.Inside)
                 {
                     movementExecutor.ShotDownPiece(SelectedPiece);
-                    wasShotDown = true;
                     Debug.Log($"  {SelectedPiece.Type} was shot down!");
                     return true;
                 }
@@ -62,38 +59,6 @@ namespace CommanderChess.CommandSystem
             catch (Exception e)
             {
                 Debug.LogError($"MoveCommand DoExecute failed: {e.Message}\n{e.StackTrace}");
-                return false;
-            }
-        }
-
-        protected override bool DoUndo()
-        {
-            try
-            {
-                if (wasShotDown)
-                {
-                    // Restore shot down piece
-                    if (!movementExecutor.PlaceOnBoard(SelectedPiece, From))
-                    {
-                        Debug.LogError("MoveCommand: Failed to restore shot piece");
-                        return false;
-                    }
-                    return true;
-                }
-
-                // Revert normal move
-                var result = movementExecutor.RevertMovePiece(SelectedPiece, To, From);
-                if (!result.IsSuccess)
-                {
-                    Debug.LogError($"MoveCommand: RevertMovePiece failed: {result.ErrorMessage}");
-                    return false;
-                }
-
-                return true;
-            }
-            catch (Exception e)
-            {
-                Debug.LogError($"MoveCommand DoUndo failed: {e.Message}\n{e.StackTrace}");
                 return false;
             }
         }

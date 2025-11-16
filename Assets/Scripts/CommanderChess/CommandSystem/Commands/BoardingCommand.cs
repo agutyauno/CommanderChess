@@ -8,7 +8,6 @@ namespace CommanderChess.CommandSystem
     public class BoardingCommand : BaseCommand
     {
         BasePiece target;
-        bool wasShotDown = false;
         bool moverBecamePassenger = false;
 
         public BoardingCommand(
@@ -23,7 +22,6 @@ namespace CommanderChess.CommandSystem
         {
             SelectedPiece = board.Pieces[from];
             target = board.Pieces[to];
-            wasShotDown = false;
             moverBecamePassenger = false;
         }
 
@@ -48,7 +46,6 @@ namespace CommanderChess.CommandSystem
                 if (pathResult == PathResult.GoThrough || pathResult == PathResult.Inside)
                 {
                     movementExecutor.ShotDownPiece(SelectedPiece);
-                    wasShotDown = true;
                     Debug.Log($"  {SelectedPiece.Type} shot down during boarding!");
                     return true;
                 }
@@ -76,40 +73,6 @@ namespace CommanderChess.CommandSystem
             catch (Exception e)
             {
                 Debug.LogError($"BoardingCommand DoExecute failed: {e.Message}\n{e.StackTrace}");
-                return false;
-            }
-        }
-
-        protected override bool DoUndo()
-        {
-            try
-            {
-                if (wasShotDown)
-                {
-                    // Restore shot down piece
-                    if (!movementExecutor.PlaceOnBoard(SelectedPiece, From))
-                    {
-                        Debug.LogError("BoardingCommand: Failed to restore shot piece");
-                        return false;
-                    }
-                    return true;
-                }
-
-                // Revert boarding
-                var result = movementExecutor.RevertBoarding(
-                    SelectedPiece, target, From, To, moverBecamePassenger);
-            
-                if (!result.IsSuccess)
-                {
-                    Debug.LogError($"BoardingCommand: RevertBoarding failed: {result.ErrorMessage}");
-                    return false;
-                }
-
-                return true;
-            }
-            catch (Exception e)
-            {
-                Debug.LogError($"BoardingCommand DoUndo failed: {e.Message}\n{e.StackTrace}");
                 return false;
             }
         }

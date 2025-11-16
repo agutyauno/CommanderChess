@@ -8,6 +8,7 @@ namespace CommanderChess.CommandSystem
 {
     /// <summary>
     /// CommandManager - Quản lý tạo và thực thi commands (Factory + Invoker)
+    /// REFACTORED: Commands không còn quản lý backup, TurnManager quản lý turn-level snapshots
     /// </summary>
     public class CommandManager
     {
@@ -17,11 +18,13 @@ namespace CommanderChess.CommandSystem
         [Inject] readonly StateBackupService backupService;
         [Inject] readonly PathChecker pathChecker;
         [Inject] readonly MovementExecutor movementExecutor;
+        [Inject] readonly TurnManager turnManager; // NEW: Inject TurnManager
         #endregion
 
         #region History Stacks
-        readonly Stack<ICommand> undoStack = new Stack<ICommand>();
-        readonly Stack<ICommand> redoStack = new Stack<ICommand>();
+        // Note: Undo/Redo giờ được quản lý bởi TurnManager
+        // Chỉ giữ lại command history cho debugging
+        readonly List<ICommand> executedCommands = new List<ICommand>();
         const int maxHistorySize = 50;
         #endregion
 
@@ -76,7 +79,7 @@ namespace CommanderChess.CommandSystem
         #region Execution Methods
 
         /// <summary>
-        /// Execute command và thêm vào history
+        /// Execute command và record vào TurnManager
         /// </summary>
         public bool Execute(ICommand command)
         {
@@ -91,26 +94,17 @@ namespace CommanderChess.CommandSystem
 
             if (success)
             {
-                // Add to undo stack
-                undoStack.Push(command);
-
+                // Record command vào turn history
+                turnManager.RecordCommand(command);
+                
+                // Add to executed commands list (for debugging)
+                executedCommands.Add(command);
+                
                 // Limit history size
-                if (undoStack.Count > maxHistorySize)
+                if (executedCommands.Count > maxHistorySize)
                 {
-                    // Remove oldest command
-                    var temp = new Stack<ICommand>();
-                    while (undoStack.Count > maxHistorySize)
-                    {
-                        var oldest = undoStack.Pop();
-                        if (undoStack.Count > 0)
-                            temp.Push(oldest);
-                    }
-                    while (temp.Count > 0)
-                        undoStack.Push(temp.Pop());
+                    executedCommands.RemoveAt(0);
                 }
-
-                // Clear redo stack (new action invalidates redo history)
-                redoStack.Clear();
 
                 Debug.Log($"Command executed: {command.Description}");
             }
@@ -123,77 +117,19 @@ namespace CommanderChess.CommandSystem
         }
 
         /// <summary>
-        /// Undo last command
+        /// Undo turn - delegated to TurnManager
         /// </summary>
-        public bool Undo()
+        public bool UndoTurn()
         {
-            if (!CanUndo())
-            {
-                Debug.LogWarning("Cannot undo - no commands in history");
-                return false;
-            }
-
-            var command = undoStack.Pop();
-            bool success = command.Undo();
-
-            if (success)
-            {
-                redoStack.Push(command);
-                Debug.Log($"Command undone: {command.Description}");
-            }
-            else
-            {
-                // Push back to undo stack if undo failed
-                undoStack.Push(command);
-                Debug.LogError($"Undo failed: {command.Description}");
-            }
-
-            return success;
+            return turnManager.UndoTurn();
         }
 
         /// <summary>
-        /// Redo last undone command
-        /// </summary>
-        public bool Redo()
-        {
-            if (!CanRedo())
-            {
-                Debug.LogWarning("Cannot redo - no commands in redo history");
-                return false;
-            }
-
-            var command = redoStack.Pop();
-            bool success = command.Execute();
-
-            if (success)
-            {
-                undoStack.Push(command);
-                Debug.Log($"Command redone: {command.Description}");
-            }
-            else
-            {
-                // Push back to redo stack if redo failed
-                redoStack.Push(command);
-                Debug.LogError($"Redo failed: {command.Description}");
-            }
-
-            return success;
-        }
-
-        /// <summary>
-        /// Check if can undo
+        /// Check if can undo turn
         /// </summary>
         public bool CanUndo()
         {
-            return undoStack.Count > 0;
-        }
-
-        /// <summary>
-        /// Check if can redo
-        /// </summary>
-        public bool CanRedo()
-        {
-            return redoStack.Count > 0;
+            return turnManager.CanUndo;
         }
 
         #endregion
@@ -205,8 +141,8 @@ namespace CommanderChess.CommandSystem
         /// </summary>
         public void ClearHistory()
         {
-            undoStack.Clear();
-            redoStack.Clear();
+            executedCommands.Clear();
+            turnManager.ClearHistory();
             Debug.Log("Command history cleared");
         }
 
@@ -215,7 +151,7 @@ namespace CommanderChess.CommandSystem
         /// </summary>
         public ICommand GetLastCommand()
         {
-            return undoStack.Count > 0 ? undoStack.Peek() : null;
+            return executedCommands.Count > 0 ? executedCommands[executedCommands.Count - 1] : null;
         }
 
         /// <summary>
@@ -223,7 +159,7 @@ namespace CommanderChess.CommandSystem
         /// </summary>
         public List<ICommand> GetCommandHistory()
         {
-            return new List<ICommand>(undoStack);
+            return new List<ICommand>(executedCommands);
         }
 
         /// <summary>
@@ -231,7 +167,7 @@ namespace CommanderChess.CommandSystem
         /// </summary>
         public int GetHistoryCount()
         {
-            return undoStack.Count;
+            return executedCommands.Count;
         }
 
         #endregion

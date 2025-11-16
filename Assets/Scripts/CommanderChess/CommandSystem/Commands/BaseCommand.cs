@@ -8,10 +8,10 @@ namespace CommanderChess.CommandSystem
 {
     /// <summary>
     /// Base class cho tất cả commands trong game
+    /// REFACTORED: Không còn quản lý backup/undo - TurnManager quản lý turn-level snapshots
     /// Sử dụng Template Method Pattern để định nghĩa flow chung:
     /// 1. CanExecute() - Validation
-    /// 2. Execute() - Backup -> DoExecute() -> UpdateCache
-    /// 3. Undo() - DoUndo() -> Restore -> UpdateCache
+    /// 2. Execute() - DoExecute() -> UpdateCache
     /// </summary>
     public abstract class BaseCommand : ICommand
     {
@@ -23,12 +23,9 @@ namespace CommanderChess.CommandSystem
         // Dependencies - sẽ được inject từ constructor của derived classes
         protected readonly Board board;
         protected readonly CarryingSystem carryingSystem;
-        protected readonly StateBackupService backupService;
+        protected readonly StateBackupService backupService; // Keep for internal use if needed
         protected readonly PathChecker pathChecker;
         protected readonly MovementExecutor movementExecutor;
-
-        // Backup snapshot
-        protected StateBackupService.Snapshot snapshot;
 
         //fields
         protected BoardCoord From;
@@ -59,6 +56,7 @@ namespace CommanderChess.CommandSystem
 
         /// <summary>
         /// Template method - Định nghĩa flow thực thi command
+        /// REFACTORED: Không còn tạo snapshot - TurnManager quản lý
         /// </summary>
         public bool Execute()
         {
@@ -72,32 +70,12 @@ namespace CommanderChess.CommandSystem
 
             try
             {
-                // Step 2: Backup state
-                var piecesToBackup = GetPiecesToBackup();
-                if (piecesToBackup != null && piecesToBackup.Length > 0)
-                {
-                    snapshot = backupService.CreateSnapshot(piecesToBackup);
-
-                    // Kiểm tra snapshot có được tạo thành công không
-                    if (snapshot == null)
-                    {
-                        Debug.LogError($"Failed to create snapshot for: {Description}");
-                        WasSuccessful = false;
-                        return false;
-                    }
-                }
-                else
-                {
-                    // ⚠️ Warning nếu không có pieces để backup
-                    Debug.LogWarning($"No pieces to backup for: {Description}");
-                }
-
-                // Step 3: Execute actual logic
+                // Step 2: Execute actual logic
                 WasSuccessful = DoExecute();
 
                 if (WasSuccessful)
                 {
-                    // Step 4: Update cache cho các pieces bị ảnh hưởng
+                    // Step 3: Update cache cho các pieces bị ảnh hưởng
                     UpdateAffectedPiecesCache();
 
                     Debug.Log($"{Description}");
@@ -118,44 +96,6 @@ namespace CommanderChess.CommandSystem
             }
         }
 
-        /// <summary>
-        /// Template method - Định nghĩa flow undo command
-        /// </summary>
-        public bool Undo()
-        {
-            if (!WasSuccessful)
-            {
-                Debug.LogWarning($"Cannot undo: {Description} was not successful");
-                return false;
-            }
-
-            if (snapshot == null)
-            {
-                Debug.LogWarning($"Cannot undo: {Description} has no backup");
-                return false;
-            }
-
-            try
-            {
-                bool undoSuccess = DoUndo();
-                if (undoSuccess)
-                {
-                    backupService.RestoreSnapshot(snapshot);
-                    UpdateAffectedPiecesCache();
-
-                    Debug.Log($"Undo: {Description}");
-                    OnUndoSuccess();
-                }
-
-                return undoSuccess;
-            }
-            catch (Exception e)
-            {
-                Debug.LogError($"Undo failed: {e.Message}\n{e.StackTrace}");
-                return false;
-            }
-        }
-
         #endregion
 
         #region Abstract Methods - Phải implement ở derived classes
@@ -172,11 +112,13 @@ namespace CommanderChess.CommandSystem
         protected abstract bool DoExecute();
 
         /// <summary>
-        /// Logic undo của command
-        /// Return true nếu thành công
-        /// Note: Restore state sẽ được xử lý tự động bởi BaseCommand
+        /// DoUndo is no longer used - kept for backward compatibility
+        /// TurnManager handles all undo operations at turn-level
         /// </summary>
-        protected abstract bool DoUndo();
+        protected virtual bool DoUndo() 
+        { 
+            return false; 
+        }
 
         #endregion
 
@@ -189,53 +131,39 @@ namespace CommanderChess.CommandSystem
         protected virtual void OnExecuteSuccess() { }
 
         /// <summary>
-        /// Hook được gọi sau khi Undo thành công
-        /// Override nếu cần logic bổ sung
-        /// </summary>
-        protected virtual void OnUndoSuccess() { }
-
-        /// <summary>
         /// Update cache cho các pieces bị ảnh hưởng
         /// Override nếu cần custom logic
         /// </summary>
         protected virtual void UpdateAffectedPiecesCache()
         {
-            if (snapshot == null) return;
-
-            foreach (var piece in snapshot.PieceData.Keys)
+            // Update cache cho piece đã di chuyển
+            board.Pieces.TryGetValue(From, out var fromPiece);
+            board.Pieces.TryGetValue(To, out var toPiece);
+            
+            fromPiece?.RecalculateCache();
+            toPiece?.RecalculateCache();
+            
+            // Update carried pieces
+            if (fromPiece != null)
             {
-                piece.RecalculateCache();
+                foreach (var carried in carryingSystem.GetAllCarriedPieces(fromPiece))
+                {
+                    carried.RecalculateCache();
+                }
+            }
+            
+            if (toPiece != null)
+            {
+                foreach (var carried in carryingSystem.GetAllCarriedPieces(toPiece))
+                {
+                    carried.RecalculateCache();
+                }
             }
         }
 
         #endregion
 
         #region Helper Methods
-        /// <summary>
-        /// Trả về danh sách pieces cần backup
-        /// </summary>
-        protected BasePiece[] GetPiecesToBackup()
-        {
-
-            board.Pieces.TryGetValue(From, out var movedPiece);
-            board.Pieces.TryGetValue(To, out var targetPiece);
-            List<BasePiece> piecesToBackUp = new();
-
-            // ✅ Thêm piece chính trước
-            if (movedPiece != null)
-            {
-                piecesToBackUp.Add(movedPiece);
-                piecesToBackUp.AddRange(carryingSystem.GetAllCarriedPieces(movedPiece));
-            }
-
-            if (targetPiece != null)
-            {
-                piecesToBackUp.Add(targetPiece);
-                piecesToBackUp.AddRange(carryingSystem.GetAllCarriedPieces(targetPiece));
-            }
-
-            return piecesToBackUp.ToArray();
-        }
 
         /// <summary>
         /// Helper: Update position của piece và các pieces nó đang mang
@@ -244,15 +172,11 @@ namespace CommanderChess.CommandSystem
         {
             piece.Position = newPosition;
 
-            // TODO: Gửi event cập nhật vị trí
-            // EventBus.Publish(new PieceMovedEvent(piece, newPosition));
-
             // Update carried pieces
             var carriedPieces = carryingSystem.GetAllCarriedPieces(piece);
             foreach (var carried in carriedPieces)
             {
                 carried.Position = newPosition;
-                // TODO: Gửi event
             }
         }
 
@@ -264,8 +188,6 @@ namespace CommanderChess.CommandSystem
             board.Pieces.Remove(from);
             board.Pieces[to] = piece;
         }
-
-
 
         #endregion
     }
