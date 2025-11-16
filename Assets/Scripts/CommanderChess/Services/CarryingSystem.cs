@@ -54,7 +54,6 @@ namespace CommanderChess.Services
             {
                 int capacity = piece.MaxCarryCapacity; // Lấy từ PieceData
                 carryingNodes[piece] = new CarryingNode(piece, capacity);
-                Debug.Log($"Registered {piece.Type} with capacity {capacity}");
             }
         }
 
@@ -271,7 +270,6 @@ namespace CommanderChess.Services
 
             var carrierNode = carryingNodes[carrier];
 
-            // ✅ Check capacity
             if (carrierNode.MaxCapacity == 0)
             {
                 reason = $"{carrier.Type} has 0 capacity";
@@ -374,8 +372,6 @@ namespace CommanderChess.Services
             }
 
             Debug.Log("Redistribution complete:");
-            PrintGroupStructure(carrier, "  ");
-
             return true;
         }
 
@@ -456,7 +452,6 @@ namespace CommanderChess.Services
             if (!carryingNodes.TryGetValue(holder, out var holderNode))
                 return false;
 
-            // ✅ Kiểm tra capacity
             if (!holderNode.HasFreeSlot)
             {
                 Debug.Log($"      {holder.Type} has no free slots ({holderNode.CurrentLoad}/{holderNode.MaxCapacity})");
@@ -503,56 +498,6 @@ namespace CommanderChess.Services
             foreach (var piece in originalPieces)
             {
                 Detach(piece);
-            }
-        }
-
-        #endregion
-
-        #region Debug & Visualization
-
-        public void PrintGroupStructure(BasePiece root, string indent = "")
-        {
-            if (!carryingNodes.TryGetValue(root, out var node))
-                return;
-
-            Debug.Log($"{indent}{root.Type} (carrying: {node.CurrentLoad}/{node.MaxCapacity}, free: {node.FreeSlots})");
-
-            foreach (var child in node.Carrying)
-            {
-                PrintGroupStructure(child, indent + "  ├── ");
-            }
-        }
-
-        public string GetGroupTreeString(BasePiece root)
-        {
-            var sb = new System.Text.StringBuilder();
-            BuildTreeString(root, sb, "", true);
-            return sb.ToString();
-        }
-
-        private void BuildTreeString(BasePiece piece, System.Text.StringBuilder sb, string indent, bool isLast)
-        {
-            if (!carryingNodes.TryGetValue(piece, out var node))
-                return;
-
-            sb.Append(indent);
-            if (isLast)
-            {
-                sb.Append("└── ");
-                indent += "    ";
-            }
-            else
-            {
-                sb.Append("├── ");
-                indent += "│   ";
-            }
-
-            sb.AppendLine($"{piece.Type} (carrying: {node.CurrentLoad}/{node.MaxCapacity}, free: {node.FreeSlots})");
-
-            for (int i = 0; i < node.Carrying.Count; i++)
-            {
-                bool lastChild = i == node.Carrying.Count - 1;
-                BuildTreeString(node.Carrying[i], sb, indent, lastChild);
             }
         }
 

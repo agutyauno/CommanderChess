@@ -46,7 +46,7 @@ namespace CommanderChess.CommandSystem
                 if (pathResult == PathResult.GoThrough || pathResult == PathResult.Inside)
                 {
                     movementExecutor.ShotDownPiece(SelectedPiece);
-                    Debug.Log($"  {SelectedPiece.Type} shot down during boarding!");
+//                     Debug.Log($"  {SelectedPiece.Type} shot down during boarding!");
                     return true;
                 }
 

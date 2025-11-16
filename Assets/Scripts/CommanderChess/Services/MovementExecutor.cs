@@ -163,12 +163,12 @@ namespace CommanderChess.Services
         UpdateVisualPosition(attacker, attackerOriginalPos);
         UpdateCarriedVisualPositions(attacker);
         
-        Debug.Log($"Attacker moved back from {defenderPos.ToLabel()} to {attackerOriginalPos.ToLabel()}");
+//         Debug.Log($"Attacker moved back from {defenderPos.ToLabel()} to {attackerOriginalPos.ToLabel()}");
     }
     else
     {
         // Attacker didn't move, nothing to revert
-        Debug.Log($"Attacker stayed at {attackerOriginalPos.ToLabel()}, no position change");
+//         Debug.Log($"Attacker stayed at {attackerOriginalPos.ToLabel()}, no position change");
     }
 
     return MovementResult.Success(attacker, defenderPos, attackerOriginalPos);
@@ -409,7 +409,7 @@ namespace CommanderChess.Services
                 }
             }
 
-            Debug.Log($"Shot down: {piece.Type} at {piece.Position.ToLabel()} (+ {carriedPieces.Count} carried pieces)");
+//             Debug.Log($"Shot down: {piece.Type} at {piece.Position.ToLabel()} (+ {carriedPieces.Count} carried pieces)");
         }
 
         #endregion

@@ -87,7 +87,7 @@ namespace CommanderChess.Domain
 
         public void Init()
         {
-            Debug.Log($"[{GetType().Name}.Init] Initializing {team} {Type} at {Position.ToLabel()}");
+//             Debug.Log($"[{GetType().Name}.Init] Initializing {team} {Type} at {Position.ToLabel()}");
 
             if (board == null || carryingSystem == null)
             {
@@ -109,7 +109,7 @@ namespace CommanderChess.Domain
 
             RecalculateCache();
 
-            Debug.Log($"[{GetType().Name}.Init] {team} {Type}: {cachedMoves.Count} moves, {cachedAttacks.Count} attacks");
+//             Debug.Log($"[{GetType().Name}.Init] {team} {Type}: {cachedMoves.Count} moves, {cachedAttacks.Count} attacks");
             carryingSystem.RegisterPiece(this);
         }
 

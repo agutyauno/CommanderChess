@@ -136,13 +136,13 @@ namespace CommanderChess.UI.Controllers
             // Show confirm/cancel buttons
             btnConfirm.visible = true;
             btnCancel.visible = true;
-            Debug.Log($"[GameHUD] Turn end condition reached: {evt.CommandDescription}");
+//             Debug.Log($"[GameHUD] Turn end condition reached: {evt.CommandDescription}");
         }
 
         void OnTurnDetachOccurred(TurnDetachOccurredEvent evt)
         {
             // Detach happened - carrier can still act, don't show confirm yet
-            Debug.Log($"[GameHUD] Detach occurred - {evt.AllowedPiece.Type} can continue acting");
+//             Debug.Log($"[GameHUD] Detach occurred - {evt.AllowedPiece.Type} can continue acting");
         }
 
         void OnTurnEnded(TurnEndedEvent evt)
@@ -150,7 +150,7 @@ namespace CommanderChess.UI.Controllers
             // Hide confirm/cancel buttons
             btnConfirm.visible = false;
             btnCancel.visible = false;
-            Debug.Log($"[GameHUD] Turn ended for {evt.Team}");
+//             Debug.Log($"[GameHUD] Turn ended for {evt.Team}");
         }
 
         void OnTurnEndCancelled(TurnEndCancelledEvent evt)
@@ -158,7 +158,7 @@ namespace CommanderChess.UI.Controllers
             // Hide confirm/cancel buttons
             btnConfirm.visible = false;
             btnCancel.visible = false;
-            Debug.Log($"[GameHUD] Turn cancelled for {evt.Team}");
+//             Debug.Log($"[GameHUD] Turn cancelled for {evt.Team}");
         }
         #endregion
 
@@ -233,7 +233,7 @@ namespace CommanderChess.UI.Controllers
             // If clicking the same piece, deselect it
             if (currentSelectedPiece == piece)
             {
-                Debug.Log($"Deselecting {piece.Type}");
+//                 Debug.Log($"Deselecting {piece.Type}");
                 
                 // If piece is carried, go back to selecting carrier
                 if (carryingSystem.IsCarried(piece))
@@ -265,13 +265,13 @@ namespace CommanderChess.UI.Controllers
             // Check if piece is carried (need to detach)
             if (carryingSystem.IsCarried(piece))
             {
-                Debug.Log($"Selected carried piece {piece.Type} - entering detach mode");
+//                 Debug.Log($"Selected carried piece {piece.Type} - entering detach mode");
                 gameStateManager.SelectPieceForDetach(piece);
             }
             else
             {
                 // Piece is carrier or standalone - select normally
-                Debug.Log($"Selected piece {piece.Type}");
+//                 Debug.Log($"Selected piece {piece.Type}");
                 gameStateManager.SelectPiece(piece);
             }
         }
@@ -294,13 +294,13 @@ namespace CommanderChess.UI.Controllers
 
         void OnConfirmButtonClicked()
         {
-            Debug.Log("[GameHUD] Confirm button clicked - ending turn");
+//             Debug.Log("[GameHUD] Confirm button clicked - ending turn");
             turnManager.ConfirmEndTurn();
         }
 
         void OnCancelButtonClicked()
         {
-            Debug.Log("[GameHUD] Cancel button clicked - cancelling turn");
+//             Debug.Log("[GameHUD] Cancel button clicked - cancelling turn");
             turnManager.CancelEndTurn();
         }
 

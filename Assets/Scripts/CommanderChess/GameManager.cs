@@ -23,28 +23,28 @@ public class GameManager : MonoBehaviour
 
     void InitializeGame()
     {
-        Debug.Log("=== Initializing Commander Chess ===");
+//         Debug.Log("=== Initializing Commander Chess ===");
 
         // 1. Initialize board
         board.Init();
-        Debug.Log("Board initialized");
+//         Debug.Log("Board initialized");
 
         // 2. Setup pieces
         SetupPieces();
-        Debug.Log("Pieces setup completed");
+//         Debug.Log("Pieces setup completed");
 
         // 3. Reset turn to Red
         turnManager.ResetTurn();
-        Debug.Log("Turn manager initialized");
+//         Debug.Log("Turn manager initialized");
 
         // 4. Subscribe to events VIA EVENTBUS
         SubscribeToEvents();
-        Debug.Log("Event subscriptions completed");
+//         Debug.Log("Event subscriptions completed");
 
         // 5. ✅ Publish game initialized event
         eventBus.Publish(new GameInitializedEvent());
 
-        Debug.Log("=== Game Ready ===");
+//         Debug.Log("=== Game Ready ===");
     }
 
     void SetupPieces()
@@ -91,21 +91,21 @@ public class GameManager : MonoBehaviour
 
     void OnTurnChanged(TurnChangedEvent evt)
     {
-        Debug.Log($">>> Turn changed: {evt.PreviousTurn} -> {evt.NewTurn} (Turn {evt.TurnNumber})");
+//         Debug.Log($">>> Turn changed: {evt.PreviousTurn} -> {evt.NewTurn} (Turn {evt.TurnNumber})");
         // TODO: Update UI to show current turn
         // TODO: Play turn change sound/animation
     }
 
     void OnTurnStarted(TurnStartedEvent evt)
     {
-        Debug.Log($">>> {evt.Team}'s turn started (Turn {evt.TurnNumber})");
+//         Debug.Log($">>> {evt.Team}'s turn started (Turn {evt.TurnNumber})");
         // TODO: Play turn start animation/sound
         // TODO: Show turn indicator
     }
 
     void OnPieceSelected(PieceSelectedEvent evt)
     {
-        Debug.Log($">>> Selected: {evt.Piece.Team} {evt.Piece.Type} at {evt.Piece.Position.ToLabel()}");
+//         Debug.Log($">>> Selected: {evt.Piece.Team} {evt.Piece.Type} at {evt.Piece.Position.ToLabel()}");
         // TODO: Show piece info panel
         // TODO: Play selection sound
         // TODO: Highlight piece sprite
@@ -113,21 +113,21 @@ public class GameManager : MonoBehaviour
 
     void OnPieceDeselected(PieceDeselectedEvent evt)
     {
-        Debug.Log($">>> Piece deselected");
+//         Debug.Log($">>> Piece deselected");
         // TODO: Hide piece info panel
         // TODO: Clear highlights
     }
 
     void OnPieceMoved(PieceMovedEvent evt)
     {
-        Debug.Log($">>> Piece moved: {evt.Piece.Type} from {evt.From.ToLabel()} to {evt.To.ToLabel()}");
+//         Debug.Log($">>> Piece moved: {evt.Piece.Type} from {evt.From.ToLabel()} to {evt.To.ToLabel()}");
         // TODO: Play movement sound
         // TODO: Update minimap
     }
 
     void OnPieceCaptured(PieceCapturedEvent evt)
     {
-        Debug.Log($">>> Piece captured: {evt.Attacker.Type} captured {evt.Defender.Type}");
+//         Debug.Log($">>> Piece captured: {evt.Attacker.Type} captured {evt.Defender.Type}");
         // TODO: Play capture sound/animation
         // TODO: Update captured pieces display
         // TODO: Show score update
@@ -156,7 +156,7 @@ public class GameManager : MonoBehaviour
 
     public void OnRestartGameButtonClicked()
     {
-        Debug.Log("Restarting game...");
+//         Debug.Log("Restarting game...");
         // Reload scene
         UnityEngine.SceneManagement.SceneManager.LoadScene(
             UnityEngine.SceneManagement.SceneManager.GetActiveScene().name

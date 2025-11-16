@@ -60,18 +60,18 @@ namespace CommanderChess.Presentation
 
             if (boardCoord.HasValue)
             {
-                Debug.Log($"Left clicked: {boardCoord.Value.ToLabel()}");
+//                 Debug.Log($"Left clicked: {boardCoord.Value.ToLabel()}");
                 gameStateManager.OnBoardPositionClicked(boardCoord.Value);
             }
             else
             {
-                Debug.Log("Left clicked outside board");
+//                 Debug.Log("Left clicked outside board");
             }
         }
 
         void HandleRightClick()
         {
-            Debug.Log("Right click - canceling action");
+//             Debug.Log("Right click - canceling action");
             gameStateManager.CancelCurrentAction();
         }
 
@@ -84,7 +84,7 @@ namespace CommanderChess.Presentation
             // ESC - Cancel action
             if (keyboard.escapeKey.wasPressedThisFrame)
             {
-                Debug.Log("ESC pressed - canceling action");
+//                 Debug.Log("ESC pressed - canceling action");
                 gameStateManager.CancelCurrentAction();
             }
 
@@ -92,7 +92,7 @@ namespace CommanderChess.Presentation
             if ((keyboard.leftCtrlKey.isPressed || keyboard.rightCtrlKey.isPressed) &&
                 keyboard.zKey.wasPressedThisFrame)
             {
-                Debug.Log("Ctrl+Z pressed - undo");
+//                 Debug.Log("Ctrl+Z pressed - undo");
                 gameStateManager.UndoLastMove();
             }
         }

@@ -23,7 +23,7 @@ namespace CommanderChess.GameState
 
         public void Enter()
         {
-            Debug.Log($"Entered SelectingDetachTargetState - detaching {Data.SelectedPiece.Type}");
+//             Debug.Log($"Entered SelectingDetachTargetState - detaching {Data.SelectedPiece.Type}");
 
             if (Data.SelectedPiece == null)
             {
@@ -44,7 +44,7 @@ namespace CommanderChess.GameState
                 return;
             }
 
-            Debug.Log($"Detaching {passengerToDetach.Type} from {carrier.Type}");
+//             Debug.Log($"Detaching {passengerToDetach.Type} from {carrier.Type}");
 
             // Calculate possible detach positions using passenger's possible moves
             Data.HighlightedMoves.Clear();
@@ -56,7 +56,7 @@ namespace CommanderChess.GameState
             if (passengerToDetach.PossibleMoves != null && passengerToDetach.PossibleMoves.Count > 0)
             {
                 Data.HighlightedMoves.AddRange(passengerToDetach.PossibleMoves);
-                Debug.Log($"Found {Data.HighlightedMoves.Count} possible moves for {passengerToDetach.Type}");
+//                 Debug.Log($"Found {Data.HighlightedMoves.Count} possible moves for {passengerToDetach.Type}");
             }
 
             if (Data.HighlightedMoves.Count == 0)
@@ -70,12 +70,12 @@ namespace CommanderChess.GameState
             Manager.HighlightMoves(Data.HighlightedMoves);
             Manager.HighlightSelected(Data.SelectedPosition);
 
-            Debug.Log($"Highlighted {Data.HighlightedMoves.Count} valid detach positions for {passengerToDetach.Type}");
+//             Debug.Log($"Highlighted {Data.HighlightedMoves.Count} valid detach positions for {passengerToDetach.Type}");
         }
 
         public void Exit()
         {
-            Debug.Log("Exited SelectingDetachTargetState");
+//             Debug.Log("Exited SelectingDetachTargetState");
             Manager.ClearHighlights();
         }
 
@@ -97,7 +97,7 @@ namespace CommanderChess.GameState
             // Clicking on carrier piece should cancel detach mode
             if (piece == carrier)
             {
-                Debug.Log("Clicked carrier - canceling detach");
+//                 Debug.Log("Clicked carrier - canceling detach");
                 SelectCarrier();
                 return;
             }
@@ -105,7 +105,7 @@ namespace CommanderChess.GameState
             // Clicking on the same passenger should deselect and go back to carrier
             if (piece == passengerToDetach)
             {
-                Debug.Log("Clicked same passenger - deselecting");
+//                 Debug.Log("Clicked same passenger - deselecting");
                 SelectCarrier();
                 return;
             }
@@ -116,7 +116,7 @@ namespace CommanderChess.GameState
 
         public void HandleCancel()
         {
-            Debug.Log("Cancel in SelectingDetachTargetState - back to carrier");
+//             Debug.Log("Cancel in SelectingDetachTargetState - back to carrier");
             SelectCarrier();
         }
 
@@ -131,7 +131,7 @@ namespace CommanderChess.GameState
         {
             var from = carrier.Position;
 
-            Debug.Log($"Attempting detach: {passengerToDetach.Type} from {carrier.Type} at {from.ToLabel()} to {to.ToLabel()}");
+//             Debug.Log($"Attempting detach: {passengerToDetach.Type} from {carrier.Type} at {from.ToLabel()} to {to.ToLabel()}");
 
             // Validate
             var validation = Manager.ActionValidator.ValidateDetach(carrier, passengerToDetach, to);
@@ -145,7 +145,7 @@ namespace CommanderChess.GameState
             var command = Manager.CommandManager.CreateDetachCommand(from, to);
             if (Manager.CommandManager.Execute(command))
             {
-                Debug.Log($"Detach executed successfully");
+//                 Debug.Log($"Detach executed successfully");
                 
                 // After detach, auto-select carrier for next action
                 Manager.ChangeState(GameState.ExecutingAction);

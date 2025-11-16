@@ -19,7 +19,7 @@ namespace CommanderChess.GameState
 
         public void Enter()
         {
-            Debug.Log("Entered IdleState - Waiting for piece selection");
+//             Debug.Log("Entered IdleState - Waiting for piece selection");
 
             // Clear any previous selection data
             Data.Clear();
@@ -31,18 +31,12 @@ namespace CommanderChess.GameState
             Manager.NotifyPieceDeselected();
         }
 
-        public void Exit()
-        {
-            Debug.Log("Exited IdleState");
-        }
-
-        public void HandleBoardClick(BoardCoord coord)
-        {
-            // Clicking on empty board in Idle state does nothing
-            Debug.Log($"Clicked empty position {coord.ToLabel()} in IdleState - no action");
-        }
-
-        public void HandlePieceClick(BasePiece piece)
+    public void Exit()
+    {
+    }    public void HandleBoardClick(BoardCoord coord)
+    {
+        // Clicking on empty board in Idle state does nothing
+    }        public void HandlePieceClick(BasePiece piece)
         {
             // Kiểm tra xem piece có được phép hành động không (respects detach logic and end-condition)
             if (!Manager.TurnManager.IsPieceAllowedToAct(piece))
@@ -70,7 +64,6 @@ namespace CommanderChess.GameState
             }
 
             // Select piece và chuyển sang PieceSelectedState
-            Debug.Log($"Selected {piece.Team} {piece.Type} at {piece.Position.ToLabel()}");
 
             Data.SelectedPiece = piece;
             Data.SelectedPosition = piece.Position;
@@ -78,13 +71,10 @@ namespace CommanderChess.GameState
             Manager.ChangeState(GameState.PieceSelected);
         }
 
-        public void HandleCancel()
-        {
-            // Nothing to cancel in Idle state
-            Debug.Log("HandleCancel in IdleState - no action");
-        }
-
-        public void Update()
+    public void HandleCancel()
+    {
+        // Nothing to cancel in Idle state
+    }        public void Update()
         {
             // Idle state không cần update logic
         }

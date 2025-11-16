@@ -46,7 +46,7 @@ namespace CommanderChess.Services
         /// </summary>
         public void ClearAllPieces()
         {
-            Debug.Log("Clearing all pieces...");
+//             Debug.Log("Clearing all pieces...");
 
             // Get all piece GameObjects
             BasePiece[] pieces = GetComponentsInChildren<BasePiece>();
@@ -63,7 +63,7 @@ namespace CommanderChess.Services
             // Clear board dictionary
             board.Pieces.Clear();
 
-            Debug.Log($"Cleared {pieces.Length} pieces");
+//             Debug.Log($"Cleared {pieces.Length} pieces");
         }
 
         bool Validate()

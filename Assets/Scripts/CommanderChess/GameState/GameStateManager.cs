@@ -121,7 +121,7 @@ namespace CommanderChess.GameState
         {
             if (commandManager.CanUndo())
             {
-                Debug.Log("Undoing current turn");
+//                 Debug.Log("Undoing current turn");
                 bool success = commandManager.UndoTurn();
                 
                 if (success)
@@ -215,7 +215,7 @@ namespace CommanderChess.GameState
             // Enter new state
             currentState.Enter();
 
-            Debug.Log($"State changed: {previousState} -> {newState}");
+//             Debug.Log($"State changed: {previousState} -> {newState}");
         }
 
         #endregion

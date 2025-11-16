@@ -78,7 +78,7 @@ namespace CommanderChess.CommandSystem
                     // Step 3: Update cache cho các pieces bị ảnh hưởng
                     UpdateAffectedPiecesCache();
 
-                    Debug.Log($"{Description}");
+//                     Debug.Log($"{Description}");
                     OnExecuteSuccess();
                 }
                 else

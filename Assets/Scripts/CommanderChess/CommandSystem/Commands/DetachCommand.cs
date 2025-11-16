@@ -59,7 +59,7 @@ namespace CommanderChess.CommandSystem
                 {
                     // Passenger shot down during detach
                     movementExecutor.ShotDownPiece(passenger);
-                    Debug.Log($"  {passenger.Type} shot down during detach!");
+//                     Debug.Log($"  {passenger.Type} shot down during detach!");
                     return true;
                 }
 

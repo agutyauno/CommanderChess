@@ -59,7 +59,7 @@ namespace CommanderChess.Presentation
                 }
             }
 
-            Debug.Log($"Highlighted {currentMoves.Count} move positions");
+//             Debug.Log($"Highlighted {currentMoves.Count} move positions");
         }
 
         /// <summary>
@@ -81,7 +81,7 @@ namespace CommanderChess.Presentation
                 }
             }
 
-            Debug.Log($"Highlighted {currentAttacks.Count} attack positions");
+//             Debug.Log($"Highlighted {currentAttacks.Count} attack positions");
         }
 
         /// <summary>
@@ -97,7 +97,7 @@ namespace CommanderChess.Presentation
                 selectedTilemap.SetTile(cellPos, selectedTile);
                 currentSelected = coord;
 
-                Debug.Log($"Highlighted selected position: {coord.ToLabel()}");
+//                 Debug.Log($"Highlighted selected position: {coord.ToLabel()}");
             }
         }
 
@@ -120,7 +120,7 @@ namespace CommanderChess.Presentation
                 }
             }
 
-            Debug.Log($"Highlighted {currentDangers.Count} danger zones");
+//             Debug.Log($"Highlighted {currentDangers.Count} danger zones");
         }
 
         #endregion
@@ -188,7 +188,7 @@ namespace CommanderChess.Presentation
             ClearAttacks();
             ClearSelected();
             ClearDangers();
-            Debug.Log("Cleared all highlights");
+//             Debug.Log("Cleared all highlights");
         }
 
         #endregion

@@ -1,6 +1,7 @@
 using System.Linq;
 using CommanderChess.Domain;
 using CommanderChess.Events;
+using UnityEngine;
 using VContainer;
 
 namespace CommanderChess.Services
@@ -31,11 +32,13 @@ namespace CommanderChess.Services
             if (CheckCommanderLost(Team.Red, out var redCommanderCondition))
             {
                 PublishWin(Team.Blue, Team.Red, redCommanderCondition);
+                Debug.Log("Red Commander lost. Blue team wins!");
                 return true;
             }
             if (CheckCommanderLost(Team.Blue, out var blueCommanderCondition))
             {
                 PublishWin(Team.Red, Team.Blue, blueCommanderCondition);
+                Debug.Log("Blue Commander lost. Red team wins!");
                 return true;
             }
 
@@ -43,33 +46,39 @@ namespace CommanderChess.Services
             if (CheckAllNavyLost(Team.Red))
             {
                 PublishWin(Team.Blue, Team.Red, WinCondition.AllNavyLost);
+                Debug.Log("Red team lost all navy units. Blue team wins!");
                 return true;
             }
             if (CheckAllNavyLost(Team.Blue))
             {
                 PublishWin(Team.Red, Team.Blue, WinCondition.AllNavyLost);
+                Debug.Log("Blue team lost all navy units. Red team wins!");
                 return true;
             }
 
             if (CheckAllAirforceLost(Team.Red))
             {
                 PublishWin(Team.Blue, Team.Red, WinCondition.AllAirforceLost);
+                Debug.Log("Red team lost all airforce units. Blue team wins!");
                 return true;
             }
             if (CheckAllAirforceLost(Team.Blue))
             {
                 PublishWin(Team.Red, Team.Blue, WinCondition.AllAirforceLost);
+                Debug.Log("Blue team lost all airforce units. Red team wins!");
                 return true;
             }
 
             if (CheckAllGroundUnitsLost(Team.Red))
             {
                 PublishWin(Team.Blue, Team.Red, WinCondition.AllGroundUnitsLost);
+                Debug.Log("Red team lost all ground units. Blue team wins!");
                 return true;
             }
             if (CheckAllGroundUnitsLost(Team.Blue))
             {
                 PublishWin(Team.Red, Team.Blue, WinCondition.AllGroundUnitsLost);
+                Debug.Log("Blue team lost all ground units. Red team wins!");
                 return true;
             }
 

@@ -79,7 +79,6 @@ public class TurnManager : BaseService
     protected override void OnInitialize()
     {
         base.OnInitialize();
-        Debug.Log("[TurnManager] Initializing with turn-level backup system");
         
         // Subscribe to movement events
         eventBus.Subscribe<PieceMovedEvent>(OnPieceMoved);
@@ -119,13 +118,11 @@ public class TurnManager : BaseService
         if (currentTurnSnapshot != null)
         {
             currentTurnSnapshot.Commands.Add(command);
-            Debug.Log($"[TurnManager] Recorded command: {command.Description} (Total: {currentTurnSnapshot.Commands.Count})");
             
             // Check win conditions FIRST (Priority: Commander Death > Unit Losses)
             bool gameWon = winConditionChecker.CheckWinConditions();
             if (gameWon)
             {
-                Debug.Log("[TurnManager] Game ended! Win condition met.");
                 return; // Don't process further if game ended
             }
 
@@ -167,23 +164,21 @@ public class TurnManager : BaseService
     private void OnPieceMoved(PieceMovedEvent evt)
     {
         // Movement already recorded via RecordCommand, just ensure logic consistency
-        Debug.Log($"[TurnManager] OnPieceMoved: {evt.Piece.Type} {evt.From.ToLabel()}→{evt.To.ToLabel()}");
     }
 
     private void OnPieceCaptured(PieceCapturedEvent evt)
     {
-        Debug.Log($"[TurnManager] OnPieceCaptured: {evt.Attacker.Type} captured {evt.Defender.Type}");
+        // Capture recorded
     }
 
     private void OnPieceBoarded(PieceBoardedEvent evt)
     {
-        Debug.Log($"[TurnManager] OnPieceBoarded: {evt.Passenger.Type} boarded {evt.Carrier.Type}");
+        // Boarding recorded
     }
 
     private void OnPieceDetached(PieceDetachedEvent evt)
     {
         // After a detach, only the carrier at carrierPos is allowed to continue actions
-        Debug.Log($"[TurnManager] OnPieceDetached: {evt.Passenger.Type} detached");
         
         if (board.Pieces.ContainsKey(evt.CarrierPosition))
         {
@@ -207,8 +202,6 @@ public class TurnManager : BaseService
             Debug.LogWarning("[TurnManager] ConfirmEndTurn called but no end condition pending");
             return;
         }
-
-        Debug.Log($"[TurnManager] Turn {turnNumber} confirmed by {currentTurn}");
 
         // Publish TurnEnded event BEFORE EndTurn
         eventBus.Publish(new TurnEndedEvent(currentTurn, turnNumber));
@@ -240,8 +233,6 @@ public class TurnManager : BaseService
             return;
         }
 
-        Debug.Log($"[TurnManager] Cancelling turn {turnNumber} for {currentTurn}");
-
         // Restore to snapshot at start of current turn
         backupService.RestoreSnapshot(currentTurnSnapshot.GameState);
         bool valid = backupService.ValidateSnapshotRestored(currentTurnSnapshot.GameState);
@@ -261,8 +252,6 @@ public class TurnManager : BaseService
 
         // Notify listeners
         eventBus.Publish(new TurnEndCancelledEvent(currentTurn, turnNumber));
-        
-        Debug.Log($"[TurnManager] Turn cancelled successfully");
     }
 
     /// <summary>
@@ -303,7 +292,6 @@ public class TurnManager : BaseService
     /// </summary>
     public void Surrender()
     {
-        Debug.Log($"[TurnManager] {currentTurn} surrendered!");
         winConditionChecker.Surrender(currentTurn);
     }
 
@@ -347,8 +335,6 @@ public class TurnManager : BaseService
         detachActive = false;
         allowedPieceAfterDetach = null;
 
-        Debug.Log($"Turn {turnNumber}: {currentTurn}'s turn");
-
         eventBus.Publish(new TurnChangedEvent(
             newTurn: currentTurn,
             previousTurn: previousTurn,
@@ -381,11 +367,6 @@ public class TurnManager : BaseService
             // Pop snapshot trước đó
             var previousSnapshot = turnHistory.Pop();
             
-            Debug.Log($"[TurnManager] ========== UNDO TURN ==========");
-            Debug.Log($"[TurnManager] Undoing turn {turnNumber} -> Restoring turn {previousSnapshot.TurnNumber}");
-            Debug.Log($"  - Restoring {previousSnapshot.GameState.PieceData.Count} pieces");
-            Debug.Log($"  - Executed {previousSnapshot.Commands.Count} commands will be reverted");
-
             // Restore game state
             backupService.RestoreSnapshot(previousSnapshot.GameState);
 
@@ -407,9 +388,6 @@ public class TurnManager : BaseService
             endConditionPending = false;
             detachActive = false;
             allowedPieceAfterDetach = null;
-
-            Debug.Log($"[TurnManager] Turn undo successful - Now at turn {turnNumber}, {currentTurn}'s turn");
-            Debug.Log($"[TurnManager] Board has {board.Pieces.Count} pieces");
 
             // Publish events
             eventBus.Publish(new TurnUndoneEvent(
@@ -448,8 +426,6 @@ public class TurnManager : BaseService
         }
 
         currentTurnSnapshot = new TurnSnapshot(turnNumber, currentTurn, gameState);
-        
-        Debug.Log($"[TurnManager] Turn snapshot saved: Turn {turnNumber}, {currentTurn}, {gameState.PieceData.Count} pieces");
     }
 
     /// <summary>
@@ -469,8 +445,6 @@ public class TurnManager : BaseService
         endConditionPending = false;
         detachActive = false;
         allowedPieceAfterDetach = null;
-
-        Debug.Log($"Turn reset: {currentTurn}'s turn");
         
         eventBus.Publish(new TurnStartedEvent(
             team: currentTurn,
@@ -489,8 +463,6 @@ public class TurnManager : BaseService
         var previousTurn = currentTurn;
         currentTurn = team;
         turnNumber = turn;
-
-        Debug.Log($"Turn set to {turnNumber}: {currentTurn}'s turn");
         
         eventBus.Publish(new TurnChangedEvent(
             newTurn: currentTurn,
@@ -581,7 +553,6 @@ public class TurnManager : BaseService
     {
         turnHistory.Clear();
         replayHistory.Clear();
-        Debug.Log("[TurnManager] History cleared");
     }
 
     #endregion

@@ -65,14 +65,14 @@ namespace CommanderChess.CommandSystem
                     case PathResult.GoThrough:
                         // Attacker shot down before reaching target
                         movementExecutor.ShotDownPiece(SelectedPiece);
-                        Debug.Log($"  {SelectedPiece.Type} shot down before reaching target!");
+//                         Debug.Log($"  {SelectedPiece.Type} shot down before reaching target!");
                         return true;
 
                     case PathResult.Inside:
                         // Both destroyed (1-for-1 trade)
                         movementExecutor.ShotDownPiece(SelectedPiece);
                         movementExecutor.ShotDownPiece(defender);
-                        Debug.Log($"  1-for-1 trade! Both pieces destroyed!");
+//                         Debug.Log($"  1-for-1 trade! Both pieces destroyed!");
                         return true;
 
                     case PathResult.None:
@@ -93,7 +93,7 @@ namespace CommanderChess.CommandSystem
                         
                         if (!shouldMoveToTarget)
                         {
-                            Debug.Log($"  {SelectedPiece.Type} captured {defender.Type} without moving (ranged attack)");
+//                             Debug.Log($"  {SelectedPiece.Type} captured {defender.Type} without moving (ranged attack)");
                         }
                         
                         return true;

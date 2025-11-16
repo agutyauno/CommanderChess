@@ -106,7 +106,7 @@ namespace CommanderChess.CommandSystem
                     executedCommands.RemoveAt(0);
                 }
 
-                Debug.Log($"Command executed: {command.Description}");
+//                 Debug.Log($"Command executed: {command.Description}");
             }
             else
             {
@@ -143,7 +143,7 @@ namespace CommanderChess.CommandSystem
         {
             executedCommands.Clear();
             turnManager.ClearHistory();
-            Debug.Log("Command history cleared");
+//             Debug.Log("Command history cleared");
         }
 
         /// <summary>

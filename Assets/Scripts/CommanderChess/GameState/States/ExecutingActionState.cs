@@ -22,7 +22,7 @@ namespace CommanderChess.GameState
 
         public void Enter()
         {
-            Debug.Log("Entered ExecutingActionState - blocking input");
+//             Debug.Log("Entered ExecutingActionState - blocking input");
             isExecuting = true;
 
             // TODO: Nếu có animation system, chờ animation complete
@@ -34,26 +34,26 @@ namespace CommanderChess.GameState
 
         public void Exit()
         {
-            Debug.Log("Exited ExecutingActionState");
+//             Debug.Log("Exited ExecutingActionState");
             isExecuting = false;
         }
 
         public void HandleBoardClick(BoardCoord coord)
         {
             // Input blocked during execution
-            Debug.Log("Input blocked - command executing");
+//             Debug.Log("Input blocked - command executing");
         }
 
         public void HandlePieceClick(BasePiece piece)
         {
             // Input blocked during execution
-            Debug.Log("Input blocked - command executing");
+//             Debug.Log("Input blocked - command executing");
         }
 
         public void HandleCancel()
         {
             // Cannot cancel during execution
-            Debug.Log("Cannot cancel - command executing");
+//             Debug.Log("Cannot cancel - command executing");
         }
 
         public void Update()
@@ -69,13 +69,13 @@ namespace CommanderChess.GameState
 
         private void OnCommandCompleted()
         {
-            Debug.Log("Command execution completed");
+//             Debug.Log("Command execution completed");
 
             // Check if last command was detach - if so, auto-select carrier
             var lastCommand = Manager.CommandManager.GetLastCommand();
             if (lastCommand != null && lastCommand.GetType().Name.Contains("DetachCommand"))
             {
-                Debug.Log("Detach command completed - checking for carrier auto-select");
+//                 Debug.Log("Detach command completed - checking for carrier auto-select");
                 
                 // After detach, TurnManager sets allowedPieceAfterDetach
                 // We need to find the carrier and auto-select it
@@ -85,7 +85,7 @@ namespace CommanderChess.GameState
                     var carrierPos = Data.SelectedPosition;
                     if (Manager.Board.TryGetPiece(carrierPos, out var carrier))
                     {
-                        Debug.Log($"Auto-selecting carrier {carrier.Type} after detach");
+//                         Debug.Log($"Auto-selecting carrier {carrier.Type} after detach");
                         
                         // Set selection
                         Data.SelectedPiece = carrier;

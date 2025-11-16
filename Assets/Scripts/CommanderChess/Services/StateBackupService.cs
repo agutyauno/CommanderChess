@@ -49,7 +49,7 @@ namespace CommanderChess.Services
                 };
             }
 
-            Debug.Log($"[Snapshot] Created: {snapshot.PieceData.Count} pieces");
+//             Debug.Log($"[Snapshot] Created: {snapshot.PieceData.Count} pieces");
             return snapshot;
         }
 
@@ -120,7 +120,7 @@ namespace CommanderChess.Services
             }
             else
             {
-                Debug.Log($"[Restore] Success: {board.Pieces.Count} pieces restored");
+//                 Debug.Log($"[Restore] Success: {board.Pieces.Count} pieces restored");
             }
         }
 

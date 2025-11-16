@@ -42,7 +42,7 @@ namespace CommanderChess.CommandSystem
                 if (pathResult == PathResult.GoThrough || pathResult == PathResult.Inside)
                 {
                     movementExecutor.ShotDownPiece(SelectedPiece);
-                    Debug.Log($"  {SelectedPiece.Type} was shot down!");
+//                     Debug.Log($"  {SelectedPiece.Type} was shot down!");
                     return true;
                 }
 
