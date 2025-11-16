@@ -18,6 +18,8 @@ public class TurnManager : BaseService
     #region Dependencies
     [Inject] readonly StateBackupService backupService;
     [Inject] readonly Board board;
+    [Inject] readonly WinConditionChecker winConditionChecker;
+    [Inject] readonly HeroConditionChecker heroConditionChecker;
     #endregion
 
     #region Turn State
@@ -118,6 +120,17 @@ public class TurnManager : BaseService
         {
             currentTurnSnapshot.Commands.Add(command);
             Debug.Log($"[TurnManager] Recorded command: {command.Description} (Total: {currentTurnSnapshot.Commands.Count})");
+            
+            // Check win conditions FIRST (Priority: Commander Death > Unit Losses)
+            bool gameWon = winConditionChecker.CheckWinConditions();
+            if (gameWon)
+            {
+                Debug.Log("[TurnManager] Game ended! Win condition met.");
+                return; // Don't process further if game ended
+            }
+
+            // Then check hero conditions (can attack commander safely, or last piece)
+            heroConditionChecker.CheckAllHeroConditions();
             
             // Evaluate end-turn conditions based on command type
             if (!endConditionPending)
@@ -284,6 +297,15 @@ public class TurnManager : BaseService
     /// Check if detach is active and waiting for carrier action
     /// </summary>
     public bool IsDetachActive => detachActive;
+
+    /// <summary>
+    /// Handle surrender - triggers win condition for opponent
+    /// </summary>
+    public void Surrender()
+    {
+        Debug.Log($"[TurnManager] {currentTurn} surrendered!");
+        winConditionChecker.Surrender(currentTurn);
+    }
 
     /// <summary>
     /// Kết thúc lượt hiện tại và chuyển sang lượt tiếp theo

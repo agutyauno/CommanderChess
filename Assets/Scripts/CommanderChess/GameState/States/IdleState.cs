@@ -26,6 +26,9 @@ namespace CommanderChess.GameState
 
             // Clear visual highlights
             Manager.ClearHighlights();
+            
+            // Notify deselection
+            Manager.NotifyPieceDeselected();
         }
 
         public void Exit()

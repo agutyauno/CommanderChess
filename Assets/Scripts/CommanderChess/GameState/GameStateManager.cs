@@ -60,8 +60,8 @@ namespace CommanderChess.GameState
             states[GameState.Idle] = new IdleState(stateData, this);
             states[GameState.PieceSelected] = new PieceSelectedState(stateData, this);
             states[GameState.ExecutingAction] = new ExecutingActionState(stateData, this);
+            states[GameState.SelectingDetachTarget] = new SelectingDetachTargetState(stateData, this);
             // TODO: Add more states
-            // states[GameState.SelectingDetachTarget] = new SelectingDetachTargetState(stateData, this);
             // states[GameState.WaitingForOpponent] = new WaitingForOpponentState(stateData, this);
             // states[GameState.GameOver] = new GameOverState(stateData, this);
         }
@@ -104,6 +104,15 @@ namespace CommanderChess.GameState
 
             currentState.HandleCancel();
         }
+        
+        /// <summary>
+        /// Deselect current piece and return to idle
+        /// </summary>
+        public void DeselectPiece()
+        {
+            NotifyPieceDeselected();
+            ChangeState(GameState.Idle);
+        }
 
         /// <summary>
         /// Undo current turn - restore to beginning of turn
@@ -125,6 +134,58 @@ namespace CommanderChess.GameState
             {
                 Debug.LogWarning("Cannot undo - no commands in history");
             }
+        }
+
+        /// <summary>
+        /// Called when user selects a carried piece from info panel to detach
+        /// </summary>
+        public void SelectPieceForDetach(BasePiece piece)
+        {
+            if (piece == null)
+            {
+                Debug.LogError("SelectPieceForDetach: piece is null");
+                return;
+            }
+
+            // Check if piece is carried
+            if (!carryingSystem.IsCarried(piece))
+            {
+                Debug.LogWarning($"{piece.Type} is not carried - cannot detach");
+                return;
+            }
+
+            // Set selected piece in state data
+            stateData.SelectedPiece = piece;
+            stateData.SelectedPosition = piece.Position; // Position of carrier
+
+            // Transition to SelectingDetachTarget state
+            ChangeState(GameState.SelectingDetachTarget);
+        }
+
+        /// <summary>
+        /// Called when user selects a piece (carrier or standalone) from info panel
+        /// </summary>
+        public void SelectPiece(BasePiece piece)
+        {
+            if (piece == null)
+            {
+                Debug.LogError("SelectPiece: piece is null");
+                return;
+            }
+
+            // Check if piece is allowed to act
+            if (!turnManager.IsPieceAllowedToAct(piece))
+            {
+                Debug.LogWarning($"Piece {piece.Type} is not allowed to act");
+                return;
+            }
+
+            // Set selected piece
+            stateData.SelectedPiece = piece;
+            stateData.SelectedPosition = piece.Position;
+
+            // Transition to PieceSelected state
+            ChangeState(GameState.PieceSelected);
         }
 
         #endregion
@@ -154,7 +215,6 @@ namespace CommanderChess.GameState
             // Enter new state
             currentState.Enter();
 
-            // ✅ Publish event thông qua EventBus
             Debug.Log($"State changed: {previousState} -> {newState}");
         }
 
@@ -203,7 +263,6 @@ namespace CommanderChess.GameState
         /// </summary>
         public void NotifyPieceSelected(BasePiece piece)
         {
-            // ✅ Publish event
             eventBus.Publish(new PieceSelectedEvent(piece));
         }
 
@@ -212,7 +271,6 @@ namespace CommanderChess.GameState
         /// </summary>
         public void NotifyPieceDeselected()
         {
-            // ✅ Publish event
             eventBus.Publish(new PieceDeselectedEvent());
         }
 

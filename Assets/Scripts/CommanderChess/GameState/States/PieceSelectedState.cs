@@ -160,6 +160,7 @@ namespace CommanderChess.GameState
         public void HandleCancel()
         {
             Debug.Log("Cancel in PieceSelectedState - deselecting piece");
+            Manager.NotifyPieceDeselected();
             Manager.ChangeState(GameState.Idle);
         }
 

@@ -33,6 +33,12 @@ public class GameLifeTimeScope : LifetimeScope
         builder.Register<CommandManager>(Lifetime.Singleton).AsSelf().AsImplementedInterfaces();
         builder.Register<TurnManager>(Lifetime.Singleton).AsSelf().AsImplementedInterfaces();
         builder.Register<ActionValidator>(Lifetime.Singleton).AsSelf().AsImplementedInterfaces();
+        
+        // Game Condition Services
+        builder.Register<GameStatsTracker>(Lifetime.Singleton).AsSelf().AsImplementedInterfaces();
+        builder.Register<WinConditionChecker>(Lifetime.Singleton).AsSelf().AsImplementedInterfaces();
+        builder.Register<HeroConditionChecker>(Lifetime.Singleton).AsSelf().AsImplementedInterfaces();
+        
         builder.RegisterComponent(pieceSpawner).AsSelf();
 
         // Managers

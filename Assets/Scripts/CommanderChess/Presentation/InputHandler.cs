@@ -95,14 +95,6 @@ namespace CommanderChess.Presentation
                 Debug.Log("Ctrl+Z pressed - undo");
                 gameStateManager.UndoLastMove();
             }
-
-            // Ctrl+Y - Redo (TODO: implement redo in GameStateManager)
-            if ((keyboard.leftCtrlKey.isPressed || keyboard.rightCtrlKey.isPressed) &&
-                keyboard.yKey.wasPressedThisFrame)
-            {
-                Debug.Log("Ctrl+Y pressed - redo (not implemented yet)");
-                // gameStateManager.RedoLastMove();
-            }
         }
 
         #endregion

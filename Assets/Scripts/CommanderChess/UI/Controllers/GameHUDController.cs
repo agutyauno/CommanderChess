@@ -7,6 +7,9 @@ using CommanderChess.Services;
 using UnityEngine;
 using UnityEngine.UIElements;
 using VContainer;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 namespace CommanderChess.UI.Controllers
 {
@@ -73,6 +76,8 @@ namespace CommanderChess.UI.Controllers
             if (btnRof == null) Debug.LogError("btn_rof not found!");
             if (btnConfirm == null) Debug.LogError("btn_confirm not found!");
             if (btnCancel == null) Debug.LogError("btn_cancel not found!");
+
+            infoPanel.visible = false;
         }
 
         void SetupButton()
@@ -121,7 +126,7 @@ namespace CommanderChess.UI.Controllers
 
         void OnPieceDeselected(PieceDeselectedEvent evt)
         {
-            infoPanelItems.Clear();
+            infoPanel.Clear();
             currentSelectedPiece = null;
             infoPanel.visible = false;
         }
@@ -160,7 +165,8 @@ namespace CommanderChess.UI.Controllers
         #region Info Panel Management
         void ReBuildInfoPanel()
         {
-            ClearInfoPanel();   
+            ClearInfoPanel();
+            AddInfoPanelItem(carrierPiece);   
             foreach (var piece in carryingSystem.GetAllCarriedPieces(carrierPiece))
             {
                 AddInfoPanelItem(piece);
@@ -224,8 +230,50 @@ namespace CommanderChess.UI.Controllers
 
         void OnInfoPanelItemClicked(BasePiece piece)
         {
+            // If clicking the same piece, deselect it
+            if (currentSelectedPiece == piece)
+            {
+                Debug.Log($"Deselecting {piece.Type}");
+                
+                // If piece is carried, go back to selecting carrier
+                if (carryingSystem.IsCarried(piece))
+                {
+                    var carrier = carryingSystem.GetCarrier(piece);
+                    if (carrier != null)
+                    {
+                        currentSelectedPiece = carrier;
+                        UpdatePieceSelection();
+                        
+                        // Select carrier in game state
+                        gameStateManager.SelectPiece(carrier);
+                    }
+                }
+                else
+                {
+                    // Deselect and go back to idle
+                    currentSelectedPiece = null;
+                    UpdatePieceSelection();
+                    gameStateManager.CancelCurrentAction();
+                }
+                return;
+            }
+
+            // Update UI selection
             currentSelectedPiece = piece;
             UpdatePieceSelection();
+
+            // Check if piece is carried (need to detach)
+            if (carryingSystem.IsCarried(piece))
+            {
+                Debug.Log($"Selected carried piece {piece.Type} - entering detach mode");
+                gameStateManager.SelectPieceForDetach(piece);
+            }
+            else
+            {
+                // Piece is carrier or standalone - select normally
+                Debug.Log($"Selected piece {piece.Type}");
+                gameStateManager.SelectPiece(piece);
+            }
         }
         #endregion
 
@@ -271,13 +319,32 @@ namespace CommanderChess.UI.Controllers
         #region Utility
         Sprite GetPieceIcon(BasePiece piece)
         {
-            var spritePath = $"project://database/Assets/Sprites/Pieces/{piece.Type}_{piece.Team}Side.png";
-            var sprite = Resources.Load<Sprite>(spritePath);
+            #if UNITY_EDITOR
+            // Use AssetDatabase in Editor
+            var spritePath = $"Assets/Sprites/Pieces/{piece.Type}_{piece.Team}Side.png";
+            var sprite = AssetDatabase.LoadAssetAtPath<Sprite>(spritePath);
+            
             if (sprite == null)
             {
                 Debug.LogError($"Sprite not found at path: {spritePath}");
+                Debug.LogError($"Make sure the file exists and naming matches: {piece.Type}_{piece.Team}Side.png");
             }
+            
             return sprite;
+            #else
+            // Use Resources.Load in Build
+            // Sprites must be in Assets/Resources/Pieces/ folder for builds
+            var spritePath = $"Pieces/{piece.Type}_{piece.Team}Side";
+            var sprite = Resources.Load<Sprite>(spritePath);
+            
+            if (sprite == null)
+            {
+                Debug.LogError($"Sprite not found at Resources path: {spritePath}");
+                Debug.LogError($"Make sure sprites are in Assets/Resources/Pieces/ folder for builds");
+            }
+            
+            return sprite;
+            #endif
         }
 
         string GetPieceDisplayName(BasePiece piece)

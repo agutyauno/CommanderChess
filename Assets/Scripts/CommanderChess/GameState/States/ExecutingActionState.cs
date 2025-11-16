@@ -71,6 +71,33 @@ namespace CommanderChess.GameState
         {
             Debug.Log("Command execution completed");
 
+            // Check if last command was detach - if so, auto-select carrier
+            var lastCommand = Manager.CommandManager.GetLastCommand();
+            if (lastCommand != null && lastCommand.GetType().Name.Contains("DetachCommand"))
+            {
+                Debug.Log("Detach command completed - checking for carrier auto-select");
+                
+                // After detach, TurnManager sets allowedPieceAfterDetach
+                // We need to find the carrier and auto-select it
+                if (Manager.TurnManager.IsDetachActive)
+                {
+                    // Find carrier piece at the selected position
+                    var carrierPos = Data.SelectedPosition;
+                    if (Manager.Board.TryGetPiece(carrierPos, out var carrier))
+                    {
+                        Debug.Log($"Auto-selecting carrier {carrier.Type} after detach");
+                        
+                        // Set selection
+                        Data.SelectedPiece = carrier;
+                        Data.SelectedPosition = carrierPos;
+                        
+                        // Go to PieceSelected state
+                        Manager.ChangeState(GameState.PieceSelected);
+                        return;
+                    }
+                }
+            }
+
             // Clear selection
             Data.Clear();
 
