@@ -2,10 +2,23 @@
 }
 
 .button {
-    width: 160px;
+    width: 180px;
     height: 80px;
     font-size: 35px;
     margin-bottom: 15px;
+    border-top-width: 5px;
+    border-right-width: 5px;
+    border-bottom-width: 5px;
+    border-left-width: 5px;
+    border-top-left-radius: 10%;
+    border-top-right-radius: 10%;
+    border-bottom-right-radius: 10%;
+    border-bottom-left-radius: 10%;
+    -unity-font-style: bold;
+    border-left-color: rgb(0, 0, 0);
+    border-right-color: rgb(0, 0, 0);
+    border-top-color: rgb(0, 0, 0);
+    border-bottom-color: rgb(0, 0, 0);
 }
 
 .piece-image {
@@ -26,11 +39,11 @@
 }
 
 .info-panel-item {
-    background-color: rgb(204, 204, 204);
-    border-top-width: 2px;
-    border-right-width: 2px;
-    border-bottom-width: 2px;
-    border-left-width: 2px;
+    background-color: rgb(251, 250, 117);
+    border-top-width: 5px;
+    border-right-width: 5px;
+    border-bottom-width: 5px;
+    border-left-width: 5px;
     border-left-color: rgb(0, 0, 0);
     border-right-color: rgb(0, 0, 0);
     border-top-color: rgb(0, 0, 0);
@@ -40,10 +53,47 @@
     border-bottom-right-radius: 10%;
     border-bottom-left-radius: 10%;
     margin-bottom: 5px;
-    width: 160px;
+    width: 180px;
     height: 110px;
+    align-self: flex-start;
+    align-items: center;
+    -unity-font-style: normal;
 }
 
 .selected {
     background-color: rgb(255, 127, 80);
+}
+
+.turn-display {
+    background-color: rgba(0, 0, 0, 0.8);
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+    border-bottom-right-radius: 10px;
+    border-bottom-left-radius: 10px;
+    padding-left: 20px;
+    padding-right: 20px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    border-top-width: 3px;
+    border-right-width: 3px;
+    border-bottom-width: 3px;
+    border-left-width: 3px;
+    border-left-color: rgb(255, 255, 255);
+    border-right-color: rgb(255, 255, 255);
+    border-top-color: rgb(255, 255, 255);
+    border-bottom-color: rgb(255, 255, 255);
+}
+
+.turn-label {
+    font-size: 28px;
+    color: rgb(255, 255, 255);
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+}
+
+.turn-number-label {
+    font-size: 18px;
+    color: rgb(200, 200, 200);
+    -unity-text-align: middle-center;
+    margin-top: 5px;
 }

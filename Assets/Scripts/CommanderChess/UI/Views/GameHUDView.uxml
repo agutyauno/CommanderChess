@@ -1,6 +1,10 @@
 <ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
     <Style src="project://database/Assets/Scripts/CommanderChess/UI/Styles/GameHUD.uss?fileID=7433441132597879392&amp;guid=d7dc47138f960d542a7c9d0a757e4e3d&amp;type=3#GameHUD" />
     <ui:VisualElement style="flex-grow: 1;">
+        <ui:VisualElement name="turn-display" class="turn-display" style="position: relative; top: auto; left: auto; padding-left: 20px; padding-right: 20px; padding-top: 10px; padding-bottom: 10px; background-color: rgba(0, 0, 0, 0.7); border-radius: 10px; align-self: center; min-width: auto; max-width: 20%;">
+            <ui:Label name="turn-label" text="Red Team Turn" class="turn-label" style="font-size: 30px; color: rgb(255, 255, 255); -unity-font-style: bold;" />
+            <ui:Label name="turn-number-label" text="Turn 1" class="turn-number-label" style="font-size: 30px; color: rgb(200, 200, 200); -unity-font-style: normal;" />
+        </ui:VisualElement>
         <ui:VisualElement style="flex-grow: 1; align-items: center; justify-content: space-between; align-self: center; height: 80%; flex-direction: column; max-height: none; position: absolute; top: 148px; left: 883px;">
             <ui:VisualElement name="info-panel" class="info-panel">
                 <ui:VisualElement name="info-panel-item" class="info-panel-item selected" style="flex-grow: 1;">
@@ -17,9 +21,9 @@
                 </ui:VisualElement>
             </ui:VisualElement>
             <ui:VisualElement name="button-group" style="flex-grow: 1; position: relative; justify-content: space-between; top: auto; left: auto; align-items: center; max-height: 35%; height: 35%;">
-                <ui:Button text="ROF" triple-click-selects-line="false" display-tooltip-when-elided="true" name="btn_rof" class="button" />
-                <ui:Button text="Confirm" triple-click-selects-line="false" display-tooltip-when-elided="true" name="btn_confirm" class="button" />
-                <ui:Button text="Cancel" triple-click-selects-line="false" display-tooltip-when-elided="true" name="btn_cancel" class="button" />
+                <ui:Button text="ROF" triple-click-selects-line="false" display-tooltip-when-elided="true" name="btn_rof" class="button" style="background-color: rgb(255, 109, 109);" />
+                <ui:Button text="Confirm" triple-click-selects-line="false" display-tooltip-when-elided="true" name="btn_confirm" class="button" style="background-color: rgb(71, 147, 223);" />
+                <ui:Button text="Cancel" triple-click-selects-line="false" display-tooltip-when-elided="true" name="btn_cancel" class="button" style="background-color: rgb(255, 255, 255);" />
             </ui:VisualElement>
         </ui:VisualElement>
     </ui:VisualElement>

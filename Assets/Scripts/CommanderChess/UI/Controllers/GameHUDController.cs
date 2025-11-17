@@ -31,6 +31,9 @@ namespace CommanderChess.UI.Controllers
         Button btnRof;
         Button btnConfirm;
         Button btnCancel;
+        VisualElement turnDisplay;
+        Label turnLabel;
+        Label turnNumberLabel;
 
         // State
         BasePiece carrierPiece;
@@ -71,13 +74,22 @@ namespace CommanderChess.UI.Controllers
             btnRof = root.Q<Button>("btn_rof");
             btnConfirm = root.Q<Button>("btn_confirm");
             btnCancel = root.Q<Button>("btn_cancel");
+            turnDisplay = root.Q<VisualElement>("turn-display");
+            turnLabel = root.Q<Label>("turn-label");
+            turnNumberLabel = root.Q<Label>("turn-number-label");
 
             if (infoPanel == null) Debug.LogError("info-panel not found!");
             if (btnRof == null) Debug.LogError("btn_rof not found!");
             if (btnConfirm == null) Debug.LogError("btn_confirm not found!");
             if (btnCancel == null) Debug.LogError("btn_cancel not found!");
+            if (turnDisplay == null) Debug.LogError("turn-display not found!");
+            if (turnLabel == null) Debug.LogError("turn-label not found!");
+            if (turnNumberLabel == null) Debug.LogError("turn-number-label not found!");
 
             infoPanel.visible = false;
+            
+            // Initialize turn display
+            UpdateTurnDisplay();
         }
 
         void SetupButton()
@@ -101,6 +113,8 @@ namespace CommanderChess.UI.Controllers
             eventBus.Subscribe<TurnDetachOccurredEvent>(OnTurnDetachOccurred);
             eventBus.Subscribe<TurnEndedEvent>(OnTurnEnded);
             eventBus.Subscribe<TurnEndCancelledEvent>(OnTurnEndCancelled);
+            eventBus.Subscribe<TurnChangedEvent>(OnTurnChanged);
+            eventBus.Subscribe<TurnStartedEvent>(OnTurnStarted);
         }
 
         void UnsubscribeFromEvents()
@@ -111,6 +125,8 @@ namespace CommanderChess.UI.Controllers
             eventBus.Unsubscribe<TurnDetachOccurredEvent>(OnTurnDetachOccurred);
             eventBus.Unsubscribe<TurnEndedEvent>(OnTurnEnded);
             eventBus.Unsubscribe<TurnEndCancelledEvent>(OnTurnEndCancelled);
+            eventBus.Unsubscribe<TurnChangedEvent>(OnTurnChanged);
+            eventBus.Unsubscribe<TurnStartedEvent>(OnTurnStarted);
         }
         #endregion
 
@@ -159,6 +175,16 @@ namespace CommanderChess.UI.Controllers
             btnConfirm.visible = false;
             btnCancel.visible = false;
 //             Debug.Log($"[GameHUD] Turn cancelled for {evt.Team}");
+        }
+
+        void OnTurnChanged(TurnChangedEvent evt)
+        {
+            UpdateTurnDisplay();
+        }
+
+        void OnTurnStarted(TurnStartedEvent evt)
+        {
+            UpdateTurnDisplay();
         }
         #endregion
 
@@ -317,6 +343,23 @@ namespace CommanderChess.UI.Controllers
         #endregion
 
         #region Utility
+        void UpdateTurnDisplay()
+        {
+            if (turnLabel == null || turnNumberLabel == null) return;
+            
+            var currentTeam = turnManager.CurrentTurn;
+            var currentTurnNum = turnManager.TurnNumber;
+            
+            // Update turn label text and color
+            turnLabel.text = currentTeam == Team.Red ? "Red Team Turn" : "Blue Team Turn";
+            turnLabel.style.color = currentTeam == Team.Red 
+                ? new StyleColor(new Color(1f, 0.3f, 0.3f)) // Red color
+                : new StyleColor(new Color(0.3f, 0.5f, 1f)); // Blue color
+            
+            // Update turn number
+            turnNumberLabel.text = $"Turn {currentTurnNum}";
+        }
+
         Sprite GetPieceIcon(BasePiece piece)
         {
             #if UNITY_EDITOR
