@@ -6,6 +6,7 @@ namespace CommanderChess.Services
     public class ZoneProvider : BaseService
     {
         readonly ROFZone ROF;
+        readonly CommanderZone commanderZone;
         
         [Inject] readonly CarryingSystem carryingSystem;
 
@@ -13,6 +14,7 @@ namespace CommanderChess.Services
         public ZoneProvider(Board board, CarryingSystem carryingSystem)
         {
             ROF = new(board);
+            commanderZone = new(board, carryingSystem);
             this.carryingSystem = carryingSystem;
         }
 
@@ -30,6 +32,11 @@ namespace CommanderChess.Services
         public IZone GetROF()
         {
             return ROF;
+        }
+
+        public IZone GetCommanderZone()
+        {
+            return commanderZone;
         }
 
         protected override void SubscribeEvents()
@@ -53,15 +60,31 @@ namespace CommanderChess.Services
         /// </summary>
         void OnPieceMoved(PieceMovedEvent evt)
         {
-            // Check piece chính
+            // Check if commander moved
+            if (evt.Piece.Type == BasePiece.PieceType.Commander)
+            {
+                commanderZone.MarkDirty();
+            }
+
+            // Check if any carried piece is commander
+            var carriedPieces = carryingSystem.GetAllCarriedPieces(evt.Piece);
+            foreach (var passenger in carriedPieces)
+            {
+                if (passenger.Type == BasePiece.PieceType.Commander)
+                {
+                    commanderZone.MarkDirty();
+                    break;
+                }
+            }
+
+            // Check ROF zone
             if (evt.Piece.HadRingOfFire)
             {
                 ROF.MarkDirty();
                 return;
             }
 
-            // Check carried pieces (nếu carrier di chuyển, passengers cũng move)
-            var carriedPieces = carryingSystem.GetAllCarriedPieces(evt.Piece);
+            // Check carried pieces for ROF
             foreach (var passenger in carriedPieces)
             {
                 if (passenger.HadRingOfFire)
@@ -77,7 +100,24 @@ namespace CommanderChess.Services
         /// </summary>
         void OnPieceCaptured(PieceCapturedEvent evt)
         {
-            // Defender bị destroyed
+            // Check if commander was captured
+            if (evt.Defender.Type == BasePiece.PieceType.Commander)
+            {
+                commanderZone.MarkDirty();
+            }
+
+            // Check if defender was carrying commander
+            var carriedPieces = carryingSystem.GetAllCarriedPieces(evt.Defender);
+            foreach (var passenger in carriedPieces)
+            {
+                if (passenger.Type == BasePiece.PieceType.Commander)
+                {
+                    commanderZone.MarkDirty();
+                    break;
+                }
+            }
+
+            // Check ROF zone - defender destroyed
             if (evt.Defender.HadRingOfFire)
             {
                 ROF.MarkDirty();
@@ -85,7 +125,6 @@ namespace CommanderChess.Services
             }
 
             // Defender carry pieces với ROF
-            var carriedPieces = carryingSystem.GetAllCarriedPieces(evt.Defender);
             foreach (var passenger in carriedPieces)
             {
                 if (passenger.HadRingOfFire)
@@ -97,19 +136,41 @@ namespace CommanderChess.Services
         }
 
         /// <summary>
-        /// Khi piece boarding - passenger có thể có ROF
+        /// Khi piece boarding - passenger có thể có ROF hoặc là commander
         /// </summary>
         void OnPieceBoarded(PieceBoardedEvent evt)
         {
-            // Check passenger
+            // Check if passenger is commander
+            if (evt.Passenger.Type == BasePiece.PieceType.Commander)
+            {
+                commanderZone.MarkDirty();
+            }
+
+            // Check if carrier is commander
+            if (evt.Carrier.Type == BasePiece.PieceType.Commander)
+            {
+                commanderZone.MarkDirty();
+            }
+
+            // Check nếu passenger đang carry commander (nested carrying)
+            var nestedCarried = carryingSystem.GetAllCarriedPieces(evt.Passenger);
+            foreach (var nested in nestedCarried)
+            {
+                if (nested.Type == BasePiece.PieceType.Commander)
+                {
+                    commanderZone.MarkDirty();
+                    break;
+                }
+            }
+
+            // Check ROF - passenger
             if (evt.Passenger.HadRingOfFire)
             {
                 ROF.MarkDirty();
                 return;
             }
 
-            // Check nếu passenger đang carry pieces khác (nested carrying)
-            var nestedCarried = carryingSystem.GetAllCarriedPieces(evt.Passenger);
+            // Check nếu passenger đang carry pieces khác với ROF (nested carrying)
             foreach (var nested in nestedCarried)
             {
                 if (nested.HadRingOfFire)
@@ -131,15 +192,31 @@ namespace CommanderChess.Services
         /// </summary>
         void OnPieceDetached(PieceDetachedEvent evt)
         {
-            // Check passenger
+            // Check if passenger is commander
+            if (evt.Passenger.Type == BasePiece.PieceType.Commander)
+            {
+                commanderZone.MarkDirty();
+            }
+
+            // Check nếu passenger đang carry commander
+            var nestedCarried = carryingSystem.GetAllCarriedPieces(evt.Passenger);
+            foreach (var nested in nestedCarried)
+            {
+                if (nested.Type == BasePiece.PieceType.Commander)
+                {
+                    commanderZone.MarkDirty();
+                    break;
+                }
+            }
+
+            // Check ROF - passenger
             if (evt.Passenger.HadRingOfFire)
             {
                 ROF.MarkDirty();
                 return;
             }
 
-            // Check nếu passenger đang carry pieces khác
-            var nestedCarried = carryingSystem.GetAllCarriedPieces(evt.Passenger);
+            // Check nếu passenger đang carry pieces khác với ROF
             foreach (var nested in nestedCarried)
             {
                 if (nested.HadRingOfFire)

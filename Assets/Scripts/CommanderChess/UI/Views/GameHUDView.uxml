@@ -5,7 +5,7 @@
             <ui:Label name="turn-label" text="Red Team Turn" class="turn-label" style="font-size: 30px; color: rgb(255, 255, 255); -unity-font-style: bold;" />
             <ui:Label name="turn-number-label" text="Turn 1" class="turn-number-label" style="font-size: 30px; color: rgb(200, 200, 200); -unity-font-style: normal;" />
         </ui:VisualElement>
-        <ui:VisualElement style="flex-grow: 1; align-items: center; justify-content: space-between; align-self: center; height: 80%; flex-direction: column; max-height: none; position: absolute; top: 148px; left: 883px;">
+        <ui:VisualElement style="flex-grow: 1; align-items: center; justify-content: space-between; align-self: center; height: 80%; flex-direction: column; max-height: none; position: absolute; top: 154px; left: 885px;">
             <ui:VisualElement name="info-panel" class="info-panel">
                 <ui:VisualElement name="info-panel-item" class="info-panel-item selected" style="flex-grow: 1;">
                     <ui:VisualElement name="piece-image" class="piece-image" style="background-image: url(&quot;project://database/Assets/Sprites/Pieces/Commander_RedSide.png?fileID=-6004285800791726923&amp;guid=f453015bdb294824c84227a14656c092&amp;type=3#Commander_RedSide_0&quot;);" />

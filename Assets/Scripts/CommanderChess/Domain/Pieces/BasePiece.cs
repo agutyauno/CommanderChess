@@ -25,6 +25,7 @@ namespace CommanderChess.Domain
         #region Dependencies (VContainer Injection)
         [Inject] protected readonly Board board;
         [Inject] protected readonly CarryingSystem carryingSystem;
+        [Inject] protected readonly ZoneProvider zoneProvider;
         #endregion
 
         #region Serialized Fields

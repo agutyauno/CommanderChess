@@ -7,20 +7,25 @@ using VContainer;
 namespace CommanderChess.Services
 {
     /// <summary>
-    /// Checks win conditions with priority: Commander Death > All Navy Lost = All Airforce Lost = All Ground Units Lost
+    /// Checks win conditions with priority: Commander Death = Commander Confrontation > Unit Losses
     /// </summary>
     public class WinConditionChecker
     {
         private readonly Board board;
         private readonly GameStatsTracker statsTracker;
         private readonly EventBus eventBus;
+        private readonly ZoneProvider zoneProvider;
+        private readonly CarryingSystem carryingSystem;
 
         [Inject]
-        public WinConditionChecker(Board board, GameStatsTracker statsTracker, EventBus eventBus)
+        public WinConditionChecker(Board board, GameStatsTracker statsTracker, EventBus eventBus, 
+            ZoneProvider zoneProvider, CarryingSystem carryingSystem)
         {
             this.board = board;
             this.statsTracker = statsTracker;
             this.eventBus = eventBus;
+            this.zoneProvider = zoneProvider;
+            this.carryingSystem = carryingSystem;
         }
 
         /// <summary>
@@ -92,6 +97,50 @@ namespace CommanderChess.Services
         {
             Team winner = surrenderingTeam == Team.Red ? Team.Blue : Team.Red;
             PublishWin(winner, surrenderingTeam, WinCondition.Surrender);
+        }
+
+        /// <summary>
+        /// Check commander confrontation at end of turn
+        /// Commander in enemy Commander Zone (not carried) loses the game
+        /// </summary>
+        public bool CheckCommanderConfrontation()
+        {
+            var commanderZone = zoneProvider.GetCommanderZone();
+            if (commanderZone == null) return false;
+
+            // Check Red Commander
+            var redCommander = board.Pieces.Values
+                .FirstOrDefault(p => p.Team == Team.Red && p.Type == BasePiece.PieceType.Commander);
+            
+            if (redCommander != null && !carryingSystem.IsCarried(redCommander))
+            {
+                var blueZone = commanderZone.GetZoneByTeam(Team.Blue);
+                if (blueZone != null && blueZone.Contains(redCommander.Position))
+                {
+                    // Red Commander in Blue zone -> Red loses
+                    PublishWin(Team.Blue, Team.Red, WinCondition.CommanderConfrontation);
+                    Debug.Log("Red Commander in Blue Commander Zone! Blue team wins!");
+                    return true;
+                }
+            }
+
+            // Check Blue Commander
+            var blueCommander = board.Pieces.Values
+                .FirstOrDefault(p => p.Team == Team.Blue && p.Type == BasePiece.PieceType.Commander);
+            
+            if (blueCommander != null && !carryingSystem.IsCarried(blueCommander))
+            {
+                var redZone = commanderZone.GetZoneByTeam(Team.Red);
+                if (redZone != null && redZone.Contains(blueCommander.Position))
+                {
+                    // Blue Commander in Red zone -> Blue loses
+                    PublishWin(Team.Red, Team.Blue, WinCondition.CommanderConfrontation);
+                    Debug.Log("Blue Commander in Red Commander Zone! Red team wins!");
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private bool CheckCommanderLost(Team team, out WinCondition condition)

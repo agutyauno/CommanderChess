@@ -203,6 +203,14 @@ public class TurnManager : BaseService
             return;
         }
 
+        // Check commander confrontation at end of turn
+        bool confrontation = winConditionChecker.CheckCommanderConfrontation();
+        if (confrontation)
+        {
+            // Game ended due to confrontation
+            return;
+        }
+
         // Publish TurnEnded event BEFORE EndTurn
         eventBus.Publish(new TurnEndedEvent(currentTurn, turnNumber));
 
