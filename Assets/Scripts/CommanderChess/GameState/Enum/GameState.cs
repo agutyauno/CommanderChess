@@ -9,6 +9,7 @@ namespace CommanderChess.GameState
         PieceSelected,           // Đã chọn quân, hiển thị moves/attacks
         ExecutingAction,         // Đang thực thi command (chờ animation)
         SelectingDetachTarget,   // Đang chọn vị trí để detach quân
+        AirforceBombingDecision, // Airforce chờ quyết định Stay hoặc Return sau bombing
         WaitingForOpponent,      // Chờ đối thủ đánh (online mode)
         GameOver                 // Trò chơi kết thúc
     }

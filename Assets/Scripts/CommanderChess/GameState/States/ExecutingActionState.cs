@@ -71,8 +71,25 @@ namespace CommanderChess.GameState
         {
 //             Debug.Log("Command execution completed");
 
-            // Check if last command was detach - if so, auto-select carrier
+            // Check if last command was Airforce capture - trigger bombing decision
             var lastCommand = Manager.CommandManager.GetLastCommand();
+            if (lastCommand is CommandSystem.CaptureCommand captureCmd && captureCmd.ShouldTriggerBombingDecision)
+            {
+                Debug.Log("Airforce capture completed - triggering bombing decision");
+                
+                // Store bombing data
+                Data.BombingAirforce = captureCmd.CapturedBy;
+                Data.BombingOriginalPosition = captureCmd.CaptureFrom;
+                
+                // Check if Airforce was carried
+                Data.BombingCarrier = Manager.CarryingSystem.GetCarrier(captureCmd.CapturedBy);
+                
+                // Go to bombing decision state
+                Manager.ChangeState(GameState.AirforceBombingDecision);
+                return;
+            }
+            
+            // Check if last command was detach - if so, auto-select carrier
             if (lastCommand != null && lastCommand.GetType().Name.Contains("DetachCommand"))
             {
 //                 Debug.Log("Detach command completed - checking for carrier auto-select");

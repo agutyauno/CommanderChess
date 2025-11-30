@@ -10,6 +10,13 @@ namespace CommanderChess.CommandSystem
         BasePiece defender;
         bool shouldMoveToTarget = true; // Mặc định là di chuyển
 
+        // Properties for Airforce bombing decision
+        public bool IsAirforceCapture => SelectedPiece?.Type == BasePiece.PieceType.AirForce;
+        public bool IsDefenderAirforce => defender?.Type == BasePiece.PieceType.AirForce;
+        public bool ShouldTriggerBombingDecision => IsAirforceCapture && !IsDefenderAirforce && WasSuccessful;
+        public BoardCoord CaptureFrom => From;
+        public BasePiece CapturedBy => SelectedPiece;
+
         public CaptureCommand(
             BoardCoord from,
             BoardCoord to,

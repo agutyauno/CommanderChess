@@ -6,6 +6,7 @@ using CommanderChess.Services;
 using CommanderChess.CommandSystem;
 using CommanderChess.Presentation;
 using CommanderChess.GameState;
+using CommanderChess.UI.Controllers;
 
 /// <summary>
 /// GameLifeTimeScope - VContainer DI configuration
@@ -18,6 +19,7 @@ public class GameLifeTimeScope : LifetimeScope
     [SerializeField] BoardHighlighter boardHighlighter;
     [SerializeField] GameManager gameManager;
     [SerializeField] PieceSpawner pieceSpawner;
+    [SerializeField] GameHUDController gameHUDController;
 
     protected override void Configure(IContainerBuilder builder)
     {
@@ -33,7 +35,6 @@ public class GameLifeTimeScope : LifetimeScope
         builder.Register<CommandManager>(Lifetime.Singleton).AsSelf().AsImplementedInterfaces();
         builder.Register<TurnManager>(Lifetime.Singleton).AsSelf().AsImplementedInterfaces();
         builder.Register<ActionValidator>(Lifetime.Singleton).AsSelf().AsImplementedInterfaces();
-        
         // Game Condition Services
         builder.Register<GameStatsTracker>(Lifetime.Singleton).AsSelf().AsImplementedInterfaces();
         builder.Register<WinConditionChecker>(Lifetime.Singleton).AsSelf().AsImplementedInterfaces();
@@ -46,5 +47,6 @@ public class GameLifeTimeScope : LifetimeScope
         builder.RegisterComponent(inputHandler).AsSelf();
         builder.RegisterComponent(boardHighlighter).AsSelf();
         builder.RegisterComponent(gameManager).AsSelf();
+        builder.RegisterComponent(gameHUDController).AsSelf();
     }
 }

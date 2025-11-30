@@ -241,14 +241,14 @@ MonoBehaviour:
   parentReference:
     TypeName: 
   autoRun: 1
-  autoInjectGameObjects:
-  - {fileID: 1989112121}
+  autoInjectGameObjects: []
   board: {fileID: 955386419}
   gameStateManager: {fileID: 1353720679}
   inputHandler: {fileID: 1568376566}
   boardHighlighter: {fileID: 2110036577}
   gameManager: {fileID: 124011134}
   pieceSpawner: {fileID: 421106173}
+  gameHUDController: {fileID: 1989112124}
 --- !u!4 &120551829
 Transform:
   m_ObjectHideFlags: 0

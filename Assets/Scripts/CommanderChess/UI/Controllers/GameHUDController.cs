@@ -31,6 +31,10 @@ namespace CommanderChess.UI.Controllers
         Button btnRof;
         Button btnConfirm;
         Button btnCancel;
+        Button btnBombingStay;
+        Button btnBombingReturn;
+        VisualElement buttonGroupNormal;
+        VisualElement buttonGroupBombing;
         VisualElement turnDisplay;
         Label turnLabel;
         Label turnNumberLabel;
@@ -74,6 +78,10 @@ namespace CommanderChess.UI.Controllers
             btnRof = root.Q<Button>("btn_rof");
             btnConfirm = root.Q<Button>("btn_confirm");
             btnCancel = root.Q<Button>("btn_cancel");
+            btnBombingStay = root.Q<Button>("btn_bombing_stay");
+            btnBombingReturn = root.Q<Button>("btn_bombing_return");
+            buttonGroupNormal = root.Q<VisualElement>("button-group-normal");
+            buttonGroupBombing = root.Q<VisualElement>("button-group-bombing");
             turnDisplay = root.Q<VisualElement>("turn-display");
             turnLabel = root.Q<Label>("turn-label");
             turnNumberLabel = root.Q<Label>("turn-number-label");
@@ -82,6 +90,10 @@ namespace CommanderChess.UI.Controllers
             if (btnRof == null) Debug.LogError("btn_rof not found!");
             if (btnConfirm == null) Debug.LogError("btn_confirm not found!");
             if (btnCancel == null) Debug.LogError("btn_cancel not found!");
+            if (btnBombingStay == null) Debug.LogError("btn_bombing_stay not found!");
+            if (btnBombingReturn == null) Debug.LogError("btn_bombing_return not found!");
+            if (buttonGroupNormal == null) Debug.LogError("button-group-normal not found!");
+            if (buttonGroupBombing == null) Debug.LogError("button-group-bombing not found!");
             if (turnDisplay == null) Debug.LogError("turn-display not found!");
             if (turnLabel == null) Debug.LogError("turn-label not found!");
             if (turnNumberLabel == null) Debug.LogError("turn-number-label not found!");
@@ -97,8 +109,12 @@ namespace CommanderChess.UI.Controllers
             btnRof.clicked += OnRofButtonClicked;
             btnConfirm.clicked += OnConfirmButtonClicked;
             btnCancel.clicked += OnCancelButtonClicked;
+            btnBombingStay.clicked += OnBombingStayClicked;
+            btnBombingReturn.clicked += OnBombingReturnClicked;
             
-            // Initially hide confirm/cancel buttons
+            // Initially show normal buttons, hide confirm/cancel
+            buttonGroupNormal.style.display = DisplayStyle.Flex;
+            buttonGroupBombing.style.display = DisplayStyle.None;
             btnConfirm.visible = false;
             btnCancel.visible = false;
         }
@@ -115,6 +131,7 @@ namespace CommanderChess.UI.Controllers
             eventBus.Subscribe<TurnEndCancelledEvent>(OnTurnEndCancelled);
             eventBus.Subscribe<TurnChangedEvent>(OnTurnChanged);
             eventBus.Subscribe<TurnStartedEvent>(OnTurnStarted);
+            eventBus.Subscribe<BombingDecisionRequestedEvent>(OnBombingDecisionRequested);
         }
 
         void UnsubscribeFromEvents()
@@ -127,6 +144,7 @@ namespace CommanderChess.UI.Controllers
             eventBus.Unsubscribe<TurnEndCancelledEvent>(OnTurnEndCancelled);
             eventBus.Unsubscribe<TurnChangedEvent>(OnTurnChanged);
             eventBus.Unsubscribe<TurnStartedEvent>(OnTurnStarted);
+            eventBus.Unsubscribe<BombingDecisionRequestedEvent>(OnBombingDecisionRequested);
         }
         #endregion
 
@@ -185,6 +203,16 @@ namespace CommanderChess.UI.Controllers
         void OnTurnStarted(TurnStartedEvent evt)
         {
             UpdateTurnDisplay();
+        }
+
+        void OnBombingDecisionRequested(BombingDecisionRequestedEvent evt)
+        {
+            // Hide normal buttons, show bombing buttons
+            buttonGroupNormal.style.display = DisplayStyle.None;
+            buttonGroupBombing.style.display = DisplayStyle.Flex;
+            btnRof.visible = true;
+            
+            Debug.Log($"[GameHUD] Airforce bombing decision - Stay at {evt.Airforce.Position.ToLabel()} or Return to {evt.OriginalPosition.ToLabel()}");
         }
         #endregion
 
@@ -328,6 +356,36 @@ namespace CommanderChess.UI.Controllers
         {
 //             Debug.Log("[GameHUD] Cancel button clicked - cancelling turn");
             turnManager.CancelEndTurn();
+        }
+
+        void OnBombingStayClicked()
+        {
+            Debug.Log("[GameHUD] Airforce stays at captured position");
+            
+            // Hide bombing buttons, show normal buttons with confirm/cancel
+            buttonGroupBombing.style.display = DisplayStyle.None;
+            buttonGroupNormal.style.display = DisplayStyle.Flex;
+            btnRof.visible = true;
+            btnConfirm.visible = true;
+            btnCancel.visible = true;
+            
+            // Call state manager to handle stay decision
+            gameStateManager.OnAirforceBombingStay();
+        }
+
+        void OnBombingReturnClicked()
+        {
+            Debug.Log("[GameHUD] Airforce returns to original position");
+            
+            // Hide bombing buttons, show normal buttons with confirm/cancel
+            buttonGroupBombing.style.display = DisplayStyle.None;
+            buttonGroupNormal.style.display = DisplayStyle.Flex;
+            btnRof.visible = true;
+            btnConfirm.visible = true;
+            btnCancel.visible = true;
+            
+            // Call state manager to handle return decision
+            gameStateManager.OnAirforceBombingReturn();
         }
 
         void ShowRof()

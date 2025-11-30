@@ -25,7 +25,6 @@
     width: 60px;
     height: 60px;
     background-size: 80% 80%;
-    align-self: auto;
 }
 
 .piece-name {
@@ -83,21 +82,20 @@
     border-right-color: rgb(255, 255, 255);
     border-top-color: rgb(255, 255, 255);
     border-bottom-color: rgb(255, 255, 255);
+    align-self: center;
+    align-items: center;
 }
 
 .turn-label {
-    font-size: 35px;
+    font-size: 28px;
     color: rgb(255, 255, 255);
     -unity-font-style: bold;
     -unity-text-align: middle-center;
-    -unity-text-outline-width: 0;
 }
 
 .turn-number-label {
-    font-size: 20px;
+    font-size: 18px;
     color: rgb(200, 200, 200);
     -unity-text-align: middle-center;
     margin-top: 5px;
-    -unity-font-definition: url("project://database/Assets/UI%20Toolkit/UnityThemes/UnityDefaultRuntimeTheme.tss?fileID=2230732570650464555&guid=7ebfb49d0b58a3d4fa1eaefc237cb449&type=3#NotInter-Regular");
-    -unity-font-style: bold;
 }

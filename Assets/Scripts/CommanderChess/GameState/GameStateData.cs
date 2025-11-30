@@ -22,6 +22,11 @@ namespace CommanderChess.GameState
         public List<BoardCoord> HighlightedMoves { get; set; } = new List<BoardCoord>();
         public List<BoardCoord> HighlightedAttacks { get; set; } = new List<BoardCoord>();
 
+        // Bombing decision data (for Airforce)
+        public BasePiece BombingAirforce { get; set; }
+        public BoardCoord BombingOriginalPosition { get; set; }
+        public BasePiece BombingCarrier { get; set; } // Carrier if Airforce was carried during capture
+
         /// <summary>
         /// Clear all data (dùng khi chuyển về Idle hoặc reset)
         /// </summary>
@@ -32,6 +37,9 @@ namespace CommanderChess.GameState
             PendingAction = null;
             HighlightedMoves.Clear();
             HighlightedAttacks.Clear();
+            BombingAirforce = null;
+            BombingOriginalPosition = default;
+            BombingCarrier = null;
         }
     }
 }

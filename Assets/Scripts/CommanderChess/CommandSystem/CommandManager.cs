@@ -19,6 +19,7 @@ namespace CommanderChess.CommandSystem
         [Inject] readonly PathChecker pathChecker;
         [Inject] readonly MovementExecutor movementExecutor;
         [Inject] readonly TurnManager turnManager; // NEW: Inject TurnManager
+        [Inject] readonly EventBus eventBus;
         #endregion
 
         #region History Stacks

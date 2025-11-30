@@ -20,7 +20,7 @@ namespace CommanderChess.GameState
 
         public void Enter()
         {
-            //             Debug.Log($"Entered PieceSelectedState with {Data.SelectedPiece.Type}");
+            Debug.Log($"Entered PieceSelectedState with {Data.SelectedPiece.Type}");
 
             if (Data.SelectedPiece == null)
             {
@@ -39,7 +39,7 @@ namespace CommanderChess.GameState
             }
             else
             {
-            //                 Debug.Log($"Selected piece: {piece.Type} at {piece.Position.ToLabel()}");
+                Debug.Log($"Selected piece: {piece.Type} at {piece.Position.ToLabel()}");
             }
 
             if (piece.PossibleMoves == null && piece.PossibleAttacks == null)
@@ -52,7 +52,7 @@ namespace CommanderChess.GameState
             }
             else
             {
-            //                 Debug.Log($"Possible moves count: {piece.PossibleMoves.Count}, Possible attacks count: {piece.PossibleAttacks.Count}");
+                Debug.Log($"Possible moves count: {piece.PossibleMoves.Count}, Possible attacks count: {piece.PossibleAttacks.Count}");
             }
 
             Data.HighlightedMoves.Clear();
@@ -72,7 +72,7 @@ namespace CommanderChess.GameState
 
         public void Exit()
         {
-            //             Debug.Log("Exited PieceSelectedState");
+            Debug.Log("Exited PieceSelectedState");
 
             // Clear highlights
             Manager.ClearHighlights();
@@ -98,7 +98,7 @@ namespace CommanderChess.GameState
             }
 
             // Nếu không phải valid move, deselect
-            //             Debug.Log($"Clicked {coord.ToLabel()} - not a valid move, deselecting");
+            Debug.Log($"Clicked {coord.ToLabel()} - not a valid move, deselecting");
             Manager.ChangeState(GameState.Idle);
         }
 
@@ -114,7 +114,7 @@ namespace CommanderChess.GameState
             // Case 1: Clicked on same piece -> deselect
             if (clickedPiece == selectedPiece)
             {
-            //                 Debug.Log($"Clicked same piece - deselecting");
+                Debug.Log($"Clicked same piece - deselecting");
                 Manager.ChangeState(GameState.Idle);
                 return;
             }
@@ -159,7 +159,7 @@ namespace CommanderChess.GameState
 
         public void HandleCancel()
         {
-            //             Debug.Log("Cancel in PieceSelectedState - deselecting piece");
+            Debug.Log("Cancel in PieceSelectedState - deselecting piece");
             Manager.NotifyPieceDeselected();
             Manager.ChangeState(GameState.Idle);
         }
@@ -173,7 +173,7 @@ namespace CommanderChess.GameState
 
         private void TryChangePieceSelection(BasePiece newPiece)
         {
-            //             Debug.Log($"Changing selection to {newPiece.Type} at {newPiece.Position.ToLabel()}");
+            Debug.Log($"Changing selection to {newPiece.Type} at {newPiece.Position.ToLabel()}");
 
             Data.SelectedPiece = newPiece;
             Data.SelectedPosition = newPiece.Position;
@@ -188,7 +188,7 @@ namespace CommanderChess.GameState
             var piece = Data.SelectedPiece;
             var from = piece.Position;
 
-            //             Debug.Log($"Attempting move: {piece.Type} from {from.ToLabel()} to {to.ToLabel()}");
+            Debug.Log($"Attempting move: {piece.Type} from {from.ToLabel()} to {to.ToLabel()}");
 
             // Validate
             var validation = Manager.ActionValidator.ValidateMove(piece, to);
@@ -202,7 +202,7 @@ namespace CommanderChess.GameState
             var command = Manager.CommandManager.CreateMoveCommand(from, to);
             if (Manager.CommandManager.Execute(command))
             {
-            //                 Debug.Log($"Move executed successfully");
+                Debug.Log($"Move executed successfully");
                 Manager.ChangeState(GameState.ExecutingAction);
             }
             else
@@ -217,7 +217,7 @@ namespace CommanderChess.GameState
             var piece = Data.SelectedPiece;
             var from = piece.Position;
 
-            //             Debug.Log($"Attempting capture: {piece.Type} from {from.ToLabel()} to {to.ToLabel()}");
+            Debug.Log($"Attempting capture: {piece.Type} from {from.ToLabel()} to {to.ToLabel()}");
 
             // Validate
             var validation = Manager.ActionValidator.ValidateCapture(piece, to);
@@ -231,7 +231,7 @@ namespace CommanderChess.GameState
             var command = Manager.CommandManager.CreateCaptureCommand(from, to);
             if (Manager.CommandManager.Execute(command))
             {
-            //                 Debug.Log($"Capture executed successfully");
+                Debug.Log($"Capture executed successfully");
                 Manager.ChangeState(GameState.ExecutingAction);
             }
             else
@@ -246,7 +246,7 @@ namespace CommanderChess.GameState
             var piece = Data.SelectedPiece;
             var from = piece.Position;
 
-            //             Debug.Log($"Attempting boarding: {piece.Type} from {from.ToLabel()} to {to.ToLabel()}");
+            Debug.Log($"Attempting boarding: {piece.Type} from {from.ToLabel()} to {to.ToLabel()}");
 
             // Validate
             var validation = Manager.ActionValidator.ValidateBoarding(piece, to);
@@ -260,7 +260,7 @@ namespace CommanderChess.GameState
             var command = Manager.CommandManager.CreateBoardingCommand(from, to);
             if (Manager.CommandManager.Execute(command))
             {
-            //                 Debug.Log($"Boarding executed successfully");
+                Debug.Log($"Boarding executed successfully");
                 Manager.ChangeState(GameState.ExecutingAction);
             }
             else

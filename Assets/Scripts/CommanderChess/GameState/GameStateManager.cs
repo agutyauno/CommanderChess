@@ -41,6 +41,10 @@ namespace CommanderChess.GameState
         public ActionValidator ActionValidator => actionValidator;
         public CarryingSystem CarryingSystem => carryingSystem;
         public EventBus EventBus => eventBus;
+        public GameStateData Data => stateData;
+        
+        // Expose current state instance
+        public IGameState GetCurrentState() => currentState;
         #endregion
 
         #region Initialization
@@ -61,6 +65,7 @@ namespace CommanderChess.GameState
             states[GameState.PieceSelected] = new PieceSelectedState(stateData, this);
             states[GameState.ExecutingAction] = new ExecutingActionState(stateData, this);
             states[GameState.SelectingDetachTarget] = new SelectingDetachTargetState(stateData, this);
+            states[GameState.AirforceBombingDecision] = new AirforceBombingDecisionState(stateData, this);
             // TODO: Add more states
             // states[GameState.WaitingForOpponent] = new WaitingForOpponentState(stateData, this);
             // states[GameState.GameOver] = new GameOverState(stateData, this);
@@ -121,7 +126,7 @@ namespace CommanderChess.GameState
         {
             if (commandManager.CanUndo())
             {
-//                 Debug.Log("Undoing current turn");
+                Debug.Log("Undoing current turn");
                 bool success = commandManager.UndoTurn();
                 
                 if (success)
@@ -160,6 +165,36 @@ namespace CommanderChess.GameState
 
             // Transition to SelectingDetachTarget state
             ChangeState(GameState.SelectingDetachTarget);
+        }
+
+        /// <summary>
+        /// Called when Airforce bombing decision - Stay at captured position
+        /// </summary>
+        public void OnAirforceBombingStay()
+        {
+            if (currentState is AirforceBombingDecisionState bombingState)
+            {
+                bombingState.OnStaySelected();
+            }
+            else
+            {
+                Debug.LogError("OnAirforceBombingStay called but not in AirforceBombingDecisionState!");
+            }
+        }
+
+        /// <summary>
+        /// Called when Airforce bombing decision - Return to original position
+        /// </summary>
+        public void OnAirforceBombingReturn()
+        {
+            if (currentState is AirforceBombingDecisionState bombingState)
+            {
+                bombingState.OnReturnSelected();
+            }
+            else
+            {
+                Debug.LogError("OnAirforceBombingReturn called but not in AirforceBombingDecisionState!");
+            }
         }
 
         /// <summary>
@@ -215,7 +250,7 @@ namespace CommanderChess.GameState
             // Enter new state
             currentState.Enter();
 
-//             Debug.Log($"State changed: {previousState} -> {newState}");
+            Debug.Log($"State changed: {previousState} -> {newState}");
         }
 
         #endregion
