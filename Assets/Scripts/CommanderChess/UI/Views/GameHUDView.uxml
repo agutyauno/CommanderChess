@@ -32,5 +32,13 @@
                 </ui:VisualElement>
             </ui:VisualElement>
         </ui:VisualElement>
+        <ui:VisualElement name="game-over-overlay" style="position: absolute; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.8); align-items: center; justify-content: center; display: none;">
+            <ui:VisualElement name="game-over-panel" style="background-color: rgb(40, 40, 40); padding-left: 40px; padding-right: 40px; padding-top: 40px; padding-bottom: 40px; border-radius: 20px; align-items: center; min-width: 400px; border-left-color: rgb(200, 200, 200); border-right-color: rgb(200, 200, 200); border-top-color: rgb(200, 200, 200); border-bottom-color: rgb(200, 200, 200); border-left-width: 3px; border-right-width: 3px; border-top-width: 3px; border-bottom-width: 3px;">
+                <ui:Label name="game-over-title" text="GAME OVER" style="font-size: 48px; color: rgb(255, 255, 255); -unity-font-style: bold; margin-bottom: 20px; -unity-text-align: upper-center;" />
+                <ui:Label name="game-over-winner" text="Red Team Wins!" style="font-size: 36px; color: rgb(255, 100, 100); -unity-font-style: bold; margin-bottom: 10px;" />
+                <ui:Label name="game-over-condition" text="Enemy Commander Killed" style="font-size: 24px; color: rgb(200, 200, 200); margin-bottom: 30px; -unity-text-align: upper-center;" />
+                <ui:Button text="New Game" name="btn_new_game" style="background-color: rgb(71, 147, 223); color: rgb(255, 255, 255); font-size: 24px; padding-left: 30px; padding-right: 30px; padding-top: 15px; padding-bottom: 15px; border-radius: 10px; margin-top: 10px; min-width: 200px;" />
+            </ui:VisualElement>
+        </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>

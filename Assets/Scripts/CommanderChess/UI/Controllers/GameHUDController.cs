@@ -38,6 +38,13 @@ namespace CommanderChess.UI.Controllers
         VisualElement turnDisplay;
         Label turnLabel;
         Label turnNumberLabel;
+        
+        // Game Over UI
+        VisualElement gameOverOverlay;
+        Label gameOverTitle;
+        Label gameOverWinner;
+        Label gameOverCondition;
+        Button btnNewGame;
 
         // State
         BasePiece carrierPiece;
@@ -85,6 +92,13 @@ namespace CommanderChess.UI.Controllers
             turnDisplay = root.Q<VisualElement>("turn-display");
             turnLabel = root.Q<Label>("turn-label");
             turnNumberLabel = root.Q<Label>("turn-number-label");
+            
+            // Game Over UI
+            gameOverOverlay = root.Q<VisualElement>("game-over-overlay");
+            gameOverTitle = root.Q<Label>("game-over-title");
+            gameOverWinner = root.Q<Label>("game-over-winner");
+            gameOverCondition = root.Q<Label>("game-over-condition");
+            btnNewGame = root.Q<Button>("btn_new_game");
 
             if (infoPanel == null) Debug.LogError("info-panel not found!");
             if (btnRof == null) Debug.LogError("btn_rof not found!");
@@ -97,6 +111,11 @@ namespace CommanderChess.UI.Controllers
             if (turnDisplay == null) Debug.LogError("turn-display not found!");
             if (turnLabel == null) Debug.LogError("turn-label not found!");
             if (turnNumberLabel == null) Debug.LogError("turn-number-label not found!");
+            if (gameOverOverlay == null) Debug.LogError("game-over-overlay not found!");
+            if (gameOverTitle == null) Debug.LogError("game-over-title not found!");
+            if (gameOverWinner == null) Debug.LogError("game-over-winner not found!");
+            if (gameOverCondition == null) Debug.LogError("game-over-condition not found!");
+            if (btnNewGame == null) Debug.LogError("btn_new_game not found!");
 
             infoPanel.visible = false;
             
@@ -111,6 +130,7 @@ namespace CommanderChess.UI.Controllers
             btnCancel.clicked += OnCancelButtonClicked;
             btnBombingStay.clicked += OnBombingStayClicked;
             btnBombingReturn.clicked += OnBombingReturnClicked;
+            btnNewGame.clicked += OnNewGameClicked;
             
             // Initially show normal buttons, hide confirm/cancel
             buttonGroupNormal.style.display = DisplayStyle.Flex;
@@ -132,6 +152,7 @@ namespace CommanderChess.UI.Controllers
             eventBus.Subscribe<TurnChangedEvent>(OnTurnChanged);
             eventBus.Subscribe<TurnStartedEvent>(OnTurnStarted);
             eventBus.Subscribe<BombingDecisionRequestedEvent>(OnBombingDecisionRequested);
+            eventBus.Subscribe<Events.GameWonEvent>(OnGameWon);
         }
 
         void UnsubscribeFromEvents()
@@ -145,6 +166,7 @@ namespace CommanderChess.UI.Controllers
             eventBus.Unsubscribe<TurnChangedEvent>(OnTurnChanged);
             eventBus.Unsubscribe<TurnStartedEvent>(OnTurnStarted);
             eventBus.Unsubscribe<BombingDecisionRequestedEvent>(OnBombingDecisionRequested);
+            eventBus.Unsubscribe<Events.GameWonEvent>(OnGameWon);
         }
         #endregion
 
@@ -213,6 +235,12 @@ namespace CommanderChess.UI.Controllers
             btnRof.visible = true;
             
             Debug.Log($"[GameHUD] Airforce bombing decision - Stay at {evt.Airforce.Position.ToLabel()} or Return to {evt.OriginalPosition.ToLabel()}");
+        }
+
+        void OnGameWon(Events.GameWonEvent evt)
+        {
+            Debug.Log($"[GameHUD] Game Won - {evt.Winner} defeats {evt.Loser} by {evt.Condition}");
+            ShowGameOverUI(evt);
         }
         #endregion
 
@@ -451,6 +479,61 @@ namespace CommanderChess.UI.Controllers
         string GetPieceDisplayName(BasePiece piece)
         {
             return $"{piece.Type}";
+        }
+        #endregion
+
+        #region Game Over UI
+        void ShowGameOverUI(Events.GameWonEvent evt)
+        {
+            // Show overlay
+            gameOverOverlay.style.display = DisplayStyle.Flex;
+            
+            // Set winner text and color
+            string winnerText = evt.Winner == Team.Red ? "Red Team Wins!" : "Blue Team Wins!";
+            Color winnerColor = evt.Winner == Team.Red ? new Color(1f, 0.4f, 0.4f) : new Color(0.4f, 0.6f, 1f);
+            
+            gameOverWinner.text = winnerText;
+            gameOverWinner.style.color = winnerColor;
+            
+            // Set condition text
+            string conditionText = GetWinConditionText(evt.Condition);
+            gameOverCondition.text = conditionText;
+            
+            // Hide game buttons
+            btnRof.visible = false;
+            btnConfirm.visible = false;
+            btnCancel.visible = false;
+            buttonGroupNormal.style.display = DisplayStyle.None;
+            buttonGroupBombing.style.display = DisplayStyle.None;
+        }
+
+        string GetWinConditionText(Events.WinCondition condition)
+        {
+            return condition switch
+            {
+                Events.WinCondition.CommanderKilled => "Enemy Commander Eliminated",
+                Events.WinCondition.CommanderConfrontation => "Commander Confrontation Victory",
+                Events.WinCondition.AllNavyLost => "Enemy Navy Destroyed",
+                Events.WinCondition.AllAirforceLost => "Enemy Airforce Destroyed",
+                Events.WinCondition.AllGroundUnitsLost => "Enemy Ground Forces Destroyed",
+                Events.WinCondition.Surrender => "Enemy Surrendered",
+                _ => "Victory!"
+            };
+        }
+
+        void OnNewGameClicked()
+        {
+            Debug.Log("[GameHUD] New Game button clicked - reloading scene");
+            
+            #if UNITY_EDITOR
+            UnityEditor.SceneManagement.EditorSceneManager.LoadScene(
+                UnityEngine.SceneManagement.SceneManager.GetActiveScene().path
+            );
+            #else
+            UnityEngine.SceneManagement.SceneManager.LoadScene(
+                UnityEngine.SceneManagement.SceneManager.GetActiveScene().buildIndex
+            );
+            #endif
         }
         #endregion
     }

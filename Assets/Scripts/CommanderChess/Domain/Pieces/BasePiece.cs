@@ -249,6 +249,8 @@ namespace CommanderChess.Domain
 
         public virtual bool ShouldMoveToTarget(BoardCoord targetPos)
         {
+            if (!IsTerrainAllowed(targetPos))
+                return false;
             return DoMoveToTarget;
         }
 
