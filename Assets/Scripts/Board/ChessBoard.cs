@@ -31,7 +31,7 @@ namespace CommanderChess.Board
         }
 
         /// <summary>
-        /// Initialize board with standard Commander Chess setup
+        /// Initialize board with standard chess setup (without Commanders)
         /// </summary>
         public void SetupStandardGame()
         {
@@ -46,37 +46,7 @@ namespace CommanderChess.Board
 
         private void SetupPiecesForSide(PlayerSide side)
         {
-            int backRow = side == PlayerSide.White ? 0 : 7;
-            int pawnRow = side == PlayerSide.White ? 1 : 6;
-
-            // Rooks
-            AddPiece(new Rook(side, new BoardPosition(backRow, 0)));
-            AddPiece(new Rook(side, new BoardPosition(backRow, 7)));
-
-            // Knights
-            AddPiece(new Knight(side, new BoardPosition(backRow, 1)));
-            AddPiece(new Knight(side, new BoardPosition(backRow, 6)));
-
-            // Bishops
-            AddPiece(new Bishop(side, new BoardPosition(backRow, 2)));
-            AddPiece(new Bishop(side, new BoardPosition(backRow, 5)));
-
-            // Queen
-            AddPiece(new Queen(side, new BoardPosition(backRow, 3)));
-
-            // King
-            var king = new King(side, new BoardPosition(backRow, 4));
-            AddPiece(king);
-            if (side == PlayerSide.White)
-                WhiteKing = king;
-            else
-                BlackKing = king;
-
-            // Pawns
-            for (int col = 0; col < 8; col++)
-            {
-                AddPiece(new Pawn(side, new BoardPosition(pawnRow, col)));
-            }
+            SetupPiecesForSide(side, useCommander: false);
         }
 
         /// <summary>
@@ -86,12 +56,12 @@ namespace CommanderChess.Board
         {
             Clear();
 
-            // Setup standard pieces first
-            SetupPiecesForSideWithCommander(PlayerSide.White);
-            SetupPiecesForSideWithCommander(PlayerSide.Black);
+            // Setup pieces with Commander replacing one knight
+            SetupPiecesForSide(PlayerSide.White, useCommander: true);
+            SetupPiecesForSide(PlayerSide.Black, useCommander: true);
         }
 
-        private void SetupPiecesForSideWithCommander(PlayerSide side)
+        private void SetupPiecesForSide(PlayerSide side, bool useCommander)
         {
             int backRow = side == PlayerSide.White ? 0 : 7;
             int pawnRow = side == PlayerSide.White ? 1 : 6;
@@ -100,16 +70,23 @@ namespace CommanderChess.Board
             AddPiece(new Rook(side, new BoardPosition(backRow, 0)));
             AddPiece(new Rook(side, new BoardPosition(backRow, 7)));
 
-            // Knights (only one knight, commander replaces the other)
+            // Knight on queenside
             AddPiece(new Knight(side, new BoardPosition(backRow, 1)));
 
-            // Commander (replaces one knight)
-            var commander = new Commander(side, new BoardPosition(backRow, 6));
-            AddPiece(commander);
-            if (side == PlayerSide.White)
-                WhiteCommander = commander;
+            // Knight or Commander on kingside
+            if (useCommander)
+            {
+                var commander = new Commander(side, new BoardPosition(backRow, 6));
+                AddPiece(commander);
+                if (side == PlayerSide.White)
+                    WhiteCommander = commander;
+                else
+                    BlackCommander = commander;
+            }
             else
-                BlackCommander = commander;
+            {
+                AddPiece(new Knight(side, new BoardPosition(backRow, 6)));
+            }
 
             // Bishops
             AddPiece(new Bishop(side, new BoardPosition(backRow, 2)));

@@ -12,6 +12,11 @@ namespace CommanderChess.Commands
     {
         private readonly ChessBoard _board;
 
+        // Constants for ability mechanics
+        private const int COMMANDER_BASE_MOVE_RANGE = 2; // Commander can move 1-2 squares (king-like or knight-like)
+        private const int CHARGE_BONUS_SQUARES = 3;      // Charge adds 3 extra squares
+        private const int CHARGE_MAX_DISTANCE = COMMANDER_BASE_MOVE_RANGE + CHARGE_BONUS_SQUARES;
+
         // Track which pieces have been boosted by Rally this turn
         private HashSet<BoardPosition> _ralliedPieces = new HashSet<BoardPosition>();
         
@@ -95,11 +100,10 @@ namespace CommanderChess.Commands
             if (!isHorizontal && !isVertical && !isDiagonal)
                 return false;
 
-            // Max distance is commander's normal move + 3
-            int maxDist = 5; // Commander can already move like a knight, so charge adds 3
+            // Max distance is commander's base move range + charge bonus
             int distance = System.Math.Max(System.Math.Abs(rowDiff), System.Math.Abs(colDiff));
             
-            if (distance > maxDist)
+            if (distance > CHARGE_MAX_DISTANCE)
                 return false;
 
             // Check path is clear
@@ -127,16 +131,26 @@ namespace CommanderChess.Commands
         /// </summary>
         private bool ExecuteShield(Commander commander)
         {
-            var targets = commander.GetRallyTargets(_board.GetBoardState());
-            
             _shieldedPieces.Clear();
-            foreach (var pos in targets)
+            
+            // Shield protects all adjacent squares (friendly pieces and the commander itself)
+            var board = _board.GetBoardState();
+            for (int dRow = -1; dRow <= 1; dRow++)
             {
-                _shieldedPieces.Add(pos);
+                for (int dCol = -1; dCol <= 1; dCol++)
+                {
+                    var pos = new BoardPosition(commander.Position.Row + dRow, commander.Position.Column + dCol);
+                    if (pos.IsValid)
+                    {
+                        var piece = board[pos.Row, pos.Column];
+                        // Shield protects friendly pieces and empty adjacent squares
+                        if (piece == null || piece.Side == commander.Side)
+                        {
+                            _shieldedPieces.Add(pos);
+                        }
+                    }
+                }
             }
-
-            // Also protect the commander itself
-            _shieldedPieces.Add(commander.Position);
 
             return true;
         }
