@@ -9,12 +9,12 @@ Tài liệu này liệt kê tất cả các tính năng cần thiết cho trò c
 
 | Phase | Tên | Priority | Số Modules | Số Features |
 |-------|-----|----------|------------|-------------|
-| Phase 1 | MVP - Core Gameplay (Desktop) | Critical | 9 | ~120 |
-| Phase 2 | Online & Social Features | High | 9 | ~100 |
-| Phase 3 | Advanced Features & Content | Medium | 6 | ~80 |
-| Phase 4 | Cross-platform & Polish | Low/Future | 6 | ~60 |
-| Backend | Infrastructure (C# Custom Server) | High | 4 | ~50 |
-| **Tổng cộng** | | | **34** | **~410** |
+| Phase 1 | MVP - Core Gameplay (Desktop) | Critical | 9 | ~380 |
+| Phase 2 | Online & Social Features | High | 9 | ~206 |
+| Phase 3 | Advanced Features & Content | Medium | 6 | ~161 |
+| Phase 4 | Cross-platform & Polish | Low/Future | 6 | ~137 |
+| Backend | Infrastructure (C# Custom Server) | High | 4 | ~149 |
+| **Tổng cộng** | | | **34** | **~1033** |
 
 ---
 
@@ -1653,8 +1653,8 @@ Một feature được coi là hoàn thành khi:
 
 | Version | Date | Changes |
 |---------|------|---------|
-| 1.0.0 | TBD | Initial feature list creation |
+| 1.0.0 | 2024-12-06 | Initial feature list creation |
 
 ---
 
-*Document created for Commander Chess project. Total: 34 modules, ~410 features.*
+*Document created for Commander Chess project. Total: 34 modules, ~1033 features.*
