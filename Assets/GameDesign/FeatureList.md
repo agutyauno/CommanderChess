@@ -42,7 +42,6 @@
 - [ ] Land terrain (default)
 - [ ] Sea terrain (blue area)
 - [ ] River terrain (separating two sides)
-- [ ] Deep water river segments
 - [ ] Shallow/reef-base river segments (2 crossing points)
 - [ ] Terrain visual differentiation
 - [ ] Terrain data structure
@@ -58,18 +57,9 @@
 - [ ] Selected piece highlight
 - [ ] Valid move positions highlight
 - [ ] Valid capture positions highlight (different color)
-- [ ] Last move highlight
 - [ ] Check/checkmate highlight on Commander
 - [ ] Ring of fire visualization
 - [ ] Hover highlight
-
-#### 1.5 Camera Controls 🟠
-- [ ] Zoom in/out functionality
-- [ ] Pan/drag to move view
-- [ ] Fit-to-screen option
-- [ ] Camera bounds restriction
-- [ ] Smooth camera transitions
-- [ ] Reset view button
 
 #### 1.6 Board Orientation 🟡
 - [ ] Default orientation (Blue at bottom)
@@ -89,12 +79,14 @@
 - [ ] Current position property
 - [ ] Movement range property
 - [ ] Capture range property
+- [ ] Move direction property
 - [ ] Score value property
 - [ ] Special abilities flags
 
 #### 2.2 Commander (Tư Lệnh) 🔴
 - [ ] Movement: unlimited along VA/HA (no blockage)
 - [ ] Capture: 1 segment only
+- [ ] Can capture at sea without moving (ranged attack)
 - [ ] Cannot move diagonally
 - [ ] Can enter Headquarter
 - [ ] Cannot face opposing Commander directly
@@ -104,6 +96,7 @@
 #### 2.3 Infantry (Bộ Binh) 🔴
 - [ ] Movement: 1 segment (VA/HA only)
 - [ ] Capture: 1 segment
+- [ ] Can capture at sea without moving (ranged attack)
 - [ ] Can cross deep water freely
 - [ ] Can be carried by Tank/Air Force/Navy
 - [ ] Score: 10 points
@@ -123,6 +116,7 @@
 #### 2.5 Militia (Dân Quân) 🔴
 - [ ] Movement: 1 segment (all 8 directions)
 - [ ] Capture: 1 segment (all 8 directions)
+- [ ] Can capture at sea without moving (ranged attack)
 - [ ] Can cross deep water freely
 - [ ] Can be carried by Tank/Air Force/Navy
 - [ ] Score: 10 points
@@ -132,6 +126,7 @@
 #### 2.6 Engineer (Công Binh) 🔴
 - [ ] Movement: 1 segment (VA/HA only)
 - [ ] Capture: 1 segment
+- [ ] Can capture at sea without moving (ranged attack)
 - [ ] Can carry heavy vehicles across river
 - [ ] Score: 10 points
 - [ ] Quantity: 2 per side
@@ -140,6 +135,7 @@
 #### 2.7 Artillery (Pháo Binh) 🔴
 - [ ] Movement: 1-3 segments (all 8 directions)
 - [ ] Capture: 1-3 segments
+- [ ] Can capture at sea without moving (ranged attack)
 - [ ] Must use reef-base to cross river (unless capturing)
 - [ ] Can capture across river when attacking
 - [ ] Can attack sea without moving (ranged attack)
@@ -150,6 +146,7 @@
 #### 2.8 Anti-aircraft (Phòng Không) 🔴
 - [ ] Movement: 1 segment (VA/HA only)
 - [ ] Capture: 1 segment
+- [ ] Can capture at sea without moving (ranged attack)
 - [ ] Ring of fire: 1 segment radius
 - [ ] Cannot cross deep water alone
 - [ ] Can be carried by Engineer
@@ -160,6 +157,7 @@
 #### 2.9 Missile (Tên Lửa) 🔴
 - [ ] Movement: within 2-segment ring
 - [ ] Capture: within 2-segment ring (ground & sky)
+- [ ] Can capture at sea without moving (ranged attack)
 - [ ] Ring of fire: 2 segments (1 segment diagonal)
 - [ ] Cannot cross deep water alone
 - [ ] Can be carried by Engineer
@@ -172,7 +170,7 @@
 - [ ] Capture: 1-4 segments
 - [ ] Can fly over any blockage
 - [ ] Destroyed by ring of fire (unless stealth)
-- [ ] Can return to original position if unsafe landing on land piece
+- [ ] Can return to original position if capture on land piece
 - [ ] Cannot land on sea
 - [ ] Can be carried by Navy (safe from ring of fire)
 - [ ] Can carry up to 2 troops
@@ -189,7 +187,7 @@
 - [ ] Can enter deep river (not reef-base)
 - [ ] Not blocked by friendly pieces when moving
 - [ ] Can carry up to 2 troops (including Air Force)
-- [ ] Score: 80 points (10+30+40)
+- [ ] Score: 80 points
 - [ ] Quantity: 2 per side
 - [ ] Visual design & sprite
 
@@ -197,9 +195,8 @@
 - [ ] Cannot move
 - [ ] Cannot capture
 - [ ] Only Commander can enter
-- [ ] Provides protection for Commander
 - [ ] Can become heroic (last defender)
-- [ ] Score: 0 points (non-capturable normally)
+- [ ] Score: 0 points
 - [ ] Quantity: 2 per side
 - [ ] Visual design & sprite
 
@@ -215,7 +212,6 @@
 - [ ] Idle animation
 - [ ] Selected animation (bounce/glow)
 - [ ] Heroic status animation
-- [ ] Carried status indicator
 
 ---
 
@@ -257,26 +253,20 @@
 - [ ] Piece combination (Tank + Infantry/Militia/Commander)
 - [ ] Air Force combination
 - [ ] Navy carrier system
-- [ ] Skip turn to combine
 - [ ] Maximum 2 carried pieces
 - [ ] Split from same point
-- [ ] Multiple captures in one turn (up to 3)
+- [ ] Multiple captures/moves in one turn (up to 3)
 - [ ] Combined piece score calculation
 
 #### 3.6 Heroic Piece System 🔴
 - [ ] Check detection for heroic promotion
 - [ ] Last defender heroic promotion
-- [ ] Heroic Infantry: +1 movement, all directions
-- [ ] Heroic Tank: +1 movement (total 3)
-- [ ] Heroic Air Force: stealth (ignore ring of fire)
-- [ ] Heroic Headquarter: can move & capture (2 segments)
-- [ ] Heroic visual indicator
-- [ ] Heroic status persistence
+- [ ] Heroic piece +1 attack range and move range, can move diagonaly
+- [ ] Specal: Air Force become a stealth Air Force ignore rings of fire. 
 
 #### 3.7 Commander Special Rules 🔴
 - [ ] Commander cannot face opponent Commander
 - [ ] Commander line-of-sight checking
-- [ ] Commander in Headquarter logic
 - [ ] Commander can ignore sea when joining Navy
 - [ ] Check detection
 - [ ] Checkmate detection
@@ -288,26 +278,25 @@
 - [ ] Turn completion validation
 - [ ] Turn history recording
 
-#### 3.9 Win Condition Detection 🔴
-- [ ] Commander capture = victory
-- [ ] Score-based victory (time expired)
-- [ ] Tactical mode objectives
-- [ ] Draw conditions (if any)
+#### 3.9 End Condition Detection 🔴
+- [ ] Commander capture
+- [ ] Tactical objectives
 
 ---
 
 ### Module 4: Game Mode - Standard
-> Chế độ chơi chuẩn Total Force 30 phút
+> Chế độ chơi 15 phút
 
-#### 4.1 Total Force Mode (30 minutes) 🔴
+#### 4.1 Normal Mode (30 minutes) 🔴
 - [ ] Full piece setup (38 pieces total)
-- [ ] 30-minute total time limit
-- [ ] Commander capture = immediate win (+50 points)
-- [ ] Time expiry = score comparison
+- [ ] 15-minute total time limit
+- [ ] Commander capture
+- [ ] Tactical objectives
+- [ ] Time expiry
 - [ ] Victory bonus: +50 points
 
 #### 4.2 Timer System 🔴
-- [ ] Total time countdown (30 min each)
+- [ ] Total time countdown (15 min each)
 - [ ] Turn timer optional
 - [ ] Timer pause on game pause
 - [ ] Timer display (MM:SS format)
@@ -323,11 +312,10 @@
 - [ ] Final score display
 
 #### 4.4 Win Conditions 🔴
-- [ ] Primary: Commander captured
-- [ ] Secondary: Higher score at time limit
-- [ ] Tie-breaker rules
+- [ ] Higher score win (standard)
+- [ ] Tactical objecttives (optional)
+- [ ] Commander capture (optional)
 - [ ] Victory message display
-- [ ] Statistics recording
 
 #### 4.5 Standard Piece Setup 🔴
 - [ ] Initial positions for all 38 pieces
