@@ -2,6 +2,6 @@ namespace CommanderChess.Core
 {
     public enum Terrain
     {
-        Land, Sea, Shallow, Seaside
+        Land, Sea, Shallow, Seaside, None
     }
 }
